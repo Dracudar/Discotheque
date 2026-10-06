@@ -9,10 +9,14 @@ def test_exemple_valide(config_exemple):
     # Les apostrophes TOML gardent les « \ » de Windows tels quels
     assert str(cfg.musique) == r"X:\Musique"
     assert cfg.surechantillonnage_crete == 8
-    assert cfg.dap.arrivees == "_sort" and str(cfg.dap.destination).startswith("X:")
-    assert cfg.references.fiches_achat is not None and cfg.corbeille is not None
+    assert str(cfg.dap).startswith("X:") and str(cfg.sauvegarde).startswith("X:")
+    assert cfg.references.fiches_achat is not None
+    # Dossiers système déduits de la racine
+    assert cfg.sortie.name == "_discotheque" and cfg.journaux.name == "_log"
+    assert cfg.rapports.name == "_reports" and cfg.corbeille.name == "_to_delete"
+    assert cfg.bot.name == "_bot" and cfg.arrivees.name == "_sort"
     assert cfg.reference_lufs == -18.0
-    assert len(cfg.categories) == 10
+    assert len(cfg.categories) == 9
 
 
 def test_categories_exemple(config_exemple):
@@ -22,7 +26,7 @@ def test_categories_exemple(config_exemple):
     for nom in ("Bulk", "Night"):
         c = cfg.categorie(nom)
         assert c.type == "vrac" and not c.pages and not c.rg_album
-    assert cfg.categorie("_discotheque").type == "ignore"
+    assert cfg.categorie("_discotheque").type == "ignore"  # dossier système implicite
     assert cfg.categorie("Inconnu") is None
 
 
@@ -34,8 +38,8 @@ def test_donnees_par_defaut():
         }
     )
     assert cfg.donnees.name == "_data" and cfg.donnees.parent.name == "S"
-    assert cfg.journaux == cfg.donnees / "journaux"
-    assert cfg.dap.destination is None and cfg.references.audit is None and cfg.corbeille is None
+    assert cfg.journaux.as_posix() == "M/_log"
+    assert cfg.dap is None and cfg.sauvegarde is None and cfg.references.audit is None
     assert cfg.ffmpeg == "ffmpeg"
 
 

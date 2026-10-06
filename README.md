@@ -42,8 +42,25 @@ Python, SQLite, ffmpeg. Pages statiques d'abord, puis serveur local.
 |---|---|
 | `disco doctor` | Vérifie Python, les modules, SQLite (FTS5, JSON), ffmpeg, fpcalc (y compris par l'entrée standard), les chemins longs et la configuration |
 | `disco config` | Affiche la configuration chargée et le traitement de chaque dossier |
-| `disco dap envoyer` | Recopie la discothèque en miroir sur le baladeur, sauf le dossier d'arrivées et la sortie générée (robocopy). `--simulation` liste sans copier |
-| `disco dap recuperer` | Copie le dossier d'arrivées du baladeur vers la discothèque, sans rien supprimer |
+| `disco dap synchro` | Déplace les arrivées du baladeur (`_sort`) vers la discothèque, puis copie la discothèque en miroir sur le baladeur, sans les dossiers système `_…` de la racine |
+| `disco dap envoyer` / `recuperer` | Une seule des deux étapes |
+| `disco dap restaurer --confirmer` | Sens inverse, baladeur → discothèque ; ce qui disparaîtrait part dans `_to_delete`. Sans `--confirmer` : simulation |
+| `disco dap lanceur --dap <dossier>` | Pose `synchro_discotheque.cmd` sur le baladeur : un double-clic lance la synchro, quelles que soient les lettres de lecteur |
+| `disco sauvegarde envoyer` / `restaurer --confirmer` | Copie froide sur un autre disque ; les fichiers remplacés ou supprimés y sont gardés dans sa corbeille |
+
+Toutes les commandes de copie acceptent `--simulation`. Chacune affiche son déroulement dans la console, l'écrit dans `_log` et produit un rapport lisible dans `_reports`.
+
+## Organisation de la discothèque
+
+```
+<racine>/                 dossiers de musique (Artists, Compilations…)
+<racine>/_discotheque/    pages générées, index et caches
+<racine>/_bot/            installation de production et config.toml
+<racine>/_sort/           arrivées depuis le baladeur
+<racine>/_log/            journaux détaillés
+<racine>/_reports/        rapports lisibles des opérations
+<racine>/_to_delete/      corbeille des opérations
+```
 
 ## Tests
 

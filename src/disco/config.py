@@ -1,4 +1,15 @@
-"""Chargement et validation de la configuration locale (config.toml)."""
+"""Chargement et validation de la configuration locale (config.toml).
+
+Tout part de la racine de la discothèque (`chemins.musique`). Les dossiers système
+vivent à la racine et commencent par « _ » ; chacun peut être déplacé dans la config :
+
+    <racine>/_discotheque   pages, index et caches (sortie)
+    <racine>/_bot           installation de production (environnement, config)
+    <racine>/_sort          arrivées depuis le baladeur
+    <racine>/_log           journaux détaillés
+    <racine>/_reports       rapports lisibles des résultats
+    <racine>/_to_delete     corbeille des opérations (jamais de suppression directe)
+"""
 
 from __future__ import annotations
 
@@ -16,6 +27,9 @@ TYPES_CATEGORIE = {
     "arrivees",
     "ignore",
 }
+
+# Préfixe des dossiers système à la racine de la discothèque
+PREFIXE_SYSTEME = "_"
 
 # Racine du dépôt : src/disco/config.py -> ../../
 RACINE_DEPOT = Path(__file__).resolve().parents[2]
@@ -36,14 +50,6 @@ class Categorie:
 
 
 @dataclass(frozen=True)
-class Dap:
-    """Copie de la discothèque sur le baladeur (DAP)."""
-
-    destination: Path | None
-    arrivees: str
-
-
-@dataclass(frozen=True)
 class References:
     """Données de référence hors dépôt (jamais versionnées)."""
 
@@ -57,7 +63,12 @@ class Config:
     sortie: Path
     donnees: Path
     journaux: Path
-    corbeille: Path | None
+    rapports: Path
+    corbeille: Path
+    bot: Path
+    arrivees: Path
+    dap: Path | None
+    sauvegarde: Path | None
     ffmpeg: str
     ffprobe: str
     fpcalc: str
@@ -65,13 +76,20 @@ class Config:
     surechantillonnage_crete: int
     processus: int
     categories: dict[str, Categorie]
-    dap: Dap
     references: References
     source: Path | None = None
 
     def categorie(self, dossier: str) -> Categorie | None:
-        """Catégorie d'un dossier de premier niveau, ou None s'il n'est pas déclaré."""
-        return self.categories.get(dossier)
+        """Catégorie d'un dossier de premier niveau.
+
+        Un dossier système (« _… ») non déclaré est ignoré ; un autre dossier non
+        déclaré renvoie None.
+        """
+        if dossier in self.categories:
+            return self.categories[dossier]
+        if dossier.startswith(PREFIXE_SYSTEME):
+            return Categorie(nom=dossier, type="ignore", pages=False, rg_album=False)
+        return None
 
 
 def trouver(explicite: str | os.PathLike | None = None) -> Path:
@@ -112,13 +130,11 @@ def depuis_dict(d: dict, source: Path | None = None) -> Config:
     chemins = _exiger(d, "chemins", "racine")
     outils = d.get("outils", {})
     analyse = d.get("analyse", {})
+    refs = d.get("references", {})
 
     musique = Path(_exiger(chemins, "musique", "chemins"))
-    sortie = Path(_exiger(chemins, "sortie", "chemins"))
-    donnees = Path(chemins.get("donnees") or sortie / "_data")
-    journaux = Path(chemins.get("journaux") or donnees / "journaux")
-    dap = d.get("dap", {})
-    refs = d.get("references", {})
+    sortie = _chemin(chemins, "sortie") or musique / "_discotheque"
+    donnees = _chemin(chemins, "donnees") or sortie / "_data"
 
     categories: dict[str, Categorie] = {}
     for nom, c in d.get("categories", {}).items():
@@ -145,8 +161,13 @@ def depuis_dict(d: dict, source: Path | None = None) -> Config:
         musique=musique,
         sortie=sortie,
         donnees=donnees,
-        journaux=journaux,
-        corbeille=_chemin(chemins, "corbeille"),
+        journaux=_chemin(chemins, "journaux") or musique / "_log",
+        rapports=_chemin(chemins, "rapports") or musique / "_reports",
+        corbeille=_chemin(chemins, "corbeille") or musique / "_to_delete",
+        bot=_chemin(chemins, "bot") or musique / "_bot",
+        arrivees=_chemin(chemins, "arrivees") or musique / "_sort",
+        dap=_chemin(d.get("dap", {}), "destination"),
+        sauvegarde=_chemin(d.get("sauvegarde", {}), "destination"),
         ffmpeg=str(outils.get("ffmpeg", "ffmpeg")),
         ffprobe=str(outils.get("ffprobe", "ffprobe")),
         fpcalc=str(outils.get("fpcalc", "fpcalc")),
@@ -154,9 +175,6 @@ def depuis_dict(d: dict, source: Path | None = None) -> Config:
         surechantillonnage_crete=surech,
         processus=int(analyse.get("processus", 0)),
         categories=categories,
-        dap=Dap(
-            destination=_chemin(dap, "destination"), arrivees=str(dap.get("arrivees", "_sort"))
-        ),
         references=References(
             audit=_chemin(refs, "audit"), fiches_achat=_chemin(refs, "fiches_achat")
         ),

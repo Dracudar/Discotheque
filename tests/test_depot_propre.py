@@ -59,7 +59,20 @@ def test_aucune_donnee_reelle(racine):
 
 # Chemins absolus Windows : seul le lecteur fictif X: est permis (exemples de configuration).
 LECTEUR = re.compile(r"(?<![A-Za-z0-9])([A-WYZ]):" + re.escape("\\"))
-TEXTES = {".py", ".md", ".toml", ".yml", ".yaml", ".txt", ".ps1", ".sh", ".html", ".json", ".cfg"}
+TEXTES = {
+    ".py",
+    ".md",
+    ".toml",
+    ".yml",
+    ".yaml",
+    ".txt",
+    ".ps1",
+    ".sh",
+    ".html",
+    ".json",
+    ".cfg",
+    ".cmd",
+}
 
 
 def test_aucun_chemin_du_poste(racine):

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+from pathlib import Path
 
 from disco import __version__
 from disco.config import ErreurConfig, charger
@@ -30,8 +31,12 @@ def _config(args: argparse.Namespace) -> int:
     print(f"Sortie    : {cfg.sortie}")
     print(f"Données   : {cfg.donnees}")
     print(f"Journaux  : {cfg.journaux}")
-    print(f"Corbeille : {cfg.corbeille or '(non définie)'}")
-    print(f"DAP       : {cfg.dap.destination or '(non défini)'} (arrivées : {cfg.dap.arrivees})")
+    print(f"Rapports  : {cfg.rapports}")
+    print(f"Corbeille : {cfg.corbeille}")
+    print(f"Bot       : {cfg.bot}")
+    print(f"Arrivées  : {cfg.arrivees}")
+    print(f"DAP       : {cfg.dap or '(non défini)'}")
+    print(f"Sauvegarde: {cfg.sauvegarde or '(non définie)'}")
     print(f"Références: audit={cfg.references.audit} fiches={cfg.references.fiches_achat}")
     print(f"Outils    : ffmpeg={cfg.ffmpeg} ffprobe={cfg.ffprobe} fpcalc={cfg.fpcalc}")
     print(
@@ -52,16 +57,44 @@ def _dap(args: argparse.Namespace) -> int:
 
     try:
         cfg = charger(args.config)
-        construire = dap.commande_envoi if args.sens == "envoyer" else dap.commande_recuperation
-        commande = construire(cfg, simulation=args.simulation)
+        if args.sens == "lanceur":
+            chemin = dap.poser_lanceur(Path(args.dap) if args.dap else cfg.dap)
+            print(f"Lanceur posé : {chemin}")
+            return 0
+        return dap.operation_dap(
+            cfg,
+            args.sens,
+            dap=Path(args.dap) if args.dap else None,
+            simulation=args.simulation,
+            confirmer=args.confirmer,
+        )
     except ErreurConfig as e:
         print(e, file=sys.stderr)
         return 2
-    print(" ".join(f'"{a}"' if " " in a else a for a in commande))
-    if sys.platform != "win32":
-        print("robocopy n'existe que sous Windows : commande affichée, non lancée.")
-        return 0
-    return dap.executer(commande, cfg.journaux)
+
+
+def _sauvegarde(args: argparse.Namespace) -> int:
+    from disco import dap
+
+    try:
+        cfg = charger(args.config)
+        return dap.operation_sauvegarde(
+            cfg, args.sens, simulation=args.simulation, confirmer=args.confirmer
+        )
+    except ErreurConfig as e:
+        print(e, file=sys.stderr)
+        return 2
+
+
+def _options_copie(sp: argparse.ArgumentParser) -> None:
+    sp.add_argument(
+        "--simulation", action="store_true", help="affiche ce qui serait fait, sans rien modifier"
+    )
+    sp.add_argument(
+        "--confirmer",
+        action="store_true",
+        help="obligatoire pour « restaurer » (sinon simulation)",
+    )
 
 
 def construire_parseur() -> argparse.ArgumentParser:
@@ -75,16 +108,23 @@ def construire_parseur() -> argparse.ArgumentParser:
     sous.add_parser("config", help="affiche la configuration chargée").set_defaults(
         fonction=_config
     )
-    d = sous.add_parser("dap", help="synchronise la discothèque avec le baladeur (robocopy)")
+    d = sous.add_parser("dap", help="synchronise la discothèque avec le baladeur")
     d.add_argument(
         "sens",
-        choices=["envoyer", "recuperer"],
-        help="envoyer : discothèque → DAP (miroir) ; recuperer : arrivées du DAP → discothèque",
+        choices=["synchro", "envoyer", "recuperer", "restaurer", "lanceur"],
+        help=(
+            "synchro : arrivées du DAP → discothèque, puis discothèque → DAP ; "
+            "envoyer / recuperer : une seule des deux étapes ; "
+            "restaurer : DAP → discothèque ; lanceur : pose le lanceur sur le DAP"
+        ),
     )
-    d.add_argument(
-        "--simulation", action="store_true", help="liste ce qui serait copié, sans rien copier"
-    )
+    d.add_argument("--dap", help="dossier de musique du baladeur (sinon [dap] destination)")
+    _options_copie(d)
     d.set_defaults(fonction=_dap)
+    s = sous.add_parser("sauvegarde", help="copie froide de la discothèque sur un autre disque")
+    s.add_argument("sens", choices=["envoyer", "restaurer"])
+    _options_copie(s)
+    s.set_defaults(fonction=_sauvegarde)
     return p
 
 

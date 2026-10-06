@@ -39,6 +39,6 @@ Les branches de livrable partent de `develop`, et leurs PR visent `develop`. `ma
 | Musicals, Original Game Soundtrack, Soundtrack | projets | oui | oui |
 | Night, Bulk | vrac | non | non (piste seulement) |
 | `_sort` | arrivées (surveillance) | non | après rangement |
-| `_discotheque` | sortie générée, ignorée | — | — |
+| `_discotheque`, `_bot`, `_log`, `_reports`, `_to_delete` | dossiers système (tout `_…` non déclaré), ignorés | — | — |
 
 La table fait foi dans `config.example.toml`.

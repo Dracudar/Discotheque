@@ -221,7 +221,7 @@ def verifier_config(cfg: Config) -> list[Resultat]:
     res = [Resultat("Configuration", OK, str(cfg.source))]
     if cfg.musique.is_dir():
         presents = sorted(p.name for p in cfg.musique.iterdir() if p.is_dir())
-        inconnus = [n for n in presents if cfg.categorie(n) is None]
+        inconnus = [n for n in presents if cfg.categorie(n) is None]  # « _… » : système
         detail = f"{cfg.musique} ({len(presents)} dossiers)"
         if inconnus:
             res.append(
@@ -243,8 +243,8 @@ def verifier_config(cfg: Config) -> list[Resultat]:
         else:
             res.append(Resultat(nom, ATTENTION, f"{chemin} : dossier parent introuvable"))
     facultatifs = (
-        ("Corbeille des lots", cfg.corbeille),
-        ("DAP", cfg.dap.destination),
+        ("DAP", cfg.dap),
+        ("Sauvegarde froide", cfg.sauvegarde),
         ("Référence : audit", cfg.references.audit),
         ("Référence : fiches d'achat", cfg.references.fiches_achat),
     )

@@ -44,15 +44,21 @@ Les emplacements réels du poste de Dracudar sont notés dans le document d'éta
 5. **Rien n'est supprimé directement.** Ce qui doit disparaître va dans `chemins.corbeille\<lot>\`, que seul Dracudar vide.
 6. `Night` et `Bulk` ne sont jamais réorganisés : ils sont indexés et analysés, sans pages.
 
-## Configuration (`config.toml`, non versionné)
-| Clé | Rôle |
-|---|---|
-| `chemins.musique` | Racine analysée : la sandbox en développement, la discothèque en production |
-| `chemins.sortie`, `chemins.donnees`, `chemins.journaux` | Pages générées, index SQLite et caches, journaux |
-| `chemins.corbeille` | Destination des fichiers retirés par les lots |
-| `references.audit`, `references.fiches_achat` | Données de référence hors dépôt |
-| `dap.destination`, `dap.arrivees` | Copie sur le baladeur (`disco dap`) et dossier transporté par le DAP |
-| `outils.*`, `analyse.*`, `categories.*` | Outils externes, réglages d'analyse, traitement des dossiers |
+## Racine et configuration (`config.toml`, non versionné)
+Tout part de la racine de la discothèque (`chemins.musique`) : la sandbox en développement, la discothèque elle-même en production. Les dossiers système sont à la racine et commencent par `_` ; chacun peut être déplacé dans la config.
+
+| Dossier | Clé | Rôle |
+|---|---|---|
+| `_discotheque` | `chemins.sortie` (+ `donnees`) | Pages générées, index SQLite et caches |
+| `_bot` | `chemins.bot` | Installation de production : environnement, version publiée depuis `main`, `config.toml`. **Distinct du clone de développement** |
+| `_sort` | `chemins.arrivees` | Arrivées depuis le baladeur |
+| `_log` | `chemins.journaux` | Journaux détaillés (aussi affichés dans la console) |
+| `_reports` | `chemins.rapports` | Rapports lisibles des résultats, avec lien vers le journal (Markdown, puis intégrés à l'interface) |
+| `_to_delete` | `chemins.corbeille` | Corbeille : ce que les opérations retirent, pour pouvoir annuler |
+
+Autres clés : `dap.destination` (baladeur, pour les commandes lancées depuis le PC), `sauvegarde.destination` (copie froide), `references.*` (données hors dépôt), `outils.*`, `analyse.*`, `categories.*`. Tout dossier `_…` non déclaré dans `categories` est ignoré par l'indexation.
+
+Toute opération du bot écrit un journal dans `_log` et un rapport dans `_reports` (`disco.journal`).
 
 On n'écrit jamais un chemin en dur dans le code ni dans la doc : tout passe par la configuration.
 
@@ -103,7 +109,8 @@ On n'écrit jamais un chemin en dur dans le code ni dans la doc : tout passe par
 py -3.14 -m venv .venv && .venv\Scripts\activate && pip install -e .[dev]
 disco doctor          # vérifie l'environnement (ne modifie rien)
 disco config          # affiche la configuration chargée
-disco dap envoyer --simulation   # synchro vers le baladeur, sans rien copier
+disco dap synchro --simulation    # synchro du baladeur, sans rien modifier
+disco sauvegarde envoyer         # copie froide sur un autre disque
 pytest                # tests
 ruff check . && ruff format src tests
 ```
