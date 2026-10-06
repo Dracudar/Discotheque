@@ -96,7 +96,7 @@ On n'écrit jamais un chemin en dur dans le code ni dans la doc : tout passe par
 - **Git :**
   - **`main` = production uniquement.** Rien n'y est poussé ni proposé directement. Seul Dracudar y fusionne `develop` quand il met une version en service.
   - **`develop` = intégration.** Chaque branche de livrable part de `develop` (`phase-1.1/index`), et sa PR vise `develop`. Dracudar la relit et la fusionne.
-  - **Chaque PR est reliée à une issue** (`Closes #n` en tête de description). Chaque issue a un jalon ; on pose les relations utiles (sous-issues, « bloqué par »). Les issues suivent la même règle que le code : aucune donnée de la discothèque ;
+  - **Chaque PR est reliée à une issue** (`Closes #n` en tête de description). Les PR ne vont pas dans le GitHub Project et n'ont pas de jalon : c'est l'issue liée qui porte le suivi. Chaque issue a un jalon ; on pose les relations utiles (sous-issues, « bloqué par »). Les issues suivent la même règle que le code : aucune donnée de la discothèque ;
   - Conventional Commits en français (`feat(analyse): …`, `fix(scan): …`, `docs: …`) ;
   - une étiquette par version mise en production sur `main` (`v0.1` = jalon 1.1) ;
   - ne jamais travailler en même temps sur la même branche depuis le cloud et depuis le PC.
