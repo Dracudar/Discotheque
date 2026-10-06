@@ -1,15 +1,22 @@
 # Configuration locale de la discothèque.
 # Copier ce fichier en « config.toml » (non versionné) et adapter les chemins à la machine.
+#
+# Où le ranger :
+# - production : dans <racine>\_bot\config.toml. La racine s'en déduit (le dossier
+#   parent de _bot), la clé « racine » peut alors être omise ;
+# - développement : dans le clone, avec au minimum « racine » (la sandbox). Le reste
+#   est lu dans <racine>\_bot\config.toml ; ce qui est écrit ici l'emporte.
 # Les chaînes entre apostrophes sont littérales : les « \ » de Windows n'ont pas à être doublés.
 # Aucun chemin réel ne doit figurer dans le dépôt : les exemples utilisent le lecteur X:.
 
 [chemins]
 # Racine de la discothèque. Pendant le développement : une copie de travail (sandbox) ;
-# en production : la discothèque elle-même. Seule clé obligatoire de cette section.
-musique = 'X:\Musique'
+# en production : la discothèque elle-même (déduite si ce fichier est dans _bot).
+racine = 'X:\Musique'
 # Dossiers système, à la racine par défaut (décommenter pour les déplacer) :
-# sortie = 'X:\Musique\_discotheque'        # pages, index et caches
-# donnees = 'X:\Musique\_discotheque\_data' # index SQLite et caches
+# sortie = 'X:\Musique\_data'               # pages (miroir de la discothèque)
+# base = 'X:\Musique\_data\_base'           # index SQLite : jamais effacé
+# cache = 'X:\Musique\_data\_cache'         # réponses des services en ligne
 # journaux = 'X:\Musique\_log'              # journaux détaillés
 # rapports = 'X:\Musique\_reports'          # rapports lisibles des résultats
 # corbeille = 'X:\Musique\_to_delete'       # ce que les opérations retirent (jamais supprimé)
@@ -94,5 +101,5 @@ type = "arrivees"
 pages = false
 rg_album = false
 
-# Les autres dossiers système de la racine (_discotheque, _bot, _log, _reports,
+# Les autres dossiers système de la racine (_data, _bot, _log, _reports,
 # _to_delete…) sont ignorés automatiquement : tout dossier qui commence par « _ ».

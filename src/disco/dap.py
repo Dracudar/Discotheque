@@ -9,7 +9,7 @@ Baladeur :
   part dans la corbeille. Simulation tant que `--confirmer` n'est pas donné.
 
 Sauvegarde froide :
-- `envoyer`   : miroir de toute la racine (y compris `_discotheque`, `_bot`, `_log`…) sauf
+- `envoyer`   : miroir de toute la racine (y compris `_data`, `_bot`, `_log`…) sauf
   la corbeille ; côté sauvegarde, les fichiers supprimés ou remplacés sont gardés dans sa
   propre corbeille datée ;
 - `restaurer` : sens inverse, sans `_bot` (l'installation en cours d'exécution) ni la
@@ -47,7 +47,7 @@ def _systeme(cfg: Config) -> set[str]:
     """Dossiers système de la racine : déclarés dans la config et présents sur le disque."""
     noms = {p.name for p in (cfg.sortie, cfg.journaux, cfg.rapports, cfg.corbeille, cfg.bot)}
     noms.add(cfg.arrivees.name)
-    noms |= copie.exclusions_systeme(cfg.musique)
+    noms |= copie.exclusions_systeme(cfg.racine)
     return {n for n in noms if n.startswith("_")}
 
 
@@ -89,7 +89,7 @@ def recuperer(cfg: Config, dap: Path, journal, simulation=False) -> copie.Bilan:
 def envoyer(cfg: Config, dap: Path, journal, simulation=False):
     exclus = _systeme(cfg) | copie.exclusions_systeme(dap) | {NOM_LANCEUR}
     journal("Exclus du miroir (premier niveau) : " + ", ".join(sorted(exclus)))
-    return copie.miroir(cfg.musique, dap, exclus, journal, corbeille=None, simulation=simulation)
+    return copie.miroir(cfg.racine, dap, exclus, journal, corbeille=None, simulation=simulation)
 
 
 def operation_dap(
@@ -97,13 +97,13 @@ def operation_dap(
 ) -> int:
     """Lance une opération sur le baladeur ; renvoie 0 si tout s'est bien passé."""
     dap = _verifier_dossier(dap or cfg.dap, "Baladeur")
-    _verifier_dossier(cfg.musique, "Discothèque")
+    _verifier_dossier(cfg.racine, "Discothèque")
     if sens == "restaurer" and not confirmer:
         simulation = True
     with Journal(cfg.journaux, f"dap_{sens}", console=console) as j:
-        j(f"Discothèque : {cfg.musique}")
+        j(f"Discothèque : {cfg.racine}")
         j(f"Baladeur    : {dap}")
-        contexte = [("Discothèque", str(cfg.musique)), ("Baladeur", str(dap))]
+        contexte = [("Discothèque", str(cfg.racine)), ("Baladeur", str(dap))]
         plan, bilans, remarques = None, [], []
         if sens in ("recuperer", "synchro"):
             bilans.append(("Arrivées", recuperer(cfg, dap, j, simulation)))
@@ -113,7 +113,7 @@ def operation_dap(
         if sens == "restaurer":
             exclus = _systeme(cfg) | copie.exclusions_systeme(dap) | {NOM_LANCEUR}
             corbeille = cfg.corbeille / f"{horodatage(j.debut)}_restauration_dap"
-            plan, b = copie.miroir(dap, cfg.musique, exclus, j, corbeille, simulation)
+            plan, b = copie.miroir(dap, cfg.racine, exclus, j, corbeille, simulation)
             bilans.append(("Discothèque", b))
             remarques.append(f"Fichiers retirés ou remplacés dans la discothèque : {corbeille}")
             if simulation and not confirmer:
@@ -133,11 +133,11 @@ def operation_sauvegarde(
     cfg: Config, sens: str, simulation=False, confirmer=False, console=True
 ) -> int:
     dest = _verifier_dossier(cfg.sauvegarde, "Sauvegarde")
-    _verifier_dossier(cfg.musique, "Discothèque")
+    _verifier_dossier(cfg.racine, "Discothèque")
     if sens == "restaurer" and not confirmer:
         simulation = True
     with Journal(cfg.journaux, f"sauvegarde_{sens}", console=console) as j:
-        j(f"Discothèque : {cfg.musique}")
+        j(f"Discothèque : {cfg.racine}")
         j(f"Sauvegarde  : {dest}")
         remarques = []
         if sens == "envoyer":
@@ -145,7 +145,7 @@ def operation_sauvegarde(
             corbeille = dest / cfg.corbeille.name / f"{horodatage(j.debut)}_sauvegarde"
             # Le journal en cours d'écriture n'est pas sauvegardé (il change pendant la copie)
             plan, b = copie.miroir(
-                cfg.musique, dest, exclus, j, corbeille, simulation, ignores={j.chemin}
+                cfg.racine, dest, exclus, j, corbeille, simulation, ignores={j.chemin}
             )
             remarques.append(
                 f"Anciennes versions et fichiers retirés de la sauvegarde : {corbeille}"
@@ -154,12 +154,12 @@ def operation_sauvegarde(
         else:
             exclus = {cfg.corbeille.name, cfg.bot.name}
             corbeille = cfg.corbeille / f"{horodatage(j.debut)}_restauration_sauvegarde"
-            plan, b = copie.miroir(dest, cfg.musique, exclus, j, corbeille, simulation)
+            plan, b = copie.miroir(dest, cfg.racine, exclus, j, corbeille, simulation)
             remarques.append(f"Fichiers retirés ou remplacés dans la discothèque : {corbeille}")
             if simulation and not confirmer:
                 remarques.append("Relancer avec --confirmer pour appliquer la restauration.")
             titre, nom = "Restauration depuis la sauvegarde", "Discothèque"
-        contexte = [("Discothèque", str(cfg.musique)), ("Sauvegarde", str(dest))]
+        contexte = [("Discothèque", str(cfg.racine)), ("Sauvegarde", str(dest))]
         chemin = _rapport(cfg, j, titre, contexte, plan, [(nom, b)], simulation, remarques)
         j(f"Rapport : {chemin}")
         return 1 if b.erreurs else 0

@@ -29,7 +29,9 @@ Python, SQLite, ffmpeg. Pages statiques d'abord, puis serveur local.
    pip install -e .[dev]
    copy config.example.toml config.toml
    ```
-   Adapter `config.toml` à la machine : chemins de la discothèque (une copie de travail pendant le développement), de la sortie, des références et du baladeur. Ce fichier n'est jamais versionné.
+   Adapter `config.toml` à la machine : racine de la discothèque (une copie de travail pendant le développement), références, baladeur, sauvegarde. Ce fichier n'est jamais versionné.
+
+   En production, la config se range dans `<racine>\_bot\config.toml` : la racine s'en déduit. Pour le développement, le `config.toml` du clone peut se limiter à `racine = '…'` ; le reste est lu dans le `_bot\config.toml` de cette racine.
 6. **Vérifier** :
    ```
    disco doctor
@@ -54,8 +56,10 @@ Toutes les commandes de copie acceptent `--simulation`. Chacune affiche son dér
 
 ```
 <racine>/                 dossiers de musique (Artists, Compilations…)
-<racine>/_discotheque/    pages générées, index et caches
-<racine>/_bot/            installation de production et config.toml
+<racine>/_data/           pages générées (miroir de la discothèque)
+<racine>/_data/_base/     index SQLite (jamais effacé)
+<racine>/_data/_cache/    caches des services en ligne
+<racine>/_bot/            installation de production, config.toml et outils
 <racine>/_sort/           arrivées depuis le baladeur
 <racine>/_log/            journaux détaillés
 <racine>/_reports/        rapports lisibles des opérations

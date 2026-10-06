@@ -24,14 +24,14 @@ def monde(tmp_path):
     ecrire(racine / "Artists" / "Les Exemples" / "Album" / "01 - Titre.flac", "audio1")
     ecrire(racine / "Artists" / "Les Exemples" / "Album" / "_bonus" / "02 - Caché.flac", "audio2")
     ecrire(racine / "Bulk" / "piste.opus", "audio3")
-    ecrire(racine / "_discotheque" / "index.html", "page")
+    ecrire(racine / "_data" / "index.html", "page")
     ecrire(racine / "_bot" / "config.toml", "cfg")
     (racine / "_sort").mkdir()
     for d in (baladeur, sauvegarde):
         d.mkdir()
     cfg = config.depuis_dict(
         {
-            "chemins": {"musique": str(racine)},
+            "chemins": {"racine": str(racine)},
             "dap": {"destination": str(baladeur)},
             "sauvegarde": {"destination": str(sauvegarde)},
             "categories": {"Artists": {"type": "artistes"}, "Bulk": {"type": "vrac"}},
@@ -113,7 +113,7 @@ def test_restauration_exige_confirmation(monde):
 def test_sauvegarde_garde_les_anciennes_versions(monde):
     cfg, racine, _, froid = monde
     assert dap.operation_sauvegarde(cfg, "envoyer", console=False) == 0
-    assert "_discotheque/index.html" in fichiers(froid) and "_bot/config.toml" in fichiers(froid)
+    assert "_data/index.html" in fichiers(froid) and "_bot/config.toml" in fichiers(froid)
 
     ecrire(racine / "Bulk" / "piste.opus", "version 2")
     (racine / "Artists" / "Les Exemples" / "Album" / "01 - Titre.flac").unlink()

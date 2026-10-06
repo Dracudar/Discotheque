@@ -27,9 +27,10 @@ def _config(args: argparse.Namespace) -> int:
         print(e, file=sys.stderr)
         return 2
     print(f"Fichier   : {cfg.source}")
-    print(f"Musique   : {cfg.musique}")
+    print(f"Racine    : {cfg.racine}")
     print(f"Sortie    : {cfg.sortie}")
-    print(f"Données   : {cfg.donnees}")
+    print(f"Base      : {cfg.base}")
+    print(f"Cache     : {cfg.cache}")
     print(f"Journaux  : {cfg.journaux}")
     print(f"Rapports  : {cfg.rapports}")
     print(f"Corbeille : {cfg.corbeille}")
