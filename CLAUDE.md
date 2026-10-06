@@ -51,6 +51,8 @@ La configuration se trouve d'elle-même :
 - **production** : `<racine>/_bot/config.toml`, à côté de l'environnement Python ; la racine s'en déduit (dossier parent de `_bot`) ;
 - **développement** : le `config.toml` du clone, qui peut se limiter à `racine = …` (la sandbox). Le reste est lu dans `<racine>/_bot/config.toml`, et le clone l'emporte.
 
+Ordre de recherche (`disco.config.trouver`) : option `--config`, variable `DISCO_CONFIG`, `config.toml` à côté de l'environnement Python (`_bot` en production, le clone en développement), puis `./config.toml`.
+
 | Dossier | Clé | Rôle |
 |---|---|---|
 | `_data` | `chemins.sortie` | Pages générées (miroir de la discothèque, `index.html` à la racine) ; ses dossiers internes commencent par `_` |
@@ -103,8 +105,10 @@ On n'écrit jamais un chemin en dur dans le code ni dans la doc : tout passe par
   - **`main` = production uniquement.** Rien n'y est poussé ni proposé directement. Seul Dracudar y fusionne `develop` quand il met une version en service.
   - **`develop` = intégration.** Chaque branche de livrable part de `develop` (`phase-1.1/index`), et sa PR vise `develop`. Dracudar la relit et la fusionne.
   - **Chaque PR est reliée à une issue** (`Closes #n` en tête de description). Les PR ne vont pas dans le GitHub Project et n'ont pas de jalon : c'est l'issue liée qui porte le suivi. Chaque issue a un jalon ; on pose les relations utiles (sous-issues, « bloqué par »). Les issues suivent la même règle que le code : aucune donnée de la discothèque ;
+  - **une issue qui demande une action à Dracudar lui est assignée.** Pas d'étiquette pour ça ;
+  - **priorité dans le champ `Priority` du GitHub Project** (`Urgent`, `High`, `Normal`, `Low`) ; sans valeur, une issue est `Normal`. Pas d'étiquette de priorité. Depuis une session cloud, le Project n'est pas modifiable : Claude indique la priorité proposée en tête de la description de l'issue (``**Priorité : `High`.**``) ;
   - Conventional Commits en français (`feat(analyse): …`, `fix(scan): …`, `docs: …`) ;
-  - une étiquette par version mise en production sur `main` (`v0.1` = jalon 1.1) ;
+  - un tag Git par version mise en production sur `main` (`v0.1` = jalon 1.1) ;
   - ne jamais travailler en même temps sur la même branche depuis le cloud et depuis le PC.
 - **Qualité :** `ruff check .`, `ruff format src tests` et `pytest` doivent passer avant toute PR. La CI le vérifie sous Windows (Python 3.14) et Linux (Python 3.13).
 - **Tests :** pas de fichiers audio réels dans le dépôt. Les fixtures audio sont synthétiques, générées par ffmpeg pendant les tests. Les fiches réelles, référence du jalon 4.1, restent hors dépôt et sont lues par les tests locaux (`references.fiches_achat` ou `DISCO_FICHES_REF`).
@@ -116,7 +120,11 @@ py -3.14 -m venv .venv && .venv\Scripts\activate && pip install -e .[dev]
 disco doctor          # vérifie l'environnement (ne modifie rien)
 disco config          # affiche la configuration chargée
 disco dap synchro --simulation    # synchro du baladeur, sans rien modifier
-disco sauvegarde envoyer         # copie froide sur un autre disque
+disco dap envoyer | recuperer     # une seule étape de la synchro
+disco dap lanceur                 # pose le lanceur sur le baladeur
+disco sauvegarde envoyer          # copie froide sur un autre disque
+disco dap restaurer --confirmer          # baladeur → discothèque (sans --confirmer : simulation)
+disco sauvegarde restaurer --confirmer   # copie froide → discothèque (idem)
 pytest                # tests
 ruff check . && ruff format src tests
 ```
