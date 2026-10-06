@@ -1,0 +1,10 @@
+# Fins de ligne normalisées en LF dans le dépôt ; Git les convertit sous Windows (core.autocrlf)
+* text=auto
+# Scripts Windows : toujours CRLF
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+# Binaires
+*.png binary
+*.jpg binary
+*.zip binary
