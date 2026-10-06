@@ -218,3 +218,35 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# ------------------------------------------------------------------
+# Projet discothèque
+# ------------------------------------------------------------------
+# Configuration locale (chemins de la machine)
+config.toml
+# Index et caches (vivent dans _discotheque\_data, jamais versionnés)
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.db
+cache/
+# Sorties générées et journaux
+_discotheque/
+logs/
+*.log
+# Fichiers audio et images de travail (jamais dans le dépôt)
+*.flac
+*.mp3
+*.m4a
+*.opus
+*.ogg
+*.wav
+*.aif
+*.aiff
+# Windows
+desktop.ini
+Thumbs.db
+# Paroles et images
+*.lrc
+*.jpg
+*.png

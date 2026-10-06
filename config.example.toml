@@ -1,0 +1,97 @@
+# Configuration locale de la discothèque.
+# Copier ce fichier en « config.toml » (non versionné) et adapter les chemins à la machine.
+# Les chaînes entre apostrophes sont littérales : les « \ » de Windows n'ont pas à être doublés.
+# Aucun chemin réel ne doit figurer dans le dépôt : les exemples utilisent le lecteur X:.
+
+[chemins]
+# Racine analysée. Pendant le développement : une copie de travail (sandbox) ;
+# en production : la discothèque elle-même.
+musique = 'X:\Musique'
+# Pages générées (arborescence miroir), qu'on peut effacer et régénérer à tout moment.
+sortie = 'X:\Musique\_discotheque'
+# Index SQLite et caches. Par défaut : <sortie>\_data
+donnees = 'X:\Musique\_discotheque\_data'
+# Journaux d'exécution. Par défaut : <donnees>\journaux
+# journaux = 'X:\Journaux\Discotheque'
+# Dossier où les lots déplacent ce qui doit disparaître (jamais de suppression directe).
+corbeille = 'X:\Travail\_to_delete'
+
+[references]
+# Données de référence hors dépôt, lues par les tests locaux et les comparaisons.
+# Résultats de l'audit de septembre 2026 (journal, données, scripts).
+audit = 'X:\Travail\_audit'
+# Fiches d'achat réalisées à la main (recap.json), référence du jalon 4.1.
+fiches_achat = 'X:\Travail\Fiches artistes'
+
+[dap]
+# Copie de la discothèque sur le baladeur (commande « disco dap »).
+destination = 'X:\Baladeur\Music'
+# Dossier transporté par le DAP (rips, achats), jamais écrasé par la synchro.
+arrivees = '_sort'
+
+[outils]
+# Nom de la commande si elle est dans le PATH, sinon chemin complet de l'exécutable.
+ffmpeg = 'ffmpeg'
+ffprobe = 'ffprobe'
+fpcalc = 'fpcalc'
+
+[analyse]
+# ReplayGain 2 : référence -18 LUFS (BS.1770). Crête vraie par suréchantillonnage x8.
+reference_lufs = -18.0
+surechantillonnage_crete = 8
+# Nombre de pistes analysées en parallèle (0 = nombre de cœurs - 2)
+processus = 0
+
+# Dossiers de premier niveau de la discothèque.
+# type : artistes, classique, compilations, projets, vrac, arrivees, ignore
+# pages : génère des pages (album, artiste, projet, compositeur)
+# rg_album : calcule et écrit le ReplayGain album (sinon piste seulement)
+[categories."Artists"]
+type = "artistes"
+pages = true
+rg_album = true
+
+[categories."Classical music"]
+type = "classique"
+pages = true
+rg_album = true
+
+[categories."Compilations"]
+type = "compilations"
+pages = true
+rg_album = true
+
+[categories."Musicals"]
+type = "projets"
+pages = true
+rg_album = true
+
+[categories."Original Game Soundtrack"]
+type = "projets"
+pages = true
+rg_album = true
+
+[categories."Soundtrack"]
+type = "projets"
+pages = true
+rg_album = true
+
+[categories."Night"]
+type = "vrac"
+pages = false
+rg_album = false
+
+[categories."Bulk"]
+type = "vrac"
+pages = false
+rg_album = false
+
+[categories."_sort"]
+type = "arrivees"
+pages = false
+rg_album = false
+
+[categories."_discotheque"]
+type = "ignore"
+pages = false
+rg_album = false
