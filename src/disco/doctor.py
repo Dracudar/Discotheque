@@ -219,32 +219,36 @@ def verifier_chemins_longs() -> Resultat:
 # --------------------------------------------------------------- Configuration
 def verifier_config(cfg: Config) -> list[Resultat]:
     res = [Resultat("Configuration", OK, str(cfg.source))]
-    if cfg.musique.is_dir():
-        presents = sorted(p.name for p in cfg.musique.iterdir() if p.is_dir())
-        inconnus = [n for n in presents if cfg.categorie(n) is None]
-        detail = f"{cfg.musique} ({len(presents)} dossiers)"
+    if cfg.racine.is_dir():
+        presents = sorted(p.name for p in cfg.racine.iterdir() if p.is_dir())
+        inconnus = [n for n in presents if cfg.categorie(n) is None]  # « _… » : système
+        detail = f"{cfg.racine} ({len(presents)} dossiers)"
         if inconnus:
             res.append(
                 Resultat(
-                    "Racine musique",
+                    "Racine",
                     ATTENTION,
                     detail + " ; non déclarés dans [categories] : " + ", ".join(inconnus),
                 )
             )
         else:
-            res.append(Resultat("Racine musique", OK, detail))
+            res.append(Resultat("Racine", OK, detail))
     else:
-        res.append(Resultat("Racine musique", ERREUR, f"{cfg.musique} introuvable"))
-    for nom, chemin in (("Dossier de sortie", cfg.sortie), ("Dossier de données", cfg.donnees)):
+        res.append(Resultat("Racine", ERREUR, f"{cfg.racine} introuvable"))
+    for nom, chemin in (
+        ("Dossier de sortie", cfg.sortie),
+        ("Base", cfg.base),
+        ("Cache", cfg.cache),
+    ):
         if chemin.is_dir():
             res.append(Resultat(nom, OK, str(chemin)))
-        elif chemin.parent.is_dir():
+        elif chemin.parent.is_dir() or chemin.parent.parent.is_dir():
             res.append(Resultat(nom, OK, f"{chemin} (sera créé)"))
         else:
             res.append(Resultat(nom, ATTENTION, f"{chemin} : dossier parent introuvable"))
     facultatifs = (
-        ("Corbeille des lots", cfg.corbeille),
-        ("DAP", cfg.dap.destination),
+        ("DAP", cfg.dap),
+        ("Sauvegarde froide", cfg.sauvegarde),
         ("Référence : audit", cfg.references.audit),
         ("Référence : fiches d'achat", cfg.references.fiches_achat),
     )

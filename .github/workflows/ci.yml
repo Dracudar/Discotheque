@@ -3,8 +3,8 @@ name: CI
 on:
   push:
     branches: [main, develop]
+  # Toutes les PR, y compris celles empilées sur une autre branche de livrable
   pull_request:
-    branches: [main, develop]
 
 jobs:
   tests:

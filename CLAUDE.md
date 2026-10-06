@@ -30,8 +30,8 @@ Les références réelles restent sur le poste, et leurs emplacements dans `conf
 Les emplacements réels du poste de Dracudar sont notés dans le document d'état du projet Claude, pas ici.
 
 ## Règles absolues (sécurité de la discothèque)
-1. **La discothèque (`chemins.musique` en production) est en lecture seule.** Exceptions :
-   - la sortie générée (`chemins.sortie`, `_discotheque`), qu'on peut effacer et régénérer à tout moment ;
+1. **La discothèque (`chemins.racine` en production) est en lecture seule.** Exceptions :
+   - les données générées (`_data`) : les pages peuvent être effacées et régénérées à tout moment, **pas la base** (`_data/_base`), coûteuse à reconstruire ;
    - les **lots de tags validés** (ReplayGain, rangement de `_sort`), **lancés par Dracudar depuis son PC**, jamais depuis une session cloud.
 2. **L'audio n'est jamais modifié.** Seuls les tags peuvent l'être, par lots.
 3. **Toute écriture sur la musique passe par un lot :**
@@ -40,19 +40,31 @@ Les emplacements réels du poste de Dracudar sont notés dans le document d'éta
    - une empreinte audio vérifiée avant et après ;
    - un journal (`journal.csv`) ;
    - un script d'annulation.
-4. **Le développement se fait sur une copie de travail (sandbox)** : en développement, `chemins.musique` pointe vers elle.
+4. **Le développement se fait sur une copie de travail (sandbox)** : en développement, `chemins.racine` pointe vers elle.
 5. **Rien n'est supprimé directement.** Ce qui doit disparaître va dans `chemins.corbeille\<lot>\`, que seul Dracudar vide.
 6. `Night` et `Bulk` ne sont jamais réorganisés : ils sont indexés et analysés, sans pages.
 
-## Configuration (`config.toml`, non versionné)
-| Clé | Rôle |
-|---|---|
-| `chemins.musique` | Racine analysée : la sandbox en développement, la discothèque en production |
-| `chemins.sortie`, `chemins.donnees`, `chemins.journaux` | Pages générées, index SQLite et caches, journaux |
-| `chemins.corbeille` | Destination des fichiers retirés par les lots |
-| `references.audit`, `references.fiches_achat` | Données de référence hors dépôt |
-| `dap.destination`, `dap.arrivees` | Copie sur le baladeur (`disco dap`) et dossier transporté par le DAP |
-| `outils.*`, `analyse.*`, `categories.*` | Outils externes, réglages d'analyse, traitement des dossiers |
+## Racine et configuration (`config.toml`, non versionné)
+Tout part de la racine de la discothèque (`chemins.racine`) : la sandbox en développement, la discothèque elle-même en production. Les dossiers système sont à la racine et commencent par `_` ; chacun peut être déplacé dans la config.
+
+La configuration se trouve d'elle-même :
+- **production** : `<racine>/_bot/config.toml`, à côté de l'environnement Python ; la racine s'en déduit (dossier parent de `_bot`) ;
+- **développement** : le `config.toml` du clone, qui peut se limiter à `racine = …` (la sandbox). Le reste est lu dans `<racine>/_bot/config.toml`, et le clone l'emporte.
+
+| Dossier | Clé | Rôle |
+|---|---|---|
+| `_data` | `chemins.sortie` | Pages générées (miroir de la discothèque, `index.html` à la racine) ; ses dossiers internes commencent par `_` |
+| `_data/_base` | `chemins.base` | Index SQLite. **Jamais effacé** |
+| `_data/_cache` | `chemins.cache` | Réponses des services en ligne |
+| `_bot` | `chemins.bot` | Installation de production : environnement, version publiée depuis `main`, `config.toml`, outils externes (`tools`). **Distinct du clone de développement** |
+| `_sort` | `chemins.arrivees` | Arrivées depuis le baladeur |
+| `_log` | `chemins.journaux` | Journaux détaillés (aussi affichés dans la console) |
+| `_reports` | `chemins.rapports` | Rapports lisibles des résultats, avec lien vers le journal (Markdown, puis intégrés à l'interface) |
+| `_to_delete` | `chemins.corbeille` | Corbeille : ce que les opérations retirent, pour pouvoir annuler |
+
+Autres clés : `dap.destination` (baladeur, pour les commandes lancées depuis le PC), `sauvegarde.destination` (copie froide), `references.*` (données hors dépôt), `outils.*`, `analyse.*`, `categories.*`. Tout dossier `_…` non déclaré dans `categories` est ignoré par l'indexation.
+
+Toute opération du bot écrit un journal dans `_log` et un rapport dans `_reports` (`disco.journal`).
 
 On n'écrit jamais un chemin en dur dans le code ni dans la doc : tout passe par la configuration.
 
@@ -75,7 +87,7 @@ On n'écrit jamais un chemin en dur dans le code ni dans la doc : tout passe par
   - tag générique `REPLAYGAIN_*` partout, plus `R128_*` pour les Opus si retenu ;
   - on ne réécrit un fichier que si la valeur change.
 - **SQLite :** mode WAL, `busy_timeout`, migrations versionnées (`PRAGMA user_version`), un seul écrivain à la fois.
-- **Pages :** arborescence miroir dans `_discotheque`, `index.html` + `data.json` par page ; les données sont aussi exportées en `.js` pour fonctionner en `file://`.
+- **Pages :** arborescence miroir dans `_data`, `index.html` + `data.json` par page ; les données sont aussi exportées en `.js` pour fonctionner en `file://`.
 
 ## Mode mentor
 - **Désactivé par défaut** dans ce dépôt : Claude écrit le code, Dracudar relit les PR. Les descriptions de PR expliquent les choix.
@@ -90,7 +102,7 @@ On n'écrit jamais un chemin en dur dans le code ni dans la doc : tout passe par
 - **Git :**
   - **`main` = production uniquement.** Rien n'y est poussé ni proposé directement. Seul Dracudar y fusionne `develop` quand il met une version en service.
   - **`develop` = intégration.** Chaque branche de livrable part de `develop` (`phase-1.1/index`), et sa PR vise `develop`. Dracudar la relit et la fusionne.
-  - **Chaque PR est reliée à une issue** (`Closes #n` en tête de description). Chaque issue a un jalon ; on pose les relations utiles (sous-issues, « bloqué par »). Les issues suivent la même règle que le code : aucune donnée de la discothèque ;
+  - **Chaque PR est reliée à une issue** (`Closes #n` en tête de description). Les PR ne vont pas dans le GitHub Project et n'ont pas de jalon : c'est l'issue liée qui porte le suivi. Chaque issue a un jalon ; on pose les relations utiles (sous-issues, « bloqué par »). Les issues suivent la même règle que le code : aucune donnée de la discothèque ;
   - Conventional Commits en français (`feat(analyse): …`, `fix(scan): …`, `docs: …`) ;
   - une étiquette par version mise en production sur `main` (`v0.1` = jalon 1.1) ;
   - ne jamais travailler en même temps sur la même branche depuis le cloud et depuis le PC.
@@ -103,7 +115,8 @@ On n'écrit jamais un chemin en dur dans le code ni dans la doc : tout passe par
 py -3.14 -m venv .venv && .venv\Scripts\activate && pip install -e .[dev]
 disco doctor          # vérifie l'environnement (ne modifie rien)
 disco config          # affiche la configuration chargée
-disco dap envoyer --simulation   # synchro vers le baladeur, sans rien copier
+disco dap synchro --simulation    # synchro du baladeur, sans rien modifier
+disco sauvegarde envoyer         # copie froide sur un autre disque
 pytest                # tests
 ruff check . && ruff format src tests
 ```

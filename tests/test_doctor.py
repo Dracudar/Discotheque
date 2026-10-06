@@ -38,14 +38,14 @@ def test_config_dossiers(tmp_path):
     (tmp_path / "Divers").mkdir()
     cfg = config.depuis_dict(
         {
-            "chemins": {"musique": str(tmp_path), "sortie": str(tmp_path / "_discotheque")},
+            "chemins": {"racine": str(tmp_path), "sortie": str(tmp_path / "_data")},
             "categories": {"Artists": {"type": "artistes"}},
         },
         source=tmp_path / "config.toml",
     )
     res = {r.nom: r for r in doctor.verifier_config(cfg)}
-    assert res["Racine musique"].statut == doctor.ATTENTION
-    assert "Divers" in res["Racine musique"].detail
+    assert res["Racine"].statut == doctor.ATTENTION
+    assert "Divers" in res["Racine"].detail
     assert "sera créé" in res["Dossier de sortie"].detail
 
 

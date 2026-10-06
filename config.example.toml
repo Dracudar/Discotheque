@@ -1,33 +1,43 @@
 # Configuration locale de la discothèque.
 # Copier ce fichier en « config.toml » (non versionné) et adapter les chemins à la machine.
+#
+# Où le ranger :
+# - production : dans <racine>\_bot\config.toml. La racine s'en déduit (le dossier
+#   parent de _bot), la clé « racine » peut alors être omise ;
+# - développement : dans le clone, avec au minimum « racine » (la sandbox). Le reste
+#   est lu dans <racine>\_bot\config.toml ; ce qui est écrit ici l'emporte.
 # Les chaînes entre apostrophes sont littérales : les « \ » de Windows n'ont pas à être doublés.
 # Aucun chemin réel ne doit figurer dans le dépôt : les exemples utilisent le lecteur X:.
 
 [chemins]
-# Racine analysée. Pendant le développement : une copie de travail (sandbox) ;
-# en production : la discothèque elle-même.
-musique = 'X:\Musique'
-# Pages générées (arborescence miroir), qu'on peut effacer et régénérer à tout moment.
-sortie = 'X:\Musique\_discotheque'
-# Index SQLite et caches. Par défaut : <sortie>\_data
-donnees = 'X:\Musique\_discotheque\_data'
-# Journaux d'exécution. Par défaut : <donnees>\journaux
-# journaux = 'X:\Journaux\Discotheque'
-# Dossier où les lots déplacent ce qui doit disparaître (jamais de suppression directe).
-corbeille = 'X:\Travail\_to_delete'
+# Racine de la discothèque. Pendant le développement : une copie de travail (sandbox) ;
+# en production : la discothèque elle-même (déduite si ce fichier est dans _bot).
+racine = 'X:\Musique'
+# Dossiers système, à la racine par défaut (décommenter pour les déplacer) :
+# sortie = 'X:\Musique\_data'               # pages (miroir de la discothèque)
+# base = 'X:\Musique\_data\_base'           # index SQLite : jamais effacé
+# cache = 'X:\Musique\_data\_cache'         # réponses des services en ligne
+# journaux = 'X:\Musique\_log'              # journaux détaillés
+# rapports = 'X:\Musique\_reports'          # rapports lisibles des résultats
+# corbeille = 'X:\Musique\_to_delete'       # ce que les opérations retirent (jamais supprimé)
+# bot = 'X:\Musique\_bot'                   # installation de production
+# arrivees = 'X:\Musique\_sort'             # arrivées depuis le baladeur
 
 [references]
 # Données de référence hors dépôt, lues par les tests locaux et les comparaisons.
-# Résultats de l'audit de septembre 2026 (journal, données, scripts).
+# Résultats et scripts de l'audit de septembre 2026.
 audit = 'X:\Travail\_audit'
 # Fiches d'achat réalisées à la main (recap.json), référence du jalon 4.1.
 fiches_achat = 'X:\Travail\Fiches artistes'
 
 [dap]
-# Copie de la discothèque sur le baladeur (commande « disco dap »).
+# Dossier de musique du baladeur, pour les commandes lancées depuis le PC.
+# Le lanceur posé sur le baladeur (« disco dap lanceur ») donne ce chemin lui-même.
 destination = 'X:\Baladeur\Music'
-# Dossier transporté par le DAP (rips, achats), jamais écrasé par la synchro.
-arrivees = '_sort'
+
+[sauvegarde]
+# Copie froide sur un autre disque (« disco sauvegarde envoyer »).
+destination = 'X:\Sauvegarde\Musique'
 
 [outils]
 # Nom de la commande si elle est dans le PATH, sinon chemin complet de l'exécutable.
@@ -91,7 +101,5 @@ type = "arrivees"
 pages = false
 rg_album = false
 
-[categories."_discotheque"]
-type = "ignore"
-pages = false
-rg_album = false
+# Les autres dossiers système de la racine (_data, _bot, _log, _reports,
+# _to_delete…) sont ignorés automatiquement : tout dossier qui commence par « _ ».

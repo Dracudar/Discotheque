@@ -1,8 +1,27 @@
-"""Chargement et validation de la configuration locale (config.toml)."""
+"""Chargement et validation de la configuration locale (config.toml).
+
+Tout part de la racine de la discothèque (`chemins.racine`). Les dossiers système
+vivent à la racine et commencent par « _ » ; chacun peut être déplacé dans la config :
+
+    <racine>/_data          pages générées (miroir de la discothèque), base et caches
+    <racine>/_data/_base    index SQLite : coûteux à reconstruire, jamais effacé
+    <racine>/_data/_cache   réponses des services en ligne
+    <racine>/_bot           installation de production (environnement, config, outils)
+    <racine>/_sort          arrivées depuis le baladeur
+    <racine>/_log           journaux détaillés
+    <racine>/_reports       rapports lisibles des résultats
+    <racine>/_to_delete     corbeille des opérations (jamais de suppression directe)
+
+La configuration se trouve d'elle-même (voir `trouver`). En production, c'est
+`<racine>/_bot/config.toml`, et la racine s'en déduit : le dossier parent de `_bot`.
+En développement, le `config.toml` du clone peut se limiter à `racine` (la sandbox) :
+le reste est lu dans le `_bot/config.toml` de cette racine, et le clone peut le surcharger.
+"""
 
 from __future__ import annotations
 
 import os
+import sys
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
@@ -17,8 +36,13 @@ TYPES_CATEGORIE = {
     "ignore",
 }
 
+# Préfixe des dossiers système à la racine de la discothèque
+PREFIXE_SYSTEME = "_"
+
 # Racine du dépôt : src/disco/config.py -> ../../
 RACINE_DEPOT = Path(__file__).resolve().parents[2]
+
+NOM_CONFIG = "config.toml"
 
 
 class ErreurConfig(Exception):
@@ -36,14 +60,6 @@ class Categorie:
 
 
 @dataclass(frozen=True)
-class Dap:
-    """Copie de la discothèque sur le baladeur (DAP)."""
-
-    destination: Path | None
-    arrivees: str
-
-
-@dataclass(frozen=True)
 class References:
     """Données de référence hors dépôt (jamais versionnées)."""
 
@@ -53,11 +69,17 @@ class References:
 
 @dataclass(frozen=True)
 class Config:
-    musique: Path
+    racine: Path
     sortie: Path
-    donnees: Path
+    base: Path
+    cache: Path
     journaux: Path
-    corbeille: Path | None
+    rapports: Path
+    corbeille: Path
+    bot: Path
+    arrivees: Path
+    dap: Path | None
+    sauvegarde: Path | None
     ffmpeg: str
     ffprobe: str
     fpcalc: str
@@ -65,19 +87,39 @@ class Config:
     surechantillonnage_crete: int
     processus: int
     categories: dict[str, Categorie]
-    dap: Dap
     references: References
     source: Path | None = None
 
     def categorie(self, dossier: str) -> Categorie | None:
-        """Catégorie d'un dossier de premier niveau, ou None s'il n'est pas déclaré."""
-        return self.categories.get(dossier)
+        """Catégorie d'un dossier de premier niveau.
+
+        Un dossier système (« _… ») non déclaré est ignoré ; un autre dossier non
+        déclaré renvoie None.
+        """
+        if dossier in self.categories:
+            return self.categories[dossier]
+        if dossier.startswith(PREFIXE_SYSTEME):
+            return Categorie(nom=dossier, type="ignore", pages=False, rg_album=False)
+        return None
+
+
+def dossier_environnement() -> Path | None:
+    """Dossier qui contient l'environnement Python en cours (venv), s'il y en a un.
+
+    En production, `disco` tourne depuis `<racine>/_bot/.venv` : ce dossier est `_bot`.
+    En développement, c'est le clone (`<clone>/.venv`).
+    """
+    if sys.prefix == sys.base_prefix:
+        return None
+    return Path(sys.prefix).resolve().parent
 
 
 def trouver(explicite: str | os.PathLike | None = None) -> Path:
     """Chemin du fichier de configuration.
 
-    Ordre : argument explicite, variable DISCO_CONFIG, ./config.toml, config.toml du dépôt.
+    Ordre : argument explicite, variable DISCO_CONFIG, config.toml à côté de
+    l'environnement Python (`_bot` en production, le clone en développement),
+    ./config.toml, config.toml du dépôt.
     """
     candidats: list[Path] = []
     if explicite:
@@ -85,11 +127,14 @@ def trouver(explicite: str | os.PathLike | None = None) -> Path:
     elif os.environ.get("DISCO_CONFIG"):
         candidats.append(Path(os.environ["DISCO_CONFIG"]))
     else:
-        candidats += [Path.cwd() / "config.toml", RACINE_DEPOT / "config.toml"]
+        env = dossier_environnement()
+        if env is not None:
+            candidats.append(env / NOM_CONFIG)
+        candidats += [Path.cwd() / NOM_CONFIG, RACINE_DEPOT / NOM_CONFIG]
     for c in candidats:
         if c.is_file():
             return c
-    essais = ", ".join(str(c) for c in candidats)
+    essais = ", ".join(str(c) for c in dict.fromkeys(candidats))
     raise ErreurConfig(
         f"Configuration introuvable (essayé : {essais}). "
         "Copier config.example.toml en config.toml et adapter les chemins."
@@ -107,18 +152,35 @@ def _chemin(table: dict, cle: str) -> Path | None:
     return Path(v) if v else None
 
 
+def _racine_deduite(source: Path | None) -> Path | None:
+    """Racine déduite de l'emplacement de la config : `<racine>/_bot/config.toml`."""
+    if source is not None and source.parent.name.startswith(PREFIXE_SYSTEME):
+        return source.parent.parent
+    return None
+
+
 def depuis_dict(d: dict, source: Path | None = None) -> Config:
-    """Construit et valide une Config à partir du contenu TOML déjà lu."""
-    chemins = _exiger(d, "chemins", "racine")
+    """Construit et valide une Config à partir du contenu TOML déjà lu.
+
+    Sans `chemins.racine`, la racine est déduite de l'emplacement de la config, si elle
+    est rangée dans un dossier système (`<racine>/_bot/config.toml`).
+    """
+    chemins = d.get("chemins", {})
     outils = d.get("outils", {})
     analyse = d.get("analyse", {})
-
-    musique = Path(_exiger(chemins, "musique", "chemins"))
-    sortie = Path(_exiger(chemins, "sortie", "chemins"))
-    donnees = Path(chemins.get("donnees") or sortie / "_data")
-    journaux = Path(chemins.get("journaux") or donnees / "journaux")
-    dap = d.get("dap", {})
     refs = d.get("references", {})
+
+    if "musique" in chemins:
+        raise ErreurConfig("La clé [chemins] musique s'appelle désormais racine.")
+    if "donnees" in chemins:
+        raise ErreurConfig("La clé [chemins] donnees s'appelle désormais base.")
+    racine = _chemin(chemins, "racine") or _racine_deduite(source)
+    if racine is None:
+        raise ErreurConfig(
+            "Clé manquante : [chemins] racine (obligatoire quand config.toml "
+            "n'est pas rangé dans <racine>/_bot)."
+        )
+    sortie = _chemin(chemins, "sortie") or racine / "_data"
 
     categories: dict[str, Categorie] = {}
     for nom, c in d.get("categories", {}).items():
@@ -142,11 +204,17 @@ def depuis_dict(d: dict, source: Path | None = None) -> Config:
         raise ErreurConfig("analyse.surechantillonnage_crete doit valoir au moins 1")
 
     return Config(
-        musique=musique,
+        racine=racine,
         sortie=sortie,
-        donnees=donnees,
-        journaux=journaux,
-        corbeille=_chemin(chemins, "corbeille"),
+        base=_chemin(chemins, "base") or sortie / "_base",
+        cache=_chemin(chemins, "cache") or sortie / "_cache",
+        journaux=_chemin(chemins, "journaux") or racine / "_log",
+        rapports=_chemin(chemins, "rapports") or racine / "_reports",
+        corbeille=_chemin(chemins, "corbeille") or racine / "_to_delete",
+        bot=_chemin(chemins, "bot") or racine / "_bot",
+        arrivees=_chemin(chemins, "arrivees") or racine / "_sort",
+        dap=_chemin(d.get("dap", {}), "destination"),
+        sauvegarde=_chemin(d.get("sauvegarde", {}), "destination"),
         ffmpeg=str(outils.get("ffmpeg", "ffmpeg")),
         ffprobe=str(outils.get("ffprobe", "ffprobe")),
         fpcalc=str(outils.get("fpcalc", "fpcalc")),
@@ -154,9 +222,6 @@ def depuis_dict(d: dict, source: Path | None = None) -> Config:
         surechantillonnage_crete=surech,
         processus=int(analyse.get("processus", 0)),
         categories=categories,
-        dap=Dap(
-            destination=_chemin(dap, "destination"), arrivees=str(dap.get("arrivees", "_sort"))
-        ),
         references=References(
             audit=_chemin(refs, "audit"), fiches_achat=_chemin(refs, "fiches_achat")
         ),
@@ -164,12 +229,40 @@ def depuis_dict(d: dict, source: Path | None = None) -> Config:
     )
 
 
-def charger(explicite: str | os.PathLike | None = None) -> Config:
-    """Trouve, lit et valide la configuration."""
-    chemin = trouver(explicite)
+def _lire(chemin: Path) -> dict:
     try:
         with open(chemin, "rb") as f:
-            contenu = tomllib.load(f)
+            return tomllib.load(f)
     except tomllib.TOMLDecodeError as e:
         raise ErreurConfig(f"{chemin} : TOML invalide ({e})") from e
+
+
+def fusionner(dessous: dict, dessus: dict) -> dict:
+    """Fusionne deux contenus TOML : les valeurs de `dessus` l'emportent, table par table."""
+    res = dict(dessous)
+    for cle, valeur in dessus.items():
+        if isinstance(valeur, dict) and isinstance(res.get(cle), dict):
+            res[cle] = fusionner(res[cle], valeur)
+        else:
+            res[cle] = valeur
+    return res
+
+
+def charger(explicite: str | os.PathLike | None = None) -> Config:
+    """Trouve, lit et valide la configuration.
+
+    Si la config trouvée n'est pas celle de `<racine>/_bot` (cas du clone de
+    développement), la config de `<racine>/_bot` est lue d'abord, puis surchargée.
+    """
+    chemin = trouver(explicite)
+    contenu = _lire(chemin)
+    chemins = contenu.get("chemins", {})
+    racine = _chemin(chemins, "racine") or _racine_deduite(chemin)
+    if racine is not None:
+        bot = _chemin(chemins, "bot") or racine / "_bot"
+        config_bot = bot / NOM_CONFIG
+        if config_bot.is_file() and config_bot.resolve() != chemin.resolve():
+            contenu = fusionner(_lire(config_bot), contenu)
+            # La racine de la config du clone l'emporte toujours
+            contenu.setdefault("chemins", {})["racine"] = str(racine)
     return depuis_dict(contenu, source=chemin)
