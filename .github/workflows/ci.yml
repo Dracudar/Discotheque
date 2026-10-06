@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  tests:
+    name: Tests (${{ matrix.os }}, Python ${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # La machine cible : Windows, Python 3.14
+          - os: windows-latest
+            python: "3.14"
+          # Repli prévu dans le plan (et environnement des sessions cloud)
+          - os: ubuntu-latest
+            python: "3.13"
+    env:
+      FPCALC_VERSION: "1.6.1"
+      PYTHONUTF8: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          allow-prereleases: true
+          cache: pip
+
+      - name: Outils audio (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          choco install ffmpeg -y --no-progress
+          $zip = "chromaprint-fpcalc-$env:FPCALC_VERSION-windows-x86_64"
+          Invoke-WebRequest "https://github.com/acoustid/chromaprint/releases/download/v$env:FPCALC_VERSION/$zip.zip" -OutFile fpcalc.zip
+          Expand-Archive fpcalc.zip -DestinationPath "$env:RUNNER_TEMP\fpcalc"
+          Get-ChildItem -Recurse "$env:RUNNER_TEMP\fpcalc" -Filter fpcalc.exe |
+            ForEach-Object { $_.DirectoryName } | Select-Object -First 1 |
+            Out-File -Append -Encoding utf8 $env:GITHUB_PATH
+
+      - name: Outils audio (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q ffmpeg
+          tgz="chromaprint-fpcalc-${FPCALC_VERSION}-linux-x86_64"
+          curl -sSL "https://github.com/acoustid/chromaprint/releases/download/v${FPCALC_VERSION}/${tgz}.tar.gz" | tar xz -C "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/$tgz" >> "$GITHUB_PATH"
+
+      - name: Installation
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Lint
+        run: |
+          ruff check .
+          ruff format --check src tests
+
+      - name: Tests
+        run: pytest
+
+      - name: Diagnostic de l'environnement
+        # Sans config.toml, la configuration n'est qu'un point d'attention :
+        # le diagnostic échoue seulement si Python, SQLite ou un outil pose problème.
+        run: python -m disco doctor

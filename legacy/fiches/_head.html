@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Discothèque : __NAME__</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+JP:wght@400;600&display=swap">
+<style>
+:root{
+  --bg:#f6f5f4; --surface:#ffffff; --fg:#1f1d20; --muted:#655f66; --line:#dddadc;
+  --head:#eeebed; --accent:#2f5d8a;
+  --ok:#2e7d4f; --ok-bg:#e3f1e8; --warn:#9a6a00; --warn-bg:#f7edd2; --bad:#a33b2e; --bad-bg:#f6e1dd; --na-bg:#ecebe9; --abs:#ffffff; --abs-bg:#d7261e; --lo:#b14700; --lo-bg:#fdd5b8; --pa:#6b3fa0; --pa-bg:#ece3f7;
+  --new:#2f5d8a; --new-bg:#e1ebf5;
+  --display:"Fraunces",Georgia,serif; --body:"IBM Plex Sans","Noto Sans JP",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#171518; --surface:#1f1c20; --fg:#ebe8ea; --muted:#a39ca3; --line:#322e33; --head:#29252a; --accent:#8db4dc;
+  --ok:#7fcf9c; --ok-bg:#1f3328; --warn:#e2c16a; --warn-bg:#3a3120; --bad:#ec9a8e; --bad-bg:#3d2522; --na-bg:#2c292d; --abs:#ffffff; --abs-bg:#d8352a; --lo:#ffab70; --lo-bg:#4d2410; --pa:#c9a8f2; --pa-bg:#30244a; --new:#8db4dc; --new-bg:#1f2a36; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#171518; --surface:#1f1c20; --fg:#ebe8ea; --muted:#a39ca3; --line:#322e33; --head:#29252a; --accent:#8db4dc;
+  --ok:#7fcf9c; --ok-bg:#1f3328; --warn:#e2c16a; --warn-bg:#3a3120; --bad:#ec9a8e; --bad-bg:#3d2522; --na-bg:#2c292d; --abs:#ffffff; --abs-bg:#d8352a; --lo:#ffab70; --lo-bg:#4d2410; --pa:#c9a8f2; --pa-bg:#30244a; --new:#8db4dc; --new-bg:#1f2a36; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.55 var(--body)}
+.wrap{max-width:1080px;margin:0 auto;padding-inline:16px;padding-block:28px 64px;display:grid;gap:36px}
+h1{font:600 clamp(28px,5vw,40px)/1.1 var(--display);margin:0;text-wrap:balance}
+h1 .jp{font:600 .6em var(--body);color:var(--accent);margin-left:.35em}
+h2{font:600 22px/1.2 var(--display);margin:0 0 4px}
+.sub{color:var(--muted);margin:0}
+.recap{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px 28px;margin:0}
+.recap div{min-width:0}
+.recap dt{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.recap dd{margin:2px 0 0}
+section{display:grid;gap:10px;min-width:0}
+.note{color:var(--muted);font-size:14px;margin:0}
+.tbl{border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+table{width:100%;border-collapse:separate;border-spacing:0}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tbody tr:last-child td{border-bottom:0}
+thead th{position:sticky;top:0;z-index:2;background:var(--head);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;box-shadow:0 1px 0 var(--line)}
+thead th:first-child{border-top-left-radius:6px} thead th:last-child{border-top-right-radius:6px}
+td.y{font:500 14px var(--mono);font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap}
+td.t{font-weight:600}
+td.t small{display:block;font-weight:400;color:var(--muted);font-size:13px}
+td.c{color:var(--muted);font-size:14px}
+.pill{display:inline-block;font:500 12px var(--mono);padding:2px 8px;border-radius:99px;white-space:nowrap}
+.hr{background:var(--ok-bg);color:var(--ok)} .cd{background:var(--warn-bg);color:var(--warn)}
+.ab{background:var(--abs-bg);color:var(--abs)} .lo{background:var(--lo-bg);color:var(--lo)} .pa{background:var(--pa-bg);color:var(--pa)} .nv{background:var(--na-bg);color:var(--muted)}
+.tag{display:inline-block;font:500 11px var(--mono);padding:1px 6px;border-radius:4px;background:var(--new-bg);color:var(--new);margin-left:6px;vertical-align:1px}
+ul.checks{margin:0;padding-left:20px;display:grid;gap:6px}
+@media (max-width:760px){
+  .tbl{overflow:auto;max-height:75vh}
+  table{min-width:680px}
+}
+.empty{padding:14px 16px;border:1px dashed var(--line);border-radius:6px;color:var(--muted);margin:0}
+</style></head><body>

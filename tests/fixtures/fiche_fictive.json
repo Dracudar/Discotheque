@@ -1,0 +1,20 @@
+{
+  "artiste": "Les Exemples",
+  "dossier_discotheque": "Les Exemples",
+  "page_artifact": null,
+  "verifie_le": "2026-01-01",
+  "name": "Les Exemples",
+  "h1": "Les Exemples",
+  "sub": "Fiche fictive pour les tests : aucun lien avec la discothèque.",
+  "recap": [["Pays · genre", "Nulle part · rock de démonstration"], ["Activité", "Depuis 2000"]],
+  "l1note": "deux achats possibles.",
+  "l1": [
+    ["2001", "Album", "Premier Album", null, "AB", "HR", "Absent, disponible en Hi-Res."],
+    ["2004", "Album", "Deuxième Album", "édition deluxe", ["CD", "LO", "PA"], "CD", "Pistes mixtes et incomplètes."],
+    ["2010", "Single", "Titre Seul", null, "LO", "LU", "Lossy uniquement."]
+  ],
+  "l1b": [["2008", "Musique de Film", null, "AB", "IN", "BO fictive, indisponible."]],
+  "l2": [["2012", "Un Duo", "Autre Artiste", "NV", "Crédité à un autre artiste."]],
+  "l3": [["2005", "Live", "En Concert", null, "AB", "Live."], ["2006", "Compilation", "Le Meilleur", null, "CD+HR", "Reprend les albums."]],
+  "points": ["Point de contrôle fictif."]
+}
