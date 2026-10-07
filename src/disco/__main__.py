@@ -9,7 +9,7 @@ Auteur :
     Dracudar
 
 Version :
-    0.1.0.dev0
+    1.0
 
 Date de création :
     2026.10.06

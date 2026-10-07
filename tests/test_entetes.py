@@ -2,7 +2,8 @@
 
 L'en-tête suit le modèle commun aux projets de Dracudar : nom du fichier et titre,
 puis les rubriques Description, Auteur, Version, Date de création et Date de
-modification (dates au format aaaa.mm.jj).
+modification (dates au format aaaa.mm.jj). La version est propre au fichier, au format
+majeur.mineur, distincte de celle du programme (majeur.mineur.correctif).
 """
 
 import ast
@@ -21,6 +22,7 @@ RUBRIQUES = (
     "Date de modification :",
 )
 DATE = re.compile(r"^\s+\d{4}\.\d{2}\.\d{2}$", re.MULTILINE)
+VERSION = re.compile(r"\nVersion :\n\s+\d+\.\d+\n")
 
 
 @pytest.mark.parametrize("module", MODULES, ids=lambda p: p.name)
@@ -31,6 +33,7 @@ def test_entete(module):
     for rubrique in RUBRIQUES:
         assert f"\n{rubrique}\n" in doc, f"{module.name} : rubrique « {rubrique} » absente"
     assert len(DATE.findall(doc)) == 2, f"{module.name} : dates au format aaaa.mm.jj"
+    assert VERSION.search(doc), f"{module.name} : version du fichier au format majeur.mineur"
 
 
 @pytest.mark.parametrize("module", MODULES, ids=lambda p: p.name)

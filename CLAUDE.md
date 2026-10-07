@@ -116,7 +116,7 @@ On n'écrit jamais un chemin en dur dans le code ni dans la doc : tout passe par
       Dracudar
 
   Version :
-      <version du programme, disco.__version__>
+      1.0
 
   Date de création :
       aaaa.mm.jj
@@ -125,7 +125,7 @@ On n'écrit jamais un chemin en dur dans le code ni dans la doc : tout passe par
       aaaa.mm.jj
   """
   ```
-  **À chaque modification d'un fichier**, on met à jour sa `Date de modification` (date du jour) et sa `Version` (la version du programme en cours, `__version__` de `src/disco/__init__.py`). Chaque fonction, méthode et classe a une docstring, avec les rubriques `Args:`, `Returns:`, `Raises:` ou `Attributes:` quand elles apportent quelque chose. `tests/test_entetes.py` vérifie la présence de l'en-tête et des docstrings, mais pas que les dates sont à jour : c'est une règle de relecture.
+  **Chaque fichier a sa propre version**, au format `majeur.mineur` (pas de correctif au niveau du fichier), indépendante de celle du programme (`__version__`, au format `majeur.mineur.correctif`). Un nouveau fichier commence à `1.0`. **À chaque modification d'un fichier**, on met à jour sa `Date de modification` (date du jour) et on incrémente sa `Version` : le mineur pour une modification (`1.0` → `1.1`), une seule fois par PR ; le majeur pour une réécriture ou un changement de son interface (`1.4` → `2.0`). Chaque fonction, méthode et classe a une docstring, avec les rubriques `Args:`, `Returns:`, `Raises:` ou `Attributes:` quand elles apportent quelque chose. `tests/test_entetes.py` vérifie la présence de l'en-tête et des docstrings et le format de la version, mais pas que la date et la version sont à jour : c'est une règle de relecture.
 - **Git :**
   - **`main` = production uniquement.** Rien n'y est poussé ni proposé directement. Seul Dracudar y fusionne `develop` quand il met une version en service.
   - **`develop` = intégration.** Chaque branche de livrable part de `develop` (`phase-1.1/index`), et sa PR vise `develop`. Dracudar la relit et la fusionne.
