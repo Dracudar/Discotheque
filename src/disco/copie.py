@@ -1,14 +1,33 @@
-"""Moteur de copie miroir, sans robocopy.
+"""
+copie.py - Moteur de copie miroir
 
-- **Plan** : on liste la source et la destination, puis on compare taille et date de
-  modification (tolérance de 2 s, comme robocopy /FFT, pour les cartes en FAT/exFAT).
-- **Copie atomique** : chaque fichier est copié sous un nom temporaire, vérifié (taille),
-  puis renommé. Une interruption ne laisse jamais un fichier tronqué à sa place définitive ;
-  relancer l'opération reprend là où elle s'était arrêtée.
-- **Ce qui disparaît** de la destination est supprimé, ou déplacé dans une corbeille quand
-  la destination doit rester récupérable (discothèque, sauvegarde).
-- **Exclusions** : uniquement des dossiers et fichiers de **premier niveau** (ex. `_log`),
-  jamais un motif appliqué à toute la profondeur.
+Description:
+    Moteur de copie miroir, sans robocopy.
+
+    - **Plan** : on liste la source et la destination, puis on compare taille et date de
+      modification (tolérance de 2 s, comme robocopy /FFT, pour les cartes en FAT/exFAT).
+    - **Copie atomique** : chaque fichier est copié sous un nom temporaire, vérifié
+      (taille), puis renommé. Une interruption ne laisse jamais un fichier tronqué à sa
+      place définitive ; relancer l'opération reprend là où elle s'était arrêtée.
+    - **Ce qui disparaît** de la destination est supprimé, ou déplacé dans une corbeille
+      quand la destination doit rester récupérable (discothèque, sauvegarde).
+    - **Exclusions** : uniquement des dossiers et fichiers de **premier niveau**
+      (ex. `_log`), jamais un motif appliqué à toute la profondeur.
+
+    Les chemins relatifs manipulés sont toujours écrits avec « / » (« a/b.flac »),
+    quel que soit le système.
+
+Auteur :
+    Dracudar
+
+Version :
+    0.1.0.dev0
+
+Date de création :
+    2026.10.06
+
+Date de modification :
+    2026.10.07
 """
 
 from __future__ import annotations
@@ -26,6 +45,15 @@ FICHIERS_IGNORES = {"desktop.ini", "thumbs.db", ".ds_store"}
 
 @dataclass
 class Plan:
+    """Ce qu'un miroir doit faire, calculé par `planifier` avant toute écriture.
+
+    Attributes:
+        nouveaux: Fichiers absents de la destination (chemins relatifs, triés).
+        modifies: Fichiers présents des deux côtés, mais de taille ou de date différente.
+        en_trop: Fichiers de la destination absents de la source.
+        octets: Volume total à copier (nouveaux et modifiés).
+    """
+
     nouveaux: list[str] = field(default_factory=list)
     modifies: list[str] = field(default_factory=list)
     en_trop: list[str] = field(default_factory=list)
@@ -33,14 +61,27 @@ class Plan:
 
     @property
     def a_copier(self) -> list[str]:
+        """Fichiers à copier : les nouveaux, puis les modifiés."""
         return self.nouveaux + self.modifies
 
     def vide(self) -> bool:
+        """Vrai si source et destination sont déjà identiques."""
         return not (self.nouveaux or self.modifies or self.en_trop)
 
 
 @dataclass
 class Bilan:
+    """Ce qu'une copie a réellement fait (reste vide en simulation).
+
+    Attributes:
+        copies: Fichiers copiés.
+        octets: Volume copié.
+        supprimes: Fichiers supprimés de la destination (miroir sans corbeille).
+        mis_en_corbeille: Fichiers déplacés dans la corbeille (en trop ou remplacés).
+        deplaces: Arrivées retirées du baladeur (copiées, ou déjà présentes).
+        erreurs: Messages « chemin : erreur » des fichiers qui n'ont pas pu être traités.
+    """
+
     copies: int = 0
     octets: int = 0
     supprimes: int = 0
@@ -54,9 +95,18 @@ def lister(
 ) -> dict[str, tuple[int, float]]:
     """Fichiers sous `racine` : {chemin relatif « a/b.flac » : (taille, date)}.
 
-    `exclus` : noms de dossiers ou de fichiers ignorés **au premier niveau seulement**
-    (comparaison insensible à la casse). Les fichiers temporaires et système sont ignorés,
-    ainsi que les fichiers `ignores` (chemins absolus, ex. le journal en cours d'écriture).
+    Les fichiers temporaires (`SUFFIXE_TEMP`) et système (`FICHIERS_IGNORES`) sont
+    toujours ignorés.
+
+    Args:
+        racine: Dossier à parcourir ; s'il n'existe pas, le résultat est vide.
+        exclus: Noms de dossiers ou de fichiers ignorés **au premier niveau seulement**
+            (comparaison insensible à la casse).
+        ignores: Fichiers ignorés, en chemins absolus (ex. le journal en cours
+            d'écriture).
+
+    Returns:
+        Un dictionnaire {chemin relatif : (taille en octets, date de modification)}.
     """
     racine = Path(racine)
     exclus = {e.lower() for e in (exclus or set())}
@@ -89,6 +139,19 @@ def exclusions_systeme(*racines: Path, prefixe: str = "_") -> set[str]:
 
 
 def planifier(source: dict, destination: dict) -> Plan:
+    """Compare deux listes de fichiers (résultats de `lister`) et en tire le plan.
+
+    Un fichier est « modifié » si sa taille diffère ou si sa date s'écarte de plus de
+    `TOLERANCE_DATE` secondes. Le contenu n'est pas relu : c'est le compromis de
+    robocopy, suffisant pour une copie de sécurité et bien plus rapide.
+
+    Args:
+        source: Fichiers de la source.
+        destination: Fichiers de la destination.
+
+    Returns:
+        Le plan du miroir source → destination.
+    """
     plan = Plan()
     for rel, (taille, date) in sorted(source.items()):
         if rel not in destination:
@@ -105,7 +168,22 @@ def planifier(source: dict, destination: dict) -> Plan:
 
 
 def copier_fichier(src: Path, dst: Path) -> int:
-    """Copie atomique : nom temporaire, vérification de la taille, puis renommage."""
+    """Copie atomique : nom temporaire, vérification de la taille, puis renommage.
+
+    La date de modification est conservée (`shutil.copy2`), sans quoi le fichier
+    paraîtrait modifié au miroir suivant. Les dossiers manquants sont créés.
+
+    Args:
+        src: Fichier à copier.
+        dst: Chemin final de la copie ; remplacé s'il existe.
+
+    Returns:
+        La taille copiée, en octets.
+
+    Raises:
+        OSError: Copie impossible, ou taille différente après copie (le fichier
+            temporaire est alors retiré).
+    """
     dst.parent.mkdir(parents=True, exist_ok=True)
     tmp = dst.with_name(dst.name + SUFFIXE_TEMP)
     shutil.copy2(src, tmp)
@@ -118,7 +196,19 @@ def copier_fichier(src: Path, dst: Path) -> int:
 
 
 def mettre_en_corbeille(fichier: Path, racine: Path, corbeille: Path) -> Path:
-    """Déplace `fichier` (sous `racine`) vers `corbeille`, en gardant son chemin relatif."""
+    """Déplace `fichier` (sous `racine`) vers `corbeille`, en gardant son chemin relatif.
+
+    Si la corbeille contient déjà ce chemin, le nom reçoit un suffixe
+    (« titre (1234).flac ») plutôt que d'écraser l'ancien.
+
+    Args:
+        fichier: Fichier à retirer.
+        racine: Dossier de référence du chemin relatif.
+        corbeille: Dossier de corbeille de l'opération.
+
+    Returns:
+        Le chemin du fichier dans la corbeille.
+    """
     cible = corbeille / fichier.relative_to(racine)
     cible.parent.mkdir(parents=True, exist_ok=True)
     if cible.exists():
@@ -128,7 +218,12 @@ def mettre_en_corbeille(fichier: Path, racine: Path, corbeille: Path) -> Path:
 
 
 def supprimer_dossiers_vides(racine: Path, exclus: set[str] | None = None) -> None:
-    """Supprime les dossiers devenus vides sous `racine` (jamais la racine elle-même)."""
+    """Supprime les dossiers devenus vides sous `racine` (jamais la racine elle-même).
+
+    Args:
+        racine: Dossier à nettoyer.
+        exclus: Dossiers de premier niveau à ne pas toucher, ni eux ni leur contenu.
+    """
     exclus = {e.lower() for e in (exclus or set())}
     for dossier, _sous, _fichiers in os.walk(racine, topdown=False):
         p = Path(dossier)
@@ -155,7 +250,20 @@ def miroir(
     """Rend `destination` identique à `source`, hors exclusions de premier niveau.
 
     Les fichiers en trop (et l'ancienne version des fichiers remplacés) vont dans
-    `corbeille` si elle est donnée ; sinon ils sont supprimés.
+    `corbeille` si elle est donnée ; sinon ils sont supprimés. Une erreur sur un fichier
+    est notée dans le bilan et n'arrête pas la copie des autres.
+
+    Args:
+        source: Dossier de référence.
+        destination: Dossier à mettre à jour.
+        exclus: Noms de premier niveau exclus, des deux côtés.
+        journal: Appelable qui reçoit chaque ligne du journal.
+        corbeille: Corbeille de l'opération ; None pour supprimer directement.
+        simulation: Journalise le plan sans rien modifier (le bilan reste vide).
+        ignores: Fichiers de la source à ne pas copier (chemins absolus).
+
+    Returns:
+        Le couple (plan, bilan).
     """
     source, destination = Path(source), Path(destination)
     plan = planifier(lister(source, exclus, ignores), lister(destination, exclus))
@@ -214,7 +322,17 @@ def deplacer_arrivees(
 
     Chaque fichier est copié puis vérifié avant d'être retiré de la source. Un fichier
     déjà présent à l'identique côté destination est seulement retiré de la source ; s'il
-    diffère, le nouveau est gardé à côté, sous un autre nom.
+    diffère, le nouveau est gardé à côté, sous un autre nom (« titre (2).flac »).
+    Rien n'est donc jamais écrasé dans la discothèque.
+
+    Args:
+        source: Dossier d'arrivées du baladeur.
+        destination: Dossier d'arrivées de la discothèque (`chemins.arrivees`).
+        journal: Appelable qui reçoit chaque ligne du journal.
+        simulation: Journalise ce qui serait déplacé, sans rien modifier.
+
+    Returns:
+        Le bilan du déplacement.
     """
     source, destination = Path(source), Path(destination)
     bilan = Bilan()

@@ -1,22 +1,40 @@
-"""Copies de sécurité : baladeur (DAP) et sauvegarde froide sur un autre disque.
+"""
+dap.py - Baladeur et sauvegarde froide
 
-Baladeur :
-- `recuperer` : déplace le dossier d'arrivées du DAP (`_sort`) vers celui de la discothèque ;
-- `envoyer`   : copie la discothèque en miroir vers le DAP, **sans** les dossiers système
-  « _… » de la racine ni le lanceur ;
-- `synchro`   : `recuperer` puis `envoyer` (l'opération habituelle) ;
-- `restaurer` : sens inverse, DAP → discothèque. Ce qui disparaîtrait de la discothèque
-  part dans la corbeille. Simulation tant que `--confirmer` n'est pas donné.
+Description:
+    Copies de sécurité : baladeur (DAP) et sauvegarde froide sur un autre disque.
 
-Sauvegarde froide :
-- `envoyer`   : miroir de toute la racine (y compris `_data`, `_bot`, `_log`…) sauf
-  la corbeille ; côté sauvegarde, les fichiers supprimés ou remplacés sont gardés dans sa
-  propre corbeille datée ;
-- `restaurer` : sens inverse, sans `_bot` (l'installation en cours d'exécution) ni la
-  corbeille. Simulation tant que `--confirmer` n'est pas donné.
+    Baladeur :
+    - `recuperer` : déplace le dossier d'arrivées du DAP (`_sort`) vers celui de la
+      discothèque ;
+    - `envoyer`   : copie la discothèque en miroir vers le DAP, **sans** les dossiers
+      système « _… » de la racine ni le lanceur ;
+    - `synchro`   : `recuperer` puis `envoyer` (l'opération habituelle) ;
+    - `restaurer` : sens inverse, DAP → discothèque. Ce qui disparaîtrait de la
+      discothèque part dans la corbeille. Simulation tant que `--confirmer` n'est pas
+      donné.
 
-Chaque opération écrit un journal dans `_log` (affiché aussi dans la console) et un rapport
-lisible dans `_reports`.
+    Sauvegarde froide :
+    - `envoyer`   : miroir de toute la racine (y compris `_data`, `_bot`, `_log`…) sauf
+      la corbeille ; côté sauvegarde, les fichiers supprimés ou remplacés sont gardés
+      dans sa propre corbeille datée ;
+    - `restaurer` : sens inverse, sans `_bot` (l'installation en cours d'exécution) ni
+      la corbeille. Simulation tant que `--confirmer` n'est pas donné.
+
+    Chaque opération écrit un journal dans `_log` (affiché aussi dans la console) et un
+    rapport lisible dans `_reports`.
+
+Auteur :
+    Dracudar
+
+Version :
+    0.1.0.dev0
+
+Date de création :
+    2026.10.06
+
+Date de modification :
+    2026.10.07
 """
 
 from __future__ import annotations
@@ -32,10 +50,23 @@ NOM_LANCEUR = "synchro_discotheque.cmd"
 
 
 def _go(octets: int) -> str:
+    """Volume lisible, en gigaoctets décimaux (« 1.25 Go »)."""
     return f"{octets / 1e9:.2f} Go"
 
 
 def _verifier_dossier(chemin: Path | None, quoi: str) -> Path:
+    """Vérifie qu'un dossier est configuré et présent (baladeur branché, disque monté…).
+
+    Args:
+        chemin: Dossier à vérifier, ou None s'il n'est pas configuré.
+        quoi: Nom du dossier dans le message d'erreur (« Baladeur », « Sauvegarde »…).
+
+    Returns:
+        Le dossier, en `Path`.
+
+    Raises:
+        ErreurConfig: Le chemin n'est pas configuré, ou le dossier est introuvable.
+    """
     if chemin is None:
         raise ErreurConfig(f"{quoi} : chemin non configuré (voir config.toml ou --dap).")
     if not Path(chemin).is_dir():
@@ -52,6 +83,22 @@ def _systeme(cfg: Config) -> set[str]:
 
 
 def _rapport(cfg, journal, titre, contexte, plan=None, bilans=(), simulation=False, remarques=None):
+    """Écrit le rapport d'une opération de copie dans `chemins.rapports`.
+
+    Args:
+        cfg: Configuration chargée.
+        journal: Journal de l'opération.
+        titre: Titre du rapport.
+        contexte: Couples (libellé, valeur) : dossiers source et destination.
+        plan: Plan du miroir, s'il y en a un (absent pour une simple récupération).
+        bilans: Couples (nom de l'étape, `copie.Bilan`) ; ignorés en simulation,
+            où rien n'a été copié.
+        simulation: Vrai si rien n'a été modifié ; le contexte le signale.
+        remarques: Lignes à signaler en plus (corbeille utilisée…).
+
+    Returns:
+        Le chemin du rapport écrit.
+    """
     chiffres = []
     if plan is not None:
         chiffres += [
@@ -79,6 +126,19 @@ def _rapport(cfg, journal, titre, contexte, plan=None, bilans=(), simulation=Fal
 
 
 def recuperer(cfg: Config, dap: Path, journal, simulation=False) -> copie.Bilan:
+    """Déplace les arrivées du baladeur (`<dap>/_sort`) vers `chemins.arrivees`.
+
+    Un baladeur sans dossier d'arrivées n'est pas une erreur : il n'y a rien à faire.
+
+    Args:
+        cfg: Configuration chargée.
+        dap: Dossier de musique du baladeur.
+        journal: Appelable qui reçoit chaque ligne du journal.
+        simulation: Liste ce qui serait déplacé, sans rien modifier.
+
+    Returns:
+        Le bilan du déplacement (vide s'il n'y avait rien à récupérer).
+    """
     src = Path(dap) / cfg.arrivees.name
     if not src.is_dir():
         journal(f"Pas de dossier d'arrivées sur le baladeur ({src}) : rien à récupérer.")
@@ -87,6 +147,21 @@ def recuperer(cfg: Config, dap: Path, journal, simulation=False) -> copie.Bilan:
 
 
 def envoyer(cfg: Config, dap: Path, journal, simulation=False):
+    """Copie la discothèque en miroir vers le baladeur.
+
+    Sont exclus, au premier niveau : les dossiers système de la discothèque et ceux du
+    baladeur, ainsi que le lanceur. Les fichiers en trop sur le baladeur sont supprimés
+    (pas de corbeille : la discothèque reste la référence).
+
+    Args:
+        cfg: Configuration chargée.
+        dap: Dossier de musique du baladeur.
+        journal: Appelable qui reçoit chaque ligne du journal.
+        simulation: Liste ce qui serait fait, sans rien modifier.
+
+    Returns:
+        Le couple (`copie.Plan`, `copie.Bilan`) du miroir.
+    """
     exclus = _systeme(cfg) | copie.exclusions_systeme(dap) | {NOM_LANCEUR}
     journal("Exclus du miroir (premier niveau) : " + ", ".join(sorted(exclus)))
     return copie.miroir(cfg.racine, dap, exclus, journal, corbeille=None, simulation=simulation)
@@ -95,7 +170,26 @@ def envoyer(cfg: Config, dap: Path, journal, simulation=False):
 def operation_dap(
     cfg: Config, sens: str, dap: Path | None = None, simulation=False, confirmer=False, console=True
 ) -> int:
-    """Lance une opération sur le baladeur ; renvoie 0 si tout s'est bien passé."""
+    """Lance une opération sur le baladeur ; renvoie 0 si tout s'est bien passé.
+
+    Écrit un journal (`dap_<sens>`) et un rapport. Sans `confirmer`, « restaurer »
+    tourne toujours en simulation : c'est la seule opération qui écrit dans la
+    discothèque, et ce qu'elle y remplace part dans la corbeille.
+
+    Args:
+        cfg: Configuration chargée.
+        sens: « synchro », « envoyer », « recuperer » ou « restaurer ».
+        dap: Dossier de musique du baladeur ; `dap.destination` par défaut.
+        simulation: Liste ce qui serait fait, sans rien modifier.
+        confirmer: Obligatoire pour appliquer « restaurer ».
+        console: Affiche aussi le journal dans la console.
+
+    Returns:
+        0 si tout s'est bien passé, 1 si au moins un fichier est en erreur.
+
+    Raises:
+        ErreurConfig: Baladeur ou discothèque non configuré ou introuvable.
+    """
     dap = _verifier_dossier(dap or cfg.dap, "Baladeur")
     _verifier_dossier(cfg.racine, "Discothèque")
     if sens == "restaurer" and not confirmer:
@@ -132,6 +226,24 @@ def operation_dap(
 def operation_sauvegarde(
     cfg: Config, sens: str, simulation=False, confirmer=False, console=True
 ) -> int:
+    """Lance une opération de sauvegarde froide ; renvoie 0 si tout s'est bien passé.
+
+    Écrit un journal (`sauvegarde_<sens>`) et un rapport. Sans `confirmer`,
+    « restaurer » tourne toujours en simulation.
+
+    Args:
+        cfg: Configuration chargée.
+        sens: « envoyer » (discothèque → sauvegarde) ou « restaurer » (l'inverse).
+        simulation: Liste ce qui serait fait, sans rien modifier.
+        confirmer: Obligatoire pour appliquer « restaurer ».
+        console: Affiche aussi le journal dans la console.
+
+    Returns:
+        0 si tout s'est bien passé, 1 si au moins un fichier est en erreur.
+
+    Raises:
+        ErreurConfig: Sauvegarde ou discothèque non configurée ou introuvable.
+    """
     dest = _verifier_dossier(cfg.sauvegarde, "Sauvegarde")
     _verifier_dossier(cfg.racine, "Discothèque")
     if sens == "restaurer" and not confirmer:
@@ -172,6 +284,17 @@ def texte_lanceur() -> str:
 
 
 def poser_lanceur(dap: Path) -> Path:
+    """Écrit le lanceur à la racine du baladeur (remplace un lanceur existant).
+
+    Args:
+        dap: Dossier de musique du baladeur.
+
+    Returns:
+        Le chemin du lanceur écrit.
+
+    Raises:
+        ErreurConfig: Baladeur non configuré ou introuvable.
+    """
     dap = _verifier_dossier(dap, "Baladeur")
     chemin = dap / NOM_LANCEUR
     chemin.write_bytes(texte_lanceur().encode("utf-8"))
