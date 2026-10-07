@@ -218,7 +218,8 @@ def verifier_chemins_longs() -> Resultat:
 
 # --------------------------------------------------------------- Configuration
 def verifier_config(cfg: Config) -> list[Resultat]:
-    res = [Resultat("Configuration", OK, str(cfg.source))]
+    fichiers = " + ".join(str(s) for s in cfg.sources)
+    res = [Resultat("Configuration", OK, fichiers or "aucun fichier : configuration par défaut")]
     if cfg.racine.is_dir():
         presents = sorted(p.name for p in cfg.racine.iterdir() if p.is_dir())
         inconnus = [n for n in presents if cfg.categorie(n) is None]  # « _… » : système
@@ -279,7 +280,9 @@ def diagnostic(cfg: Config | None, erreur_config: str | None = None) -> list[Res
     if cfg:
         res += verifier_config(cfg)
     else:
-        res.append(Resultat("Configuration", ATTENTION, erreur_config or "absente"))
+        # Sans fichier, la config par défaut suffit : ne reste ici qu'une vraie erreur
+        # (TOML invalide, racine introuvable, valeur refusée)
+        res.append(Resultat("Configuration", ERREUR, erreur_config or "illisible"))
     return res
 
 
