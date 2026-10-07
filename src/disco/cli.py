@@ -16,7 +16,7 @@ def _doctor(args: argparse.Namespace) -> int:
     try:
         cfg, erreur = charger(args.config), None
     except ErreurConfig as e:
-        cfg, erreur = None, str(e)
+        cfg, erreur = None, e
     return doctor.afficher(doctor.diagnostic(cfg, erreur))
 
 

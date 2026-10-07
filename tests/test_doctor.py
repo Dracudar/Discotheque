@@ -62,10 +62,17 @@ def test_config_dossiers(tmp_path):
 
 
 def test_diagnostic_sans_config(capsys):
-    res = doctor.diagnostic(None, "absente")
+    res = doctor.diagnostic(None, config.RacineIntrouvable("Racine introuvable"))
     code = doctor.afficher(res)
     assert code in (0, 1)
     assert "Configuration" in capsys.readouterr().out
+    # Racine introuvable (clone neuf, CI) : attention, pas erreur bloquante
+    assert res[-1].statut == doctor.ATTENTION
+
+
+def test_diagnostic_config_cassee():
+    res = doctor.diagnostic(None, config.ErreurConfig("TOML invalide"))
+    assert res[-1].statut == doctor.ERREUR
 
 
 def test_config_fichiers_lus(tmp_path):

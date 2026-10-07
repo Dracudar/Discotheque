@@ -16,7 +16,7 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
-from disco.config import Config
+from disco.config import Config, ErreurConfig, RacineIntrouvable
 
 OK, ATTENTION, ERREUR = "ok", "attention", "erreur"
 MARQUES = {OK: "[OK]", ATTENTION: "[!!]", ERREUR: "[XX]"}
@@ -265,7 +265,7 @@ def verifier_config(cfg: Config) -> list[Resultat]:
 
 
 # --------------------------------------------------------------------- Ensemble
-def diagnostic(cfg: Config | None, erreur_config: str | None = None) -> list[Resultat]:
+def diagnostic(cfg: Config | None, erreur_config: ErreurConfig | None = None) -> list[Resultat]:
     res = [verifier_python(), *verifier_modules(), verifier_sqlite()]
     ffmpeg = cfg.ffmpeg if cfg else "ffmpeg"
     ffprobe = cfg.ffprobe if cfg else "ffprobe"
@@ -280,9 +280,10 @@ def diagnostic(cfg: Config | None, erreur_config: str | None = None) -> list[Res
     if cfg:
         res += verifier_config(cfg)
     else:
-        # Sans fichier, la config par défaut suffit : ne reste ici qu'une vraie erreur
-        # (TOML invalide, racine introuvable, valeur refusée)
-        res.append(Resultat("Configuration", ERREUR, erreur_config or "illisible"))
+        # Racine introuvable (clone neuf, CI) : un réglage manque, simple point d'attention.
+        # Le reste (TOML invalide, valeur refusée) est une config cassée : erreur.
+        statut = ATTENTION if isinstance(erreur_config, RacineIntrouvable) else ERREUR
+        res.append(Resultat("Configuration", statut, str(erreur_config or "illisible")))
     return res
 
 

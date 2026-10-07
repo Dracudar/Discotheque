@@ -64,6 +64,10 @@ class ErreurConfig(Exception):
     """Configuration absente ou invalide."""
 
 
+class RacineIntrouvable(ErreurConfig):
+    """Aucune racine écrite ni déductible : un réglage manque, la config n'est pas cassée."""
+
+
 @dataclass(frozen=True)
 class Categorie:
     """Un dossier de premier niveau de la discothèque et son traitement."""
@@ -235,7 +239,7 @@ def depuis_dict(
         raise ErreurConfig("La clé [chemins] donnees s'appelle désormais base.")
     racine = _chemin(chemins, "racine")
     if racine is None:
-        raise ErreurConfig(
+        raise RacineIntrouvable(
             "Racine introuvable : lancer le programme depuis <racine>/_bot, ou indiquer "
             "[chemins] racine dans config.toml."
         )
