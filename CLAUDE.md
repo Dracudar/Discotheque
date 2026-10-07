@@ -104,6 +104,28 @@ On n'écrit jamais un chemin en dur dans le code ni dans la doc : tout passe par
 
 ## Conventions
 - **Langue :** code, noms et commentaires en français, sans accents dans les identifiants (`reference_lufs`, `rg_album`), avec accents dans les textes et les docstrings.
+- **En-tête des fichiers Python :** chaque nouveau fichier `.py` de `src/` commence par le bloc d'en-tête commun aux projets de Dracudar (voir un module existant, par ex. `src/disco/copie.py`) :
+  ```
+  """
+  <fichier>.py - <titre court>
+
+  Description:
+      <rôle du module>
+
+  Auteur :
+      Dracudar
+
+  Version :
+      <version du programme, disco.__version__>
+
+  Date de création :
+      aaaa.mm.jj
+
+  Date de modification :
+      aaaa.mm.jj
+  """
+  ```
+  **À chaque modification d'un fichier**, on met à jour sa `Date de modification` (date du jour) et sa `Version` (la version du programme en cours, `__version__` de `src/disco/__init__.py`). Chaque fonction, méthode et classe a une docstring, avec les rubriques `Args:`, `Returns:`, `Raises:` ou `Attributes:` quand elles apportent quelque chose. `tests/test_entetes.py` vérifie la présence de l'en-tête et des docstrings, mais pas que les dates sont à jour : c'est une règle de relecture.
 - **Git :**
   - **`main` = production uniquement.** Rien n'y est poussé ni proposé directement. Seul Dracudar y fusionne `develop` quand il met une version en service.
   - **`develop` = intégration.** Chaque branche de livrable part de `develop` (`phase-1.1/index`), et sa PR vise `develop`. Dracudar la relit et la fusionne.
