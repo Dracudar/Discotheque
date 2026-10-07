@@ -40,10 +40,11 @@ destination = 'X:\Baladeur\Music'
 destination = 'X:\Sauvegarde\Musique'
 
 [outils]
-# Nom de la commande si elle est dans le PATH, sinon chemin complet de l'exécutable.
-ffmpeg = 'ffmpeg'
-ffprobe = 'ffprobe'
-fpcalc = 'fpcalc'
+# Par défaut, les outils sont cherchés dans <racine>\_bot\tools, puis dans le PATH.
+# Indiquer un chemin complet seulement pour en utiliser un autre.
+# ffmpeg = 'X:\Outils\ffmpeg.exe'
+# ffprobe = 'X:\Outils\ffprobe.exe'
+# fpcalc = 'X:\Outils\fpcalc.exe'
 
 [analyse]
 # ReplayGain 2 : référence -18 LUFS (BS.1770). Crête vraie par suréchantillonnage x8.

@@ -1,3 +1,5 @@
+import os
+
 import pytest
 
 from disco import config
@@ -117,3 +119,17 @@ def test_introuvable(tmp_path, monkeypatch):
 def test_variable_environnement(config_exemple, monkeypatch):
     monkeypatch.setenv("DISCO_CONFIG", str(config_exemple))
     assert config.trouver() == config_exemple
+
+
+def test_outils_dans_bot_tools(tmp_path):
+    """Sans chemin dans [outils], un outil posé dans <bot>/tools est utilisé ; sinon le PATH."""
+    tools = tmp_path / "_bot" / "tools"
+    tools.mkdir(parents=True)
+    nom = "fpcalc.exe" if os.name == "nt" else "fpcalc"
+    (tools / nom).write_bytes(b"")
+    d = {"chemins": {"racine": str(tmp_path)}, "categories": {"A": {"type": "artistes"}}}
+    cfg = config.depuis_dict(d)
+    assert cfg.fpcalc == str(tools / nom)
+    assert cfg.ffmpeg == "ffmpeg"  # absent de tools : PATH
+    d["outils"] = {"fpcalc": "autre"}
+    assert config.depuis_dict(d).fpcalc == "autre"  # la config l'emporte
