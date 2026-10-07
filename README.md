@@ -24,8 +24,9 @@ Tout part d'un dossier racine. Les dossiers de musique y sont rangés par catég
 ```
 <racine>/
 ├── Artists/, Compilations/, Soundtrack/…   musique, par catégorie (voir config.toml)
-├── _bot/                   installation de production
-│   ├── .venv/              environnement Python
+├── _bot/                   installation de production (version compilée)
+│   ├── disco.exe           programme
+│   ├── _internal/          Python et dépendances embarqués
 │   ├── tools/              ffmpeg.exe, ffprobe.exe, fpcalc.exe
 │   └── config.toml         configuration (la racine s'en déduit)
 ├── _data/                  pages générées, en miroir de la discothèque
@@ -41,31 +42,21 @@ Chaque emplacement peut être changé dans `config.toml`.
 
 ## Installation (production, Windows)
 
-L'installation de production vit dans `<racine>\_bot`, à part du clone de développement. Elle utilise la version publiée sur `main`.
+> À partir de la première version en production (`v0.1`). D'ici là, le programme ne tourne que depuis le clone de développement (voir plus bas).
 
-1. **Python 3.14** (ou 3.13), depuis [python.org](https://www.python.org/downloads/).
-2. **Environnement et programme**, dans `<racine>\_bot` :
-   ```
-   cd X:\Musique\_bot
-   py -3.14 -m venv .venv
-   .venv\Scripts\pip install https://github.com/Dracudar/Discotheque/archive/refs/heads/main.zip
-   ```
-   Pour mettre à jour, relancer la même commande `pip install` avec `--force-reinstall`.
-3. **Outils externes**, à copier dans `<racine>\_bot\tools` (aucune installation, aucun PATH à modifier) :
+La production est une **version compilée**, publiée dans les releases GitHub à chaque version de `main`. Elle contient tout : le programme, Python et ses dépendances, ffmpeg, ffprobe et fpcalc. Rien à installer sur la machine, pas même Python.
 
-   | Outil | Où le trouver | Fichiers à copier |
-   |---|---|---|
-   | **ffmpeg / ffprobe** | build Windows *essentials* ou *full* sur [gyan.dev](https://www.gyan.dev/ffmpeg/builds/) | `bin\ffmpeg.exe`, `bin\ffprobe.exe` et `LICENSE` |
-   | **fpcalc** (Chromaprint 1.6.1) | [versions de Chromaprint](https://github.com/acoustid/chromaprint/releases/tag/v1.6.1), `chromaprint-fpcalc-1.6.1-windows-x86_64.zip` | `fpcalc.exe` |
-
-   Ils sont trouvés tout seuls. Un autre emplacement peut être donné dans la section `[outils]` de la config.
-4. **Configuration** : copier [`config.example.toml`](config.example.toml) en `<racine>\_bot\config.toml` et l'adapter (baladeur, sauvegarde, catégories). La racine s'en déduit : c'est le dossier parent de `_bot`.
-5. **Chemins longs** (pages de plus de 260 caractères) : une fois, dans PowerShell lancé en administrateur :
+1. **Télécharger** l'archive de la plateforme depuis la [dernière release](https://github.com/Dracudar/Discotheque/releases/latest).
+2. **Décompresser** son contenu dans `<racine>\_bot`.
+3. **Configurer** : copier [`config.example.toml`](config.example.toml) en `<racine>\_bot\config.toml` et l'adapter (baladeur, sauvegarde, catégories). La racine s'en déduit : c'est le dossier parent de `_bot`.
+4. **Chemins longs** (pages de plus de 260 caractères) : une fois, dans PowerShell lancé en administrateur :
    ```
    New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name LongPathsEnabled -Value 1 -PropertyType DWORD -Force
    ```
-6. **Vérifier** : `.venv\Scripts\disco doctor`. Tout doit être `[OK]`. Le diagnostic ne modifie rien.
-7. **Baladeur** (facultatif) : `.venv\Scripts\disco dap lanceur --dap <dossier de musique du baladeur>` y pose `synchro_discotheque.cmd`.
+5. **Vérifier** : `<racine>\_bot\disco.exe doctor`. Tout doit être `[OK]`. Le diagnostic ne modifie rien.
+6. **Baladeur** (facultatif) : `disco.exe dap lanceur --dap <dossier de musique du baladeur>` y pose `synchro_discotheque.cmd`.
+
+**Mise à jour** : décompresser la nouvelle version par-dessus. `config.toml` n'est jamais écrasé.
 
 ## Commandes
 
@@ -88,7 +79,7 @@ Toutes les commandes de copie acceptent `--simulation`.
 | Branche | Rôle |
 |---|---|
 | `develop` | **Branche par défaut**, intégration. Chaque livrable part d'elle (`phase-1.1/index`…) et y revient par une PR reliée à son issue. |
-| `main` | **Production uniquement.** Elle ne reçoit que `develop`, quand une version est mise en service, avec une étiquette (`v0.1`…). C'est elle qu'installe `_bot`. |
+| `main` | **Production uniquement.** Elle ne reçoit que `develop`, quand une version est mise en service, avec un tag (`v0.1`…). Chaque tag produit la version compilée installée dans `_bot`. |
 
 Le suivi se fait dans les issues, les jalons et le GitHub Project du dépôt. Les commits suivent les Conventional Commits, en français (`feat(analyse): …`).
 
@@ -96,8 +87,10 @@ Le suivi se fait dans les issues, les jalons et le GitHub Project du dépôt. Le
 
 Le développement se fait sur une **copie de travail de la discothèque** (sandbox), jamais sur la vraie.
 
-1. Préparer la sandbox comme une installation de production (`_bot\tools`, `_bot\config.toml`), sans forcément y créer de `.venv`.
-2. Cloner le dépôt (la branche `develop` est prise par défaut) et installer l'environnement de développement :
+1. **Préparer la sandbox** comme une installation de production, sans le programme :
+   - `_bot\tools` : `ffmpeg.exe` et `ffprobe.exe` (build Windows *essentials* ou *full* sur [gyan.dev](https://www.gyan.dev/ffmpeg/builds/), dossier `bin`), `fpcalc.exe` ([Chromaprint 1.6.1](https://github.com/acoustid/chromaprint/releases/tag/v1.6.1), `chromaprint-fpcalc-1.6.1-windows-x86_64.zip`). Ils sont trouvés sans configuration ; un autre emplacement peut être donné dans `[outils]` ;
+   - `_bot\config.toml`, copié de [`config.example.toml`](config.example.toml) et adapté.
+2. **Installer Python 3.14** (ou 3.13) depuis [python.org](https://www.python.org/downloads/), cloner le dépôt (la branche `develop` est prise par défaut) et créer l'environnement de développement :
    ```
    git clone https://github.com/Dracudar/Discotheque
    cd Discotheque
@@ -105,13 +98,13 @@ Le développement se fait sur une **copie de travail de la discothèque** (sandb
    .venv\Scripts\activate
    pip install -e .[dev]
    ```
-3. Créer `config.toml` dans le clone (jamais versionné), avec au minimum la racine de la sandbox :
+3. **Créer `config.toml` dans le clone** (jamais versionné), avec au minimum la racine de la sandbox :
    ```toml
    [chemins]
    racine = 'X:\Sandbox\Musique'
    ```
    Le reste est lu dans le `_bot\config.toml` de la sandbox. Ce qui est écrit dans le clone l'emporte.
-4. `disco doctor`, puis les vérifications à passer avant toute PR :
+4. **Vérifier** avec `disco doctor`, puis lancer les vérifications à passer avant toute PR :
    ```
    ruff check . && ruff format src tests
    pytest
