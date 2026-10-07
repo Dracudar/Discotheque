@@ -6,7 +6,8 @@ vivent à la racine et commencent par « _ » ; chacun peut être déplacé dans
     <racine>/_data          pages générées (miroir de la discothèque), base et caches
     <racine>/_data/_base    index SQLite : coûteux à reconstruire, jamais effacé
     <racine>/_data/_cache   réponses des services en ligne
-    <racine>/_bot           installation de production (environnement, config, outils)
+    <racine>/_bot           installation de production (environnement, config)
+    <racine>/_bot/tools     outils externes (ffmpeg, ffprobe, fpcalc)
     <racine>/_sort          arrivées depuis le baladeur
     <racine>/_log           journaux détaillés
     <racine>/_reports       rapports lisibles des résultats
@@ -152,6 +153,20 @@ def _chemin(table: dict, cle: str) -> Path | None:
     return Path(v) if v else None
 
 
+DOSSIER_OUTILS = "tools"
+
+
+def _outil(outils: dict, nom: str, bot: Path) -> str:
+    """Commande d'un outil externe.
+
+    Ordre : chemin donné dans [outils], puis `<bot>/tools/`, sinon le nom seul (PATH).
+    """
+    if outils.get(nom):
+        return str(outils[nom])
+    local = bot / DOSSIER_OUTILS / (nom + ".exe" if os.name == "nt" else nom)
+    return str(local) if local.is_file() else nom
+
+
 def _racine_deduite(source: Path | None) -> Path | None:
     """Racine déduite de l'emplacement de la config : `<racine>/_bot/config.toml`."""
     if source is not None and source.parent.name.startswith(PREFIXE_SYSTEME):
@@ -181,6 +196,7 @@ def depuis_dict(d: dict, source: Path | None = None) -> Config:
             "n'est pas rangé dans <racine>/_bot)."
         )
     sortie = _chemin(chemins, "sortie") or racine / "_data"
+    bot = _chemin(chemins, "bot") or racine / "_bot"
 
     categories: dict[str, Categorie] = {}
     for nom, c in d.get("categories", {}).items():
@@ -211,13 +227,13 @@ def depuis_dict(d: dict, source: Path | None = None) -> Config:
         journaux=_chemin(chemins, "journaux") or racine / "_log",
         rapports=_chemin(chemins, "rapports") or racine / "_reports",
         corbeille=_chemin(chemins, "corbeille") or racine / "_to_delete",
-        bot=_chemin(chemins, "bot") or racine / "_bot",
+        bot=bot,
         arrivees=_chemin(chemins, "arrivees") or racine / "_sort",
         dap=_chemin(d.get("dap", {}), "destination"),
         sauvegarde=_chemin(d.get("sauvegarde", {}), "destination"),
-        ffmpeg=str(outils.get("ffmpeg", "ffmpeg")),
-        ffprobe=str(outils.get("ffprobe", "ffprobe")),
-        fpcalc=str(outils.get("fpcalc", "fpcalc")),
+        ffmpeg=_outil(outils, "ffmpeg", bot),
+        ffprobe=_outil(outils, "ffprobe", bot),
+        fpcalc=_outil(outils, "fpcalc", bot),
         reference_lufs=float(analyse.get("reference_lufs", -18.0)),
         surechantillonnage_crete=surech,
         processus=int(analyse.get("processus", 0)),
