@@ -16,7 +16,7 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
-from disco.config import Config
+from disco.config import Config, ErreurConfig, RacineIntrouvable
 
 OK, ATTENTION, ERREUR = "ok", "attention", "erreur"
 MARQUES = {OK: "[OK]", ATTENTION: "[!!]", ERREUR: "[XX]"}
@@ -218,7 +218,8 @@ def verifier_chemins_longs() -> Resultat:
 
 # --------------------------------------------------------------- Configuration
 def verifier_config(cfg: Config) -> list[Resultat]:
-    res = [Resultat("Configuration", OK, str(cfg.source))]
+    fichiers = " + ".join(str(s) for s in cfg.sources)
+    res = [Resultat("Configuration", OK, fichiers or "aucun fichier : configuration par défaut")]
     if cfg.racine.is_dir():
         presents = sorted(p.name for p in cfg.racine.iterdir() if p.is_dir())
         inconnus = [n for n in presents if cfg.categorie(n) is None]  # « _… » : système
@@ -264,7 +265,7 @@ def verifier_config(cfg: Config) -> list[Resultat]:
 
 
 # --------------------------------------------------------------------- Ensemble
-def diagnostic(cfg: Config | None, erreur_config: str | None = None) -> list[Resultat]:
+def diagnostic(cfg: Config | None, erreur_config: ErreurConfig | None = None) -> list[Resultat]:
     res = [verifier_python(), *verifier_modules(), verifier_sqlite()]
     ffmpeg = cfg.ffmpeg if cfg else "ffmpeg"
     ffprobe = cfg.ffprobe if cfg else "ffprobe"
@@ -279,7 +280,10 @@ def diagnostic(cfg: Config | None, erreur_config: str | None = None) -> list[Res
     if cfg:
         res += verifier_config(cfg)
     else:
-        res.append(Resultat("Configuration", ATTENTION, erreur_config or "absente"))
+        # Racine introuvable (clone neuf, CI) : un réglage manque, simple point d'attention.
+        # Le reste (TOML invalide, valeur refusée) est une config cassée : erreur.
+        statut = ATTENTION if isinstance(erreur_config, RacineIntrouvable) else ERREUR
+        res.append(Resultat("Configuration", statut, str(erreur_config or "illisible")))
     return res
 
 

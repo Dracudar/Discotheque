@@ -36,9 +36,9 @@ Les branches de livrable partent de `develop`, et leurs PR visent `develop`. `ma
 | Artists | artistes | oui | oui |
 | Classical music | classique | oui | oui |
 | Compilations | compilations | oui | oui |
-| Musicals, Original Game Soundtrack, Soundtrack | projets | oui | oui |
-| Night, Bulk | vrac | non | non (piste seulement) |
+| Musicals, Soundtrack | projets | oui | oui |
+| Bulk | vrac | non | non (piste seulement) |
 | `_sort` | arrivées (surveillance) | non | après rangement |
 | `_data`, `_bot`, `_log`, `_reports`, `_to_delete` | dossiers système (tout `_…` non déclaré), ignorés | — | — |
 
-La table fait foi dans `config.example.toml`.
+Ce sont les catégories par défaut, intégrées au programme : la table fait foi dans `src/disco/modeles/config_defaut.toml`. Les catégories propres à un usage (une copie de `Soundtrack` pour un genre précis, une archive séparée de `Bulk` comme `Night`) s'ajoutent dans `<racine>/_bot/config.toml` ; une catégorie par défaut peut y être redéfinie clé par clé, ou retirée avec `type = "ignore"`.

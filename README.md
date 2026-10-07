@@ -23,22 +23,22 @@ Tout part d'un dossier racine. Les dossiers de musique y sont rangés par catég
 
 ```
 <racine>/
-├── Artists/, Compilations/, Soundtrack/…   musique, par catégorie (voir config.toml)
+├── Artists/, Compilations/, Soundtrack/…   musique, par catégorie (voir docs/README.md)
 ├── _bot/                   installation de production (version compilée)
 │   ├── disco.exe           programme
 │   ├── _internal/          Python et dépendances embarqués
 │   ├── tools/              ffmpeg.exe, ffprobe.exe, fpcalc.exe
-│   └── config.toml         configuration (la racine s'en déduit)
+│   └── config.toml         réglages personnels, facultatif (la racine s'en déduit)
 ├── _data/                  pages générées, en miroir de la discothèque
 │   ├── _base/              index SQLite (jamais effacé : long à reconstruire)
 │   └── _cache/             réponses des services en ligne
-├── _sort/                  arrivées depuis le baladeur
+├── _sort/                  arrivées depuis le baladeur, RIP de CD ou achats numériques (à trier)
 ├── _log/                   journaux détaillés
 ├── _reports/               rapports lisibles des opérations
 └── _to_delete/             corbeille : ce que les opérations retirent
 ```
 
-Chaque emplacement peut être changé dans `config.toml`.
+Cette structure et les catégories standard sont intégrées au programme : aucun `config.toml` n'est nécessaire. Chaque emplacement peut être changé dans `config.toml`, qui ne contient que ce qui diffère du défaut ; `disco config` affiche l'origine de chaque valeur (`défaut`, `_bot`, `clone`, `déduit`). Détails dans [`docs/configuration.md`](docs/configuration.md).
 
 ## Installation (production, Windows)
 
@@ -90,7 +90,7 @@ Le développement se fait sur une **copie de travail de la discothèque** (sandb
 
 1. **Préparer la sandbox** comme une installation de production, sans le programme :
    - `_bot\tools` : `ffmpeg.exe` et `ffprobe.exe` (build Windows *essentials* ou *full* sur [gyan.dev](https://www.gyan.dev/ffmpeg/builds/), dossier `bin`), `fpcalc.exe` ([Chromaprint 1.6.1](https://github.com/acoustid/chromaprint/releases/tag/v1.6.1), `chromaprint-fpcalc-1.6.1-windows-x86_64.zip`). Ils sont trouvés sans configuration ; un autre emplacement peut être donné dans `[outils]` ;
-   - `_bot\config.toml`, copié de [`config.example.toml`](config.example.toml) et adapté.
+   - `_bot\config.toml` (facultatif) : seulement les réglages personnels, voir [`config.example.toml`](config.example.toml).
 2. **Installer Python 3.14** (ou 3.13) depuis [python.org](https://www.python.org/downloads/), cloner le dépôt (la branche `develop` est prise par défaut) et créer l'environnement de développement :
    ```
    git clone https://github.com/Dracudar/Discotheque
@@ -104,7 +104,7 @@ Le développement se fait sur une **copie de travail de la discothèque** (sandb
    [chemins]
    racine = 'X:\Sandbox\Musique'
    ```
-   Le reste est lu dans le `_bot\config.toml` de la sandbox. Ce qui est écrit dans le clone l'emporte.
+   Le reste vient de la configuration par défaut, puis du `_bot\config.toml` de la sandbox s'il existe. Ce qui est écrit dans le clone l'emporte.
 4. **Vérifier** avec `disco doctor`, puis lancer les vérifications à passer avant toute PR :
    ```
    ruff check . && ruff format src tests
@@ -126,6 +126,7 @@ Discotheque/
 │   ├── dap.py                  baladeur et sauvegarde froide
 │   ├── journal.py              journaux (_log) et rapports (_reports)
 │   └── modeles/
+│       ├── config_defaut.toml        configuration par défaut intégrée
 │       └── synchro_discotheque.cmd   lanceur posé sur le baladeur
 ├── tests/                      tests pytest, sur données fictives uniquement
 │   ├── fixtures/               fiche d'achat fictive
@@ -133,6 +134,7 @@ Discotheque/
 ├── legacy/fiches/              ancien gabarit des fiches d'achat (gen.py, _head.html), pour référence
 ├── docs/
 │   ├── README.md               feuille de route (jalons) et catégories
+│   ├── configuration.md        couches, catégories, origines des valeurs
 │   └── ia-locale.md            besoin et matériel pour l'IA locale
 ├── .github/workflows/ci.yml    CI : ruff, pytest, disco doctor (Windows et Linux)
 ├── config.example.toml         modèle de configuration (chemins fictifs)

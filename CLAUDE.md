@@ -42,16 +42,19 @@ Les emplacements réels du poste de Dracudar sont notés dans le document d'éta
    - un script d'annulation.
 4. **Le développement se fait sur une copie de travail (sandbox)** : en développement, `chemins.racine` pointe vers elle.
 5. **Rien n'est supprimé directement.** Ce qui doit disparaître va dans `chemins.corbeille\<lot>\`, que seul Dracudar vide.
-6. `Night` et `Bulk` ne sont jamais réorganisés : ils sont indexés et analysés, sans pages.
+6. Les catégories `vrac` (`Bulk` par défaut, `Night` déclaré dans `_bot`) ne sont jamais réorganisées : elles sont indexées et analysées, sans pages.
 
 ## Racine et configuration (`config.toml`, non versionné)
 Tout part de la racine de la discothèque (`chemins.racine`) : la sandbox en développement, la discothèque elle-même en production. Les dossiers système sont à la racine et commencent par `_` ; chacun peut être déplacé dans la config.
 
-La configuration se trouve d'elle-même :
-- **production** : `<racine>/_bot/config.toml`, à côté de l'environnement Python ; la racine s'en déduit (dossier parent de `_bot`) ;
-- **développement** : le `config.toml` du clone, qui peut se limiter à `racine = …` (la sandbox). Le reste est lu dans `<racine>/_bot/config.toml`, et le clone l'emporte.
+La configuration se superpose en trois couches, la plus haute l'emportant clé par clé (une catégorie peut être ajoutée ou redéfinie clé par clé) :
+1. **défaut**, intégrée au programme (`src/disco/modeles/config_defaut.toml`) : réglages d'analyse et catégories standard. **Aucun `config.toml` n'est obligatoire** ;
+2. **`<racine>/_bot/config.toml`**, facultatif : seulement ce qui diffère (baladeur, sauvegarde, références, catégories en plus) ;
+3. **le `config.toml` du clone** (développement) : `racine = …` (la sandbox) et toute surcharge.
 
-Ordre de recherche (`disco.config.trouver`) : option `--config`, variable `DISCO_CONFIG`, `config.toml` à côté de l'environnement Python (`_bot` en production, le clone en développement), puis `./config.toml`.
+Sans `racine` écrite, elle se déduit de `_bot` (son dossier parent) : emplacement de la config, ou, sans aucun fichier, dossier du programme (exe compilé ou `.venv`). `disco config` indique l'origine de chaque valeur.
+
+Ordre de recherche (`disco.config.trouver`) : option `--config`, variable `DISCO_CONFIG` (le fichier doit alors exister), `config.toml` à côté du programme (`_bot` en production, le clone en développement), puis `./config.toml`.
 
 | Dossier | Clé | Rôle |
 |---|---|---|
@@ -85,7 +88,7 @@ On n'écrit jamais un chemin en dur dans le code ni dans la doc : tout passe par
   - référence −18 LUFS ;
   - crête vraie ×8, écrite dans les tags de crête ;
   - gain album calculé par addition des histogrammes de sonie des pistes, sans re-décoder ;
-  - pas de gain album pour `Bulk` et `Night` (voir `rg_album` dans la config) ;
+  - pas de gain album pour les catégories `vrac` (`Bulk`, `Night` ; voir `rg_album` dans la config) ;
   - tag générique `REPLAYGAIN_*` partout, plus `R128_*` pour les Opus si retenu ;
   - on ne réécrit un fichier que si la valeur change.
 - **SQLite :** mode WAL, `busy_timeout`, migrations versionnées (`PRAGMA user_version`), un seul écrivain à la fois.

@@ -13,10 +13,16 @@ vivent à la racine et commencent par « _ » ; chacun peut être déplacé dans
     <racine>/_reports       rapports lisibles des résultats
     <racine>/_to_delete     corbeille des opérations (jamais de suppression directe)
 
-La configuration se trouve d'elle-même (voir `trouver`). En production, c'est
-`<racine>/_bot/config.toml`, et la racine s'en déduit : le dossier parent de `_bot`.
-En développement, le `config.toml` du clone peut se limiter à `racine` (la sandbox) :
-le reste est lu dans le `_bot/config.toml` de cette racine, et le clone peut le surcharger.
+La configuration se superpose en trois couches, la plus haute l'emportant clé par clé :
+
+1. la configuration par défaut, intégrée au programme (`modeles/config_defaut.toml`) ;
+2. `<racine>/_bot/config.toml`, facultatif : seulement ce qui diffère (baladeur,
+   sauvegarde, références, catégories en plus) ;
+3. le `config.toml` trouvé ailleurs (le clone, en développement) : `racine` et toute
+   surcharge.
+
+Sans `racine` écrite, elle se déduit de `_bot` : le dossier parent de `_bot` quand la
+config y est rangée, ou, sans aucun fichier, quand le programme tourne depuis `_bot`.
 """
 
 from __future__ import annotations
@@ -24,7 +30,8 @@ from __future__ import annotations
 import os
 import sys
 import tomllib
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from importlib import resources
 from pathlib import Path
 
 TYPES_CATEGORIE = {
@@ -44,10 +51,21 @@ PREFIXE_SYSTEME = "_"
 RACINE_DEPOT = Path(__file__).resolve().parents[2]
 
 NOM_CONFIG = "config.toml"
+NOM_DEFAUT = "config_defaut.toml"
+
+# Origine d'une valeur, affichée par « disco config »
+DEFAUT = "défaut"  # configuration intégrée au programme
+BOT = "_bot"  # <racine>/_bot/config.toml
+CLONE = "clone"  # config.toml trouvé ailleurs (clone de développement, --config)
+DEDUIT = "déduit"  # calculé (chemins déduits de la racine, outils trouvés)
 
 
 class ErreurConfig(Exception):
     """Configuration absente ou invalide."""
+
+
+class RacineIntrouvable(ErreurConfig):
+    """Aucune racine écrite ni déductible : un réglage manque, la config n'est pas cassée."""
 
 
 @dataclass(frozen=True)
@@ -89,7 +107,22 @@ class Config:
     processus: int
     categories: dict[str, Categorie]
     references: References
-    source: Path | None = None
+    # Fichiers lus, du dessous vers le dessus (vide : configuration par défaut seule)
+    sources: tuple[Path, ...] = ()
+    # Couche d'où vient chaque clé écrite (« categories.Bulk.pages » -> « _bot »)
+    origines: dict[str, str] = field(default_factory=dict)
+
+    def origine(self, cle: str) -> str:
+        """Origine d'une clé pointée (« chemins.base », « categories.Bulk »…).
+
+        Une clé écrite dans aucun fichier vient de la configuration par défaut, sauf les
+        chemins et les outils, calculés à partir de la racine.
+        """
+        if cle in self.origines:
+            return self.origines[cle]
+        if cle.startswith(("chemins.", "outils.")):
+            return DEDUIT
+        return DEFAUT
 
     def categorie(self, dossier: str) -> Categorie | None:
         """Catégorie d'un dossier de premier niveau.
@@ -115,31 +148,37 @@ def dossier_environnement() -> Path | None:
     return Path(sys.prefix).resolve().parent
 
 
-def trouver(explicite: str | os.PathLike | None = None) -> Path:
-    """Chemin du fichier de configuration.
+def dossier_programme() -> Path | None:
+    """Dossier d'où tourne le programme : celui de l'exécutable pour la version compilée
+    (`<racine>/_bot/disco.exe`), sinon celui qui contient l'environnement Python."""
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).resolve().parent
+    return dossier_environnement()
 
-    Ordre : argument explicite, variable DISCO_CONFIG, config.toml à côté de
-    l'environnement Python (`_bot` en production, le clone en développement),
-    ./config.toml, config.toml du dépôt.
+
+def trouver(explicite: str | os.PathLike | None = None) -> Path | None:
+    """Chemin du fichier de configuration, ou None s'il n'y en a pas (configuration
+    par défaut seule).
+
+    Ordre : argument explicite, variable DISCO_CONFIG, config.toml à côté du programme
+    (`_bot` en production, le clone en développement), ./config.toml, config.toml du
+    dépôt. Un fichier demandé explicitement (argument ou variable) doit exister.
     """
+    demande = explicite or os.environ.get("DISCO_CONFIG")
+    if demande:
+        chemin = Path(demande)
+        if not chemin.is_file():
+            raise ErreurConfig(f"Configuration introuvable : {chemin}")
+        return chemin
     candidats: list[Path] = []
-    if explicite:
-        candidats.append(Path(explicite))
-    elif os.environ.get("DISCO_CONFIG"):
-        candidats.append(Path(os.environ["DISCO_CONFIG"]))
-    else:
-        env = dossier_environnement()
-        if env is not None:
-            candidats.append(env / NOM_CONFIG)
-        candidats += [Path.cwd() / NOM_CONFIG, RACINE_DEPOT / NOM_CONFIG]
+    programme = dossier_programme()
+    if programme is not None:
+        candidats.append(programme / NOM_CONFIG)
+    candidats += [Path.cwd() / NOM_CONFIG, RACINE_DEPOT / NOM_CONFIG]
     for c in candidats:
         if c.is_file():
             return c
-    essais = ", ".join(str(c) for c in dict.fromkeys(candidats))
-    raise ErreurConfig(
-        f"Configuration introuvable (essayé : {essais}). "
-        "Copier config.example.toml en config.toml et adapter les chemins."
-    )
+    return None
 
 
 def _exiger(table: dict, cle: str, ou: str):
@@ -167,19 +206,28 @@ def _outil(outils: dict, nom: str, bot: Path) -> str:
     return str(local) if local.is_file() else nom
 
 
-def _racine_deduite(source: Path | None) -> Path | None:
-    """Racine déduite de l'emplacement de la config : `<racine>/_bot/config.toml`."""
-    if source is not None and source.parent.name.startswith(PREFIXE_SYSTEME):
-        return source.parent.parent
+def _racine_de_bot(dossier: Path | None) -> Path | None:
+    """Racine déduite d'un dossier système (`<racine>/_bot`) : son dossier parent."""
+    if dossier is not None and dossier.name.startswith(PREFIXE_SYSTEME):
+        return dossier.parent
     return None
 
 
-def depuis_dict(d: dict, source: Path | None = None) -> Config:
+def defaut() -> dict:
+    """Configuration par défaut, intégrée au programme."""
+    texte = resources.files("disco").joinpath("modeles", NOM_DEFAUT).read_text("utf-8")
+    return tomllib.loads(texte)
+
+
+def depuis_dict(
+    d: dict, sources: tuple[Path, ...] = (), origines: dict[str, str] | None = None
+) -> Config:
     """Construit et valide une Config à partir du contenu TOML déjà lu.
 
-    Sans `chemins.racine`, la racine est déduite de l'emplacement de la config, si elle
-    est rangée dans un dossier système (`<racine>/_bot/config.toml`).
+    `d` est posé sur la configuration par défaut ; `chemins.racine` y est obligatoire
+    (`charger` la déduit de `_bot` au besoin).
     """
+    d = fusionner(defaut(), d)
     chemins = d.get("chemins", {})
     outils = d.get("outils", {})
     analyse = d.get("analyse", {})
@@ -189,11 +237,11 @@ def depuis_dict(d: dict, source: Path | None = None) -> Config:
         raise ErreurConfig("La clé [chemins] musique s'appelle désormais racine.")
     if "donnees" in chemins:
         raise ErreurConfig("La clé [chemins] donnees s'appelle désormais base.")
-    racine = _chemin(chemins, "racine") or _racine_deduite(source)
+    racine = _chemin(chemins, "racine")
     if racine is None:
-        raise ErreurConfig(
-            "Clé manquante : [chemins] racine (obligatoire quand config.toml "
-            "n'est pas rangé dans <racine>/_bot)."
+        raise RacineIntrouvable(
+            "Racine introuvable : lancer le programme depuis <racine>/_bot, ou indiquer "
+            "[chemins] racine dans config.toml."
         )
     sortie = _chemin(chemins, "sortie") or racine / "_data"
     bot = _chemin(chemins, "bot") or racine / "_bot"
@@ -206,16 +254,17 @@ def depuis_dict(d: dict, source: Path | None = None) -> Config:
             raise ErreurConfig(
                 f"Type inconnu pour [categories.{nom}] : {type_!r} (permis : {permis})"
             )
+        # Une catégorie par défaut retirée (type = "ignore") garde ses autres clés à la
+        # fusion : on les neutralise
+        actif = type_ != "ignore"
         categories[nom] = Categorie(
             nom=nom,
             type=type_,
-            pages=bool(c.get("pages", False)),
-            rg_album=bool(c.get("rg_album", False)),
+            pages=actif and bool(c.get("pages", False)),
+            rg_album=actif and bool(c.get("rg_album", False)),
         )
-    if not categories:
-        raise ErreurConfig('Aucune catégorie déclarée : section [categories."<dossier>"] attendue.')
 
-    surech = int(analyse.get("surechantillonnage_crete", 8))
+    surech = int(_exiger(analyse, "surechantillonnage_crete", "analyse"))
     if surech < 1:
         raise ErreurConfig("analyse.surechantillonnage_crete doit valoir au moins 1")
 
@@ -234,14 +283,15 @@ def depuis_dict(d: dict, source: Path | None = None) -> Config:
         ffmpeg=_outil(outils, "ffmpeg", bot),
         ffprobe=_outil(outils, "ffprobe", bot),
         fpcalc=_outil(outils, "fpcalc", bot),
-        reference_lufs=float(analyse.get("reference_lufs", -18.0)),
+        reference_lufs=float(_exiger(analyse, "reference_lufs", "analyse")),
         surechantillonnage_crete=surech,
-        processus=int(analyse.get("processus", 0)),
+        processus=int(_exiger(analyse, "processus", "analyse")),
         categories=categories,
         references=References(
             audit=_chemin(refs, "audit"), fiches_achat=_chemin(refs, "fiches_achat")
         ),
-        source=source,
+        sources=sources,
+        origines=origines or {},
     )
 
 
@@ -264,21 +314,50 @@ def fusionner(dessous: dict, dessus: dict) -> dict:
     return res
 
 
-def charger(explicite: str | os.PathLike | None = None) -> Config:
-    """Trouve, lit et valide la configuration.
+def _noter(origines: dict[str, str], contenu: dict, etiquette: str, prefixe: str = "") -> None:
+    """Note la couche qui écrit chaque clé de `contenu`, tables comprises."""
+    for cle, valeur in contenu.items():
+        nom = prefixe + cle
+        origines[nom] = etiquette
+        if isinstance(valeur, dict):
+            _noter(origines, valeur, etiquette, nom + ".")
 
-    Si la config trouvée n'est pas celle de `<racine>/_bot` (cas du clone de
-    développement), la config de `<racine>/_bot` est lue d'abord, puis surchargée.
+
+def charger(explicite: str | os.PathLike | None = None) -> Config:
+    """Trouve, lit, superpose et valide la configuration.
+
+    Couches, du dessous vers le dessus : la configuration par défaut (posée par
+    `depuis_dict`), `<racine>/_bot/config.toml` s'il existe, puis le fichier trouvé
+    s'il est ailleurs (clone de développement). Aucun fichier n'est obligatoire.
     """
     chemin = trouver(explicite)
-    contenu = _lire(chemin)
-    chemins = contenu.get("chemins", {})
-    racine = _chemin(chemins, "racine") or _racine_deduite(chemin)
+    contenu = _lire(chemin) if chemin else {}
+    racine_ecrite = _chemin(contenu.get("chemins", {}), "racine")
+    racine = racine_ecrite
+    if racine is None:
+        # <racine>/_bot/config.toml, ou, sans fichier, programme lancé depuis <racine>/_bot
+        racine = _racine_de_bot(chemin.parent if chemin else dossier_programme())
+
+    config_bot = None
     if racine is not None:
-        bot = _chemin(chemins, "bot") or racine / "_bot"
-        config_bot = bot / NOM_CONFIG
-        if config_bot.is_file() and config_bot.resolve() != chemin.resolve():
-            contenu = fusionner(_lire(config_bot), contenu)
-            # La racine de la config du clone l'emporte toujours
-            contenu.setdefault("chemins", {})["racine"] = str(racine)
-    return depuis_dict(contenu, source=chemin)
+        config_bot = (_chemin(contenu.get("chemins", {}), "bot") or racine / "_bot") / NOM_CONFIG
+    est_bot = (
+        chemin is not None and config_bot is not None and chemin.resolve() == config_bot.resolve()
+    )
+
+    couches: list[tuple[str, Path, dict]] = []
+    if config_bot is not None and config_bot.is_file() and not est_bot:
+        couches.append((BOT, config_bot, _lire(config_bot)))
+    if chemin is not None:
+        couches.append((BOT if est_bot else CLONE, chemin, contenu))
+
+    fusion: dict = {}
+    origines: dict[str, str] = {}
+    for etiquette, _, c in couches:
+        fusion = fusionner(fusion, c)
+        _noter(origines, c, etiquette)
+    if racine is not None:
+        # La racine du fichier trouvé (ou déduite) l'emporte toujours sur celle de _bot
+        fusion = fusionner(fusion, {"chemins": {"racine": str(racine)}})
+        origines["chemins.racine"] = couches[-1][0] if racine_ecrite else DEDUIT
+    return depuis_dict(fusion, sources=tuple(p for _, p, _ in couches), origines=origines)
