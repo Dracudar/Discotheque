@@ -44,19 +44,20 @@ Chaque emplacement peut être changé dans `config.toml`.
 
 > À partir de la première version en production (`v0.1`). D'ici là, le programme ne tourne que depuis le clone de développement (voir plus bas).
 
-La production est une **version compilée**, publiée dans les releases GitHub à chaque version de `main`. Elle contient tout : le programme, Python et ses dépendances, ffmpeg, ffprobe et fpcalc. Rien à installer sur la machine, pas même Python.
+La production est une **version compilée**, publiée dans les releases GitHub à chaque version de `main`. Elle contient tout : le programme, Python et ses dépendances, ffmpeg, ffprobe et fpcalc. Rien à installer à côté, pas même Python, et aucune configuration obligatoire : la structure de la racine est fixe et les catégories standard sont intégrées.
 
-1. **Télécharger** l'archive de la plateforme depuis la [dernière release](https://github.com/Dracudar/Discotheque/releases/latest).
-2. **Décompresser** son contenu dans `<racine>\_bot`.
-3. **Configurer** : copier [`config.example.toml`](config.example.toml) en `<racine>\_bot\config.toml` et l'adapter (baladeur, sauvegarde, catégories). La racine s'en déduit : c'est le dossier parent de `_bot`.
+1. **Lancer l'installateur** téléchargé depuis la [dernière release](https://github.com/Dracudar/Discotheque/releases/latest) (Windows signale un programme non signé : « Informations complémentaires », puis « Exécuter quand même »).
+2. **Choisir le dossier de la discothèque.** Le programme s'installe dans `<racine>\_bot` et crée les dossiers système. Une case permet de créer aussi l'arborescence de musique (`Artists`, `Compilations`…), et un choix permet d'installer un modèle d'IA adapté à la machine.
+3. **Personnaliser si besoin** `<racine>\_bot\config.toml` : baladeur, sauvegarde, catégories en plus (voir [`config.example.toml`](config.example.toml)).
 4. **Chemins longs** (pages de plus de 260 caractères) : une fois, dans PowerShell lancé en administrateur :
    ```
    New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name LongPathsEnabled -Value 1 -PropertyType DWORD -Force
    ```
 5. **Vérifier** : `<racine>\_bot\disco.exe doctor`. Tout doit être `[OK]`. Le diagnostic ne modifie rien.
-6. **Baladeur** (facultatif) : `disco.exe dap lanceur --dap <dossier de musique du baladeur>` y pose `synchro_discotheque.cmd`.
 
-**Mise à jour** : décompresser la nouvelle version par-dessus. `config.toml` n'est jamais écrasé.
+**Mise à jour** : relancer l'installateur de la nouvelle version ; la configuration est conservée. **Désinstallation** : retire le programme seulement, jamais la musique, `_data` ni la configuration.
+
+Sous Linux (dont Raspberry Pi), une archive à décompresser dans `<racine>/_bot`, puis `disco init`.
 
 ## Commandes
 
