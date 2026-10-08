@@ -29,7 +29,7 @@ src/
     ├── ia/            (4.2) traductions, cas ambigus → base
     ├── pages/         (2, 4.1, 5) base → _data
     │   └── modules/   album, artiste, projet, compositeur
-    └── copies/        baladeur, copie froide, archivage
+    └── copies/        (1.1, #54) baladeur, archivage
 ```
 
 Les dossiers marqués d'un jalon n'existent pas encore : ils naissent avec le livrable correspondant.
@@ -71,4 +71,4 @@ web ──────► mod/catalogue ─┼──► base SQLite ──► mo
 
 Deux mod ont besoin du même code ? Il remonte dans `backend/` ou `UI/`, jamais d'import croisé. Ils ont besoin des mêmes données ? Elles passent par la base.
 
-Les tests suivent la même arborescence (`tests/backend/`, `tests/core/`, `tests/mod/copies/`…) ; les garde-fous qui portent sur tout le dépôt restent à la racine de `tests/`. Deux fichiers de test ne doivent pas porter le même nom, même dans des dossiers différents (pytest les importe sans paquet).
+Les tests suivent la même arborescence (`tests/backend/`, `tests/core/`, `tests/mod/<nom>/`…) ; les garde-fous qui portent sur tout le dépôt restent à la racine de `tests/`. Deux fichiers de test ne doivent pas porter le même nom, même dans des dossiers différents (pytest les importe sans paquet).

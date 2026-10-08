@@ -3,7 +3,7 @@ cli.py - Ligne de commande « disco »
 
 Description:
     Point d'entrée en ligne de commande : « disco <commande> ». Construit le parseur
-    d'arguments et relie chaque sous-commande (doctor, config, dap, sauvegarde) à sa
+    d'arguments et relie chaque sous-commande (doctor, config) à sa
     fonction. Chaque sous-commande renvoie le code de retour du processus :
     0 si tout va bien, 1 en cas d'erreur pendant l'opération, 2 si la configuration
     est absente ou invalide.
@@ -25,7 +25,6 @@ from __future__ import annotations
 
 import argparse
 import sys
-from pathlib import Path
 
 from src.backend.config import ErreurConfig, charger
 from src.core.version import __version__
@@ -88,57 +87,6 @@ def _config(args: argparse.Namespace) -> int:
     return 0
 
 
-def _dap(args: argparse.Namespace) -> int:
-    """« disco dap <sens> » : synchronisation du baladeur, ou pose du lanceur.
-
-    `--dap` remplace `dap.destination` de la configuration.
-    """
-    from src.mod.copies import dap
-
-    try:
-        cfg = charger(args.config)
-        if args.sens == "lanceur":
-            chemin = dap.poser_lanceur(Path(args.dap) if args.dap else cfg.dap)
-            print(f"Lanceur posé : {chemin}")
-            return 0
-        return dap.operation_dap(
-            cfg,
-            args.sens,
-            dap=Path(args.dap) if args.dap else None,
-            simulation=args.simulation,
-            confirmer=args.confirmer,
-        )
-    except ErreurConfig as e:
-        print(e, file=sys.stderr)
-        return 2
-
-
-def _sauvegarde(args: argparse.Namespace) -> int:
-    """« disco sauvegarde <sens> » : copie froide de la discothèque, ou sa restauration."""
-    from src.mod.copies import dap
-
-    try:
-        cfg = charger(args.config)
-        return dap.operation_sauvegarde(
-            cfg, args.sens, simulation=args.simulation, confirmer=args.confirmer
-        )
-    except ErreurConfig as e:
-        print(e, file=sys.stderr)
-        return 2
-
-
-def _options_copie(sp: argparse.ArgumentParser) -> None:
-    """Ajoute à une sous-commande de copie les options `--simulation` et `--confirmer`."""
-    sp.add_argument(
-        "--simulation", action="store_true", help="affiche ce qui serait fait, sans rien modifier"
-    )
-    sp.add_argument(
-        "--confirmer",
-        action="store_true",
-        help="obligatoire pour « restaurer » (sinon simulation)",
-    )
-
-
 def construire_parseur() -> argparse.ArgumentParser:
     """Construit le parseur de « disco » et de ses sous-commandes.
 
@@ -159,23 +107,6 @@ def construire_parseur() -> argparse.ArgumentParser:
     sous.add_parser("config", help="affiche la configuration chargée").set_defaults(
         fonction=_config
     )
-    d = sous.add_parser("dap", help="synchronise la discothèque avec le baladeur")
-    d.add_argument(
-        "sens",
-        choices=["synchro", "envoyer", "recuperer", "restaurer", "lanceur"],
-        help=(
-            "synchro : arrivées du DAP → discothèque, puis discothèque → DAP ; "
-            "envoyer / recuperer : une seule des deux étapes ; "
-            "restaurer : DAP → discothèque ; lanceur : pose le lanceur sur le DAP"
-        ),
-    )
-    d.add_argument("--dap", help="dossier de musique du baladeur (sinon [dap] destination)")
-    _options_copie(d)
-    d.set_defaults(fonction=_dap)
-    s = sous.add_parser("sauvegarde", help="copie froide de la discothèque sur un autre disque")
-    s.add_argument("sens", choices=["envoyer", "restaurer"])
-    _options_copie(s)
-    s.set_defaults(fonction=_sauvegarde)
     return p
 
 

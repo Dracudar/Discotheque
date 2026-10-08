@@ -27,12 +27,12 @@ racine = 'X:\Musique'
 # arrivees = 'X:\Musique\_sort'             # arrivées depuis le baladeur
 
 [dap]
-# Dossier de musique du baladeur, pour les commandes lancées depuis le PC.
-# Le lanceur posé sur le baladeur (« disco dap lanceur ») donne ce chemin lui-même.
+# Dossier de musique du baladeur. Les copies sont en refonte (issue #54) :
+# cette clé et [sauvegarde] seront sans doute retirées.
 destination = 'X:\Baladeur\Music'
 
 [sauvegarde]
-# Copie froide sur un autre disque (« disco sauvegarde envoyer »).
+# Copie froide sur un autre disque.
 destination = 'X:\Sauvegarde\Musique'
 
 [references]

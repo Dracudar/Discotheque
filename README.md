@@ -8,8 +8,6 @@ Outils pour indexer et documenter une discothèque personnelle (fichiers FLAC, A
 
 **Disponibles**
 - **Diagnostic** (`disco doctor`) : Python, modules, SQLite, ffmpeg, fpcalc, chemins longs et configuration, sans rien modifier.
-- **Synchronisation du baladeur** : récupère ses arrivées, puis y copie la discothèque en miroir. Un double-clic sur le lanceur posé sur le baladeur suffit.
-- **Copies de sécurité** : sauvegarde froide sur un autre disque, restauration depuis le baladeur ou la sauvegarde. Rien n'est supprimé directement : ce qui disparaît part dans une corbeille.
 - **Journaux et rapports** : chaque opération s'affiche dans la console, écrit un journal détaillé et produit un rapport lisible.
 
 **Prévues**
@@ -65,13 +63,8 @@ Sous Linux (dont Raspberry Pi), une archive à décompresser dans `<racine>/_bot
 |---|---|
 | `disco doctor` | Vérifie Python, les modules, SQLite (FTS5, JSON), ffmpeg, fpcalc (y compris par l'entrée standard), les chemins longs et la configuration |
 | `disco config` | Affiche la configuration chargée et l'emplacement de chaque dossier |
-| `disco dap synchro` | Déplace les arrivées du baladeur (`_sort`) vers la discothèque, puis copie la discothèque en miroir sur le baladeur, sans les dossiers système `_…` |
-| `disco dap envoyer` / `recuperer` | Une seule des deux étapes |
-| `disco dap restaurer --confirmer` | Sens inverse, baladeur → discothèque ; ce qui disparaîtrait part dans `_to_delete`. Sans `--confirmer` : simulation |
-| `disco dap lanceur --dap <dossier>` | Pose `synchro_discotheque.cmd` sur le baladeur : un double-clic lance la synchro, quelles que soient les lettres de lecteur |
-| `disco sauvegarde envoyer` / `restaurer --confirmer` | Copie froide sur un autre disque ; les fichiers remplacés ou supprimés y sont gardés dans sa corbeille |
 
-Toutes les commandes de copie acceptent `--simulation`.
+Les copies vers le baladeur et l'archive (anciennes commandes `disco dap` et `disco sauvegarde`) sont en cours de refonte (issue #54). L'ancienne version est archivée dans `legacy/dap/`.
 
 ## Développement
 
@@ -121,15 +114,16 @@ Discotheque/
 ├── src/                        le paquet lui-même (commande « disco », « python -m src »)
 │   ├── core/                   entrée : commandes (cli), diagnostic (doctor), version
 │   ├── backend/                services communs : configuration, journaux, moteur de copie
-│   ├── assets/                 configuration par défaut, lanceur du baladeur
+│   ├── assets/                 configuration par défaut
 │   └── mod/                    le métier, un dossier par mod
-│       └── copies/             baladeur et sauvegarde froide (dap)
 ├── tests/                      tests pytest, sur données fictives, rangés en miroir de src/
 │   ├── fixtures/               fiche d'achat fictive
 │   ├── test_architecture.py    garde-fou : règle de dépendance entre couches
 │   ├── test_depot_propre.py    garde-fou : aucune donnée réelle ni chemin du poste
 │   └── test_entetes.py         garde-fou : en-têtes et docstrings
-├── legacy/fiches/              ancien gabarit des fiches d'achat (gen.py, _head.html), pour référence
+├── legacy/                     l'existant, archivé pour référence (non importé)
+│   ├── fiches/                 ancien gabarit des fiches d'achat (gen.py, _head.html)
+│   └── dap/                    ancienne synchro du baladeur et sauvegarde froide (refonte : #54)
 ├── docs/
 │   ├── README.md               feuille de route (jalons) et catégories
 │   ├── ARCHITECTURE.md         couches du code et règle de dépendance

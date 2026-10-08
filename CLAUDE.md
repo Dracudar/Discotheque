@@ -35,7 +35,7 @@ Détail dans `docs/ARCHITECTURE.md` (même convention que Morphoz_SnackApp, bran
 - **couches** aux noms anglais : `core/` (entrée : cli, doctor, version), `backend/` (services communs sans métier : config, journal, copie, puis base SQLite et outils), `UI/` (affichage commun aux pages), `assets/` (fichiers intégrés), `mod/<nom>/` (métier : analyse, catalogue, ia, pages, copies). Dossiers métier et code en français ;
 - **règle de dépendance** : un `mod` n'importe jamais un autre `mod` ni `core` ; `backend` n'importe ni `core`, ni `UI`, ni `mod`. Ce qui est partagé remonte dans `backend/` ou `UI/`. Vérifié par `tests/test_architecture.py` ;
 - **les `mod` communiquent par la base SQLite** : chacun lit ou écrit la base, aucun n'appelle les autres. Les pages ne lisent que la base ;
-- **tests en miroir de `src/`** (`tests/backend/`, `tests/mod/copies/`…), sans deux fichiers de même nom.
+- **tests en miroir de `src/`** (`tests/backend/`, `tests/mod/<nom>/`…), sans deux fichiers de même nom.
 
 ## Règles absolues (sécurité de la discothèque)
 1. **La discothèque (`chemins.racine` en production) est en lecture seule.** Exceptions :
@@ -146,19 +146,13 @@ On n'écrit jamais un chemin en dur dans le code ni dans la doc : tout passe par
   - ne jamais travailler en même temps sur la même branche depuis le cloud et depuis le PC.
 - **Qualité :** `ruff check .`, `ruff format src tests` et `pytest` doivent passer avant toute PR. La CI le vérifie sous Windows (Python 3.14) et Linux (Python 3.13).
 - **Tests :** pas de fichiers audio réels dans le dépôt. Les fixtures audio sont synthétiques, générées par ffmpeg pendant les tests. Les fiches réelles, référence du jalon 4.1, restent hors dépôt et sont lues par les tests locaux (`references.fiches_achat` ou `DISCO_FICHES_REF`).
-- **`legacy/fiches/` :** l'ancien gabarit des fiches d'achat, gardé pour référence et testé. Les scripts de l'audit restent hors dépôt (`references.audit`) : on s'en inspire pour réécrire proprement dans `src/`.
+- **`legacy/` :** l'existant archivé, jamais importé par `src/` : `fiches/` (ancien gabarit des fiches d'achat, gardé pour référence et testé) et `dap/` (ancienne synchro du baladeur et sauvegarde froide, non testée, à réécrire dans `mod/copies/`, #54). Un code qui n'est plus d'actualité y est déplacé plutôt que supprimé. Les scripts de l'audit restent hors dépôt (`references.audit`) : on s'en inspire pour réécrire proprement dans `src/`.
 
 ## Commandes utiles
 ```
 py -3.14 -m venv .venv && .venv\Scripts\activate && pip install -e .[dev]
 disco doctor          # vérifie l'environnement (ne modifie rien)
 disco config          # affiche la configuration chargée
-disco dap synchro --simulation    # synchro du baladeur, sans rien modifier
-disco dap envoyer | recuperer     # une seule étape de la synchro
-disco dap lanceur                 # pose le lanceur sur le baladeur
-disco sauvegarde envoyer          # copie froide sur un autre disque
-disco dap restaurer --confirmer          # baladeur → discothèque (sans --confirmer : simulation)
-disco sauvegarde restaurer --confirmer   # copie froide → discothèque (idem)
 pytest                # tests
 ruff check . && ruff format src tests
 ```
