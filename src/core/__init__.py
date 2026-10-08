@@ -2,7 +2,7 @@
 __init__.py - Couche core
 
 Description:
-    Entrée et environnement : ligne de commande, diagnostic, version. Envoie
+    Entrée et environnement : ligne de commande, diagnostic. Envoie
     chaque commande vers le mod qui la traite ; peut importer backend et mod.
 
 Auteur :

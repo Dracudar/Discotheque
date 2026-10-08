@@ -112,7 +112,8 @@ Le dépôt ne contient aucune donnée réelle : les tests utilisent des données
 ```
 Discotheque/
 ├── src/                        le paquet lui-même (commande « disco », « python -m src »)
-│   ├── core/                   entrée : commandes (cli), diagnostic (doctor), version
+│   ├── __versions__.py         versions du programme (puis outils, dépendances, modèles)
+│   ├── core/                   entrée : commandes (cli), diagnostic (doctor)
 │   ├── backend/                services communs : configuration, journaux, moteur de copie
 │   ├── assets/                 configuration par défaut
 │   └── mod/                    le métier, un dossier par mod

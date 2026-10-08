@@ -5,8 +5,8 @@ Description:
     Discothèque : indexation, analyses qualité et pages de la discothèque.
     `src/` est lui-même le paquet, rangé en couches (voir docs/ARCHITECTURE.md) :
     core (entrée et environnement), backend (services communs), UI (affichage commun),
-    assets (fichiers intégrés) et mod (métier). La version du programme est dans
-    `src.core.version`.
+    assets (fichiers intégrés) et mod (métier). Les versions (programme, puis outils et
+    dépendances) sont dans `src.__versions__`.
 
 Auteur :
     Dracudar

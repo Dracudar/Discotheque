@@ -8,7 +8,9 @@ Description:
       - core peut tout importer ;
       - un mod n'importe que backend, UI et lui-même, jamais un autre mod ni core ;
       - UI n'importe que backend ;
-      - backend n'importe que lui-même, jamais core, UI ni mod.
+      - backend n'importe que lui-même, jamais core, UI ni mod ;
+      - les modules à la racine de `src` (`__versions__.py`), lisibles par toutes les
+        couches, n'importent rien du paquet (sauf `__main__.py`, point d'entrée).
     Vérifie aussi que chaque dossier de `src` est une couche connue.
 
 Auteur :
@@ -33,6 +35,9 @@ DEPOT = Path(__file__).resolve().parents[1]
 SRC = DEPOT / "src"
 PAQUET = "src"
 COUCHES = {"core", "backend", "UI", "assets", "mod"}
+
+# Modules de la racine de `src` qui peuvent importer le paquet (points d'entrée)
+ENTREES = {"__main__"}
 
 # Couches que chacune peut importer, en plus d'elle-même (un mod : lui seul, pas les autres)
 AUTORISE = {
@@ -95,6 +100,14 @@ def violations(src: Path = SRC) -> list[str]:
     trouvees = []
     for fichier in sorted(src.rglob("*.py")):
         source = couche(nom_module(fichier, src))
+        if fichier.parent == src and fichier.stem not in ENTREES:
+            # module feuille de la racine : n'importe rien du paquet
+            trouvees += [
+                f"{fichier.relative_to(src.parent).as_posix()} → {m}"
+                for m in sorted(importes(fichier, src))
+                if m.split(".")[0] == PAQUET
+            ]
+            continue
         if source is None or source == "core":
             continue
         famille = source.split(".")[0]
@@ -134,6 +147,8 @@ def _ecrire(racine: Path, chemin: str, texte: str = "") -> None:
         ("backend/x.py", "from src.mod.a import y\n", "src.mod.a.y"),
         ("backend/x.py", "from ..core import cli\n", "src.core.cli"),
         ("UI/x.py", "from src.mod.a import y\n", "src.mod.a.y"),
+        ("__versions__.py", "from src.backend import config\n", "src.backend.config"),
+        ("__versions__.py", "from . import core\n", "src.core"),
     ],
 )
 def test_violations_detectees(tmp_path, chemin, texte, interdit):
@@ -146,4 +161,8 @@ def test_imports_autorises(tmp_path):
     _ecrire(tmp_path, "mod/a/x.py", "from src.backend import c\nfrom . import y\nimport os\n")
     _ecrire(tmp_path, "mod/a/y.py", "from src.mod.a import x\n")
     _ecrire(tmp_path, "UI/z.py", "from src.backend.config import charger\n")
+    _ecrire(tmp_path, "mod/a/v.py", "from src.__versions__ import __version__\n")
+    _ecrire(tmp_path, "backend/v.py", "from src import __versions__\n")
+    _ecrire(tmp_path, "__main__.py", "from src.core.cli import main\n")
+    _ecrire(tmp_path, "__versions__.py", "__version__ = '0'\n")
     assert violations(tmp_path / "src") == []

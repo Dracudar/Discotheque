@@ -26,8 +26,8 @@ from __future__ import annotations
 import argparse
 import sys
 
+from src.__versions__ import __version__
 from src.backend.config import ErreurConfig, charger
-from src.core.version import __version__
 
 
 def _doctor(args: argparse.Namespace) -> int:

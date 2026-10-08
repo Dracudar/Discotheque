@@ -31,8 +31,8 @@ where = ["."]
 include = ["src*"]
 
 [tool.setuptools.dynamic]
-# Seule source de la version du programme : __version__ dans src/core/version.py
-version = { attr = "src.core.version.__version__" }
+# Seule source de la version du programme : __version__ dans src/__versions__.py
+version = { attr = "src.__versions__.__version__" }
 
 [tool.setuptools.package-data]
 src = ["assets/*", "py.typed"]
