@@ -1,3 +1,24 @@
+"""
+test_config.py - Tests de la configuration
+
+Description:
+    Tests du chargement de la configuration : fichier d'exemple, catégories,
+    chemins déduits de la racine, superposition des couches (défaut, _bot, clone),
+    ordre de recherche, anciennes clés et valeurs refusées, outils externes.
+
+Auteur :
+    Dracudar
+
+Version :
+    1.0
+
+Date de création :
+    2026.10.06
+
+Date de modification :
+    2026.10.08
+"""
+
 import os
 
 import pytest

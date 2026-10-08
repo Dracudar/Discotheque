@@ -1,4 +1,25 @@
-"""Point d'entrée en ligne de commande : « disco <commande> »."""
+"""
+cli.py - Ligne de commande « disco »
+
+Description:
+    Point d'entrée en ligne de commande : « disco <commande> ». Construit le parseur
+    d'arguments et relie chaque sous-commande (doctor, config, dap, sauvegarde) à sa
+    fonction. Chaque sous-commande renvoie le code de retour du processus :
+    0 si tout va bien, 1 en cas d'erreur pendant l'opération, 2 si la configuration
+    est absente ou invalide.
+
+Auteur :
+    Dracudar
+
+Version :
+    1.0
+
+Date de création :
+    2026.10.06
+
+Date de modification :
+    2026.10.07
+"""
 
 from __future__ import annotations
 
@@ -11,6 +32,11 @@ from disco.config import ErreurConfig, charger
 
 
 def _doctor(args: argparse.Namespace) -> int:
+    """« disco doctor » : diagnostic de l'environnement.
+
+    Une configuration illisible n'arrête pas le diagnostic : elle y figure comme un
+    résultat parmi les autres.
+    """
     from disco import doctor
 
     try:
@@ -21,6 +47,7 @@ def _doctor(args: argparse.Namespace) -> int:
 
 
 def _config(args: argparse.Namespace) -> int:
+    """« disco config » : affiche la configuration chargée et l'origine de chaque valeur."""
     try:
         cfg = charger(args.config)
     except ErreurConfig as e:
@@ -28,7 +55,7 @@ def _config(args: argparse.Namespace) -> int:
         return 2
 
     def ligne(titre: str, valeur: object, cle: str) -> None:
-        # Entre crochets : d'où vient la valeur (défaut, _bot, clone, déduit)
+        """Affiche une valeur, suivie de son origine entre crochets (défaut, _bot…)."""
         print(f"{titre:<10}: {valeur}  [{cfg.origine(cle)}]")
 
     fichiers = " + ".join(str(s) for s in cfg.sources) or "aucun (configuration par défaut)"
@@ -62,6 +89,10 @@ def _config(args: argparse.Namespace) -> int:
 
 
 def _dap(args: argparse.Namespace) -> int:
+    """« disco dap <sens> » : synchronisation du baladeur, ou pose du lanceur.
+
+    `--dap` remplace `dap.destination` de la configuration.
+    """
     from disco import dap
 
     try:
@@ -83,6 +114,7 @@ def _dap(args: argparse.Namespace) -> int:
 
 
 def _sauvegarde(args: argparse.Namespace) -> int:
+    """« disco sauvegarde <sens> » : copie froide de la discothèque, ou sa restauration."""
     from disco import dap
 
     try:
@@ -96,6 +128,7 @@ def _sauvegarde(args: argparse.Namespace) -> int:
 
 
 def _options_copie(sp: argparse.ArgumentParser) -> None:
+    """Ajoute à une sous-commande de copie les options `--simulation` et `--confirmer`."""
     sp.add_argument(
         "--simulation", action="store_true", help="affiche ce qui serait fait, sans rien modifier"
     )
@@ -107,6 +140,12 @@ def _options_copie(sp: argparse.ArgumentParser) -> None:
 
 
 def construire_parseur() -> argparse.ArgumentParser:
+    """Construit le parseur de « disco » et de ses sous-commandes.
+
+    Returns:
+        Le parseur ; chaque sous-commande range sa fonction dans l'attribut `fonction`
+        des arguments analysés.
+    """
     p = argparse.ArgumentParser(prog="disco", description="Outils de la discothèque.")
     p.add_argument("--version", action="version", version=f"disco {__version__}")
     p.add_argument(
@@ -141,6 +180,15 @@ def construire_parseur() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Lance la commande demandée.
+
+    Args:
+        argv: Arguments de la ligne de commande, sans le nom du programme ;
+            ceux de `sys.argv` par défaut (les tests passent leur propre liste).
+
+    Returns:
+        Le code de retour du processus.
+    """
     # Sortie console en UTF-8, y compris dans un terminal Windows
     for flux in (sys.stdout, sys.stderr):
         if hasattr(flux, "reconfigure"):

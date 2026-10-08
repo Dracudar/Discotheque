@@ -1,28 +1,44 @@
-"""Chargement et validation de la configuration locale (config.toml).
+"""
+config.py - Configuration de la discothèque
 
-Tout part de la racine de la discothèque (`chemins.racine`). Les dossiers système
-vivent à la racine et commencent par « _ » ; chacun peut être déplacé dans la config :
+Description:
+    Chargement et validation de la configuration locale (config.toml).
 
-    <racine>/_data          pages générées (miroir de la discothèque), base et caches
-    <racine>/_data/_base    index SQLite : coûteux à reconstruire, jamais effacé
-    <racine>/_data/_cache   réponses des services en ligne
-    <racine>/_bot           installation de production (environnement, config)
-    <racine>/_bot/tools     outils externes (ffmpeg, ffprobe, fpcalc)
-    <racine>/_sort          arrivées depuis le baladeur
-    <racine>/_log           journaux détaillés
-    <racine>/_reports       rapports lisibles des résultats
-    <racine>/_to_delete     corbeille des opérations (jamais de suppression directe)
+    Tout part de la racine de la discothèque (`chemins.racine`). Les dossiers système
+    vivent à la racine et commencent par « _ » ; chacun peut être déplacé dans la config :
 
-La configuration se superpose en trois couches, la plus haute l'emportant clé par clé :
+        <racine>/_data          pages générées (miroir de la discothèque), base et caches
+        <racine>/_data/_base    index SQLite : coûteux à reconstruire, jamais effacé
+        <racine>/_data/_cache   réponses des services en ligne
+        <racine>/_bot           installation de production (environnement, config)
+        <racine>/_bot/tools     outils externes (ffmpeg, ffprobe, fpcalc)
+        <racine>/_sort          arrivées depuis le baladeur
+        <racine>/_log           journaux détaillés
+        <racine>/_reports       rapports lisibles des résultats
+        <racine>/_to_delete     corbeille des opérations (jamais de suppression directe)
 
-1. la configuration par défaut, intégrée au programme (`modeles/config_defaut.toml`) ;
-2. `<racine>/_bot/config.toml`, facultatif : seulement ce qui diffère (baladeur,
-   sauvegarde, références, catégories en plus) ;
-3. le `config.toml` trouvé ailleurs (le clone, en développement) : `racine` et toute
-   surcharge.
+    La configuration se superpose en trois couches, la plus haute l'emportant clé par clé :
 
-Sans `racine` écrite, elle se déduit de `_bot` : le dossier parent de `_bot` quand la
-config y est rangée, ou, sans aucun fichier, quand le programme tourne depuis `_bot`.
+    1. la configuration par défaut, intégrée au programme (`modeles/config_defaut.toml`) ;
+    2. `<racine>/_bot/config.toml`, facultatif : seulement ce qui diffère (baladeur,
+       sauvegarde, références, catégories en plus) ;
+    3. le `config.toml` trouvé ailleurs (le clone, en développement) : `racine` et toute
+       surcharge.
+
+    Sans `racine` écrite, elle se déduit de `_bot` : le dossier parent de `_bot` quand la
+    config y est rangée, ou, sans aucun fichier, quand le programme tourne depuis `_bot`.
+
+Auteur :
+    Dracudar
+
+Version :
+    1.0
+
+Date de création :
+    2026.10.06
+
+Date de modification :
+    2026.10.07
 """
 
 from __future__ import annotations
@@ -88,6 +104,36 @@ class References:
 
 @dataclass(frozen=True)
 class Config:
+    """Configuration chargée et validée, telle qu'utilisée par tout le programme.
+
+    Tous les chemins sont résolus : ceux qui ne sont pas écrits dans un fichier sont
+    déduits de la racine (voir l'en-tête du module). Les noms des attributs suivent
+    les clés du TOML (`base` = `chemins.base`, `dap` = `dap.destination`…).
+
+    Attributes:
+        racine: Racine de la discothèque (la sandbox en développement).
+        sortie: Pages générées (`_data`).
+        base: Index SQLite (`_data/_base`), jamais effacé.
+        cache: Réponses des services en ligne (`_data/_cache`).
+        journaux: Journaux détaillés (`_log`).
+        rapports: Rapports lisibles (`_reports`).
+        corbeille: Corbeille des opérations (`_to_delete`).
+        bot: Installation de production (`_bot`).
+        arrivees: Arrivées depuis le baladeur (`_sort`).
+        dap: Dossier de musique du baladeur, s'il est configuré.
+        sauvegarde: Destination de la copie froide, si elle est configurée.
+        ffmpeg: Commande de ffmpeg (chemin complet ou nom cherché dans le PATH).
+        ffprobe: Commande de ffprobe.
+        fpcalc: Commande de fpcalc (Chromaprint).
+        reference_lufs: Sonie de référence du ReplayGain 2 (−18 LUFS par défaut).
+        surechantillonnage_crete: Facteur de suréchantillonnage de la crête vraie.
+        processus: Pistes analysées en parallèle (0 : nombre de cœurs − 2).
+        categories: Catégories déclarées, par nom de dossier.
+        references: Données de référence hors dépôt.
+        sources: Fichiers lus, du dessous vers le dessus.
+        origines: Couche qui a écrit chaque clé.
+    """
+
     racine: Path
     sortie: Path
     base: Path
@@ -182,12 +228,23 @@ def trouver(explicite: str | os.PathLike | None = None) -> Path | None:
 
 
 def _exiger(table: dict, cle: str, ou: str):
+    """Valeur d'une clé obligatoire de `table`.
+
+    Args:
+        table: Table TOML lue.
+        cle: Clé demandée.
+        ou: Nom de la table, pour le message d'erreur (« analyse »).
+
+    Raises:
+        ErreurConfig: La clé est absente.
+    """
     if cle not in table:
         raise ErreurConfig(f"Clé manquante : [{ou}] {cle}")
     return table[cle]
 
 
 def _chemin(table: dict, cle: str) -> Path | None:
+    """Chemin écrit sous `cle`, ou None si la clé est absente ou vide."""
     v = table.get(cle)
     return Path(v) if v else None
 
@@ -226,6 +283,19 @@ def depuis_dict(
 
     `d` est posé sur la configuration par défaut ; `chemins.racine` y est obligatoire
     (`charger` la déduit de `_bot` au besoin).
+
+    Args:
+        d: Contenu TOML, déjà fusionné s'il vient de plusieurs fichiers.
+        sources: Fichiers lus, gardés pour `disco config`.
+        origines: Couche qui a écrit chaque clé (voir `Config.origine`).
+
+    Returns:
+        La configuration validée.
+
+    Raises:
+        RacineIntrouvable: `chemins.racine` absente.
+        ErreurConfig: Ancienne clé renommée, catégorie de type inconnu, clé
+            obligatoire manquante ou valeur hors limites.
     """
     d = fusionner(defaut(), d)
     chemins = d.get("chemins", {})
@@ -296,6 +366,11 @@ def depuis_dict(
 
 
 def _lire(chemin: Path) -> dict:
+    """Lit un fichier TOML.
+
+    Raises:
+        ErreurConfig: Le fichier n'est pas du TOML valide.
+    """
     try:
         with open(chemin, "rb") as f:
             return tomllib.load(f)
@@ -329,6 +404,16 @@ def charger(explicite: str | os.PathLike | None = None) -> Config:
     Couches, du dessous vers le dessus : la configuration par défaut (posée par
     `depuis_dict`), `<racine>/_bot/config.toml` s'il existe, puis le fichier trouvé
     s'il est ailleurs (clone de développement). Aucun fichier n'est obligatoire.
+
+    Args:
+        explicite: Fichier demandé par `--config` ; sinon, recherche par `trouver`.
+
+    Returns:
+        La configuration validée, avec ses fichiers sources et l'origine de chaque clé.
+
+    Raises:
+        RacineIntrouvable: Aucune racine écrite ni déductible.
+        ErreurConfig: Fichier demandé introuvable, TOML invalide ou valeur refusée.
     """
     chemin = trouver(explicite)
     contenu = _lire(chemin) if chemin else {}

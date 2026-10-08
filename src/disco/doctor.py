@@ -1,7 +1,25 @@
-"""Diagnostic de l'environnement (« disco doctor »).
+"""
+doctor.py - Diagnostic de l'environnement
 
-Ne modifie rien : vérifie Python, les modules, SQLite, les outils externes,
-les chemins longs Windows et les chemins de la configuration.
+Description:
+    Diagnostic de l'environnement (« disco doctor »).
+
+    Ne modifie rien : vérifie Python, les modules, SQLite, les outils externes,
+    les chemins longs Windows et les chemins de la configuration. Chaque vérification
+    renvoie un ou plusieurs `Resultat` de statut `OK`, `ATTENTION` (le programme
+    fonctionne, mais un point mérite un coup d'œil) ou `ERREUR` (à corriger).
+
+Auteur :
+    Dracudar
+
+Version :
+    1.0
+
+Date de création :
+    2026.10.06
+
+Date de modification :
+    2026.10.07
 """
 
 from __future__ import annotations
@@ -24,6 +42,14 @@ MARQUES = {OK: "[OK]", ATTENTION: "[!!]", ERREUR: "[XX]"}
 
 @dataclass
 class Resultat:
+    """Résultat d'une vérification.
+
+    Attributes:
+        nom: Ce qui est vérifié (« Python », « ffmpeg »…).
+        statut: `OK`, `ATTENTION` ou `ERREUR`.
+        detail: Version trouvée, chemin, ou ce qu'il faut corriger.
+    """
+
     nom: str
     statut: str
     detail: str
@@ -31,6 +57,7 @@ class Resultat:
 
 # --------------------------------------------------------------------- Python
 def verifier_python() -> Resultat:
+    """Vérifie la version de Python (3.13 minimum) et indique l'interpréteur utilisé."""
     v = sys.version_info
     texte = f"{v.major}.{v.minor}.{v.micro} ({platform.python_implementation()}, {sys.executable})"
     if (v.major, v.minor) < (3, 13):
@@ -39,6 +66,7 @@ def verifier_python() -> Resultat:
 
 
 def verifier_modules() -> list[Resultat]:
+    """Vérifie que les dépendances (numpy, scipy, mutagen) s'importent ; donne leur version."""
     res = []
     for nom in ("numpy", "scipy", "mutagen"):
         try:
@@ -74,6 +102,11 @@ def fonctions_sqlite() -> dict[str, bool]:
 
 
 def verifier_sqlite() -> Resultat:
+    """Vérifie la version de SQLite et ses fonctions utiles au projet.
+
+    FTS5 manquant est une erreur ; une autre fonction
+    manquante n'est qu'un point d'attention.
+    """
     dispo = fonctions_sqlite()
     manque = [k for k, v in dispo.items() if not v]
     detail = f"SQLite {sqlite3.sqlite_version} : " + ", ".join(
@@ -94,12 +127,27 @@ def localiser(commande: str) -> str | None:
 
 
 def version_outil(chemin: str, option: str = "-version") -> str:
+    """Première ligne affichée par un outil appelé avec son option de version.
+
+    Args:
+        chemin: Exécutable à lancer.
+        option: Option qui affiche la version.
+
+    Returns:
+        La première ligne de la sortie standard (sinon de la sortie d'erreur), ou « ? ».
+    """
     r = subprocess.run([chemin, option], capture_output=True, text=True, timeout=30)
     sortie = (r.stdout or r.stderr).strip().splitlines()
     return sortie[0] if sortie else "?"
 
 
 def verifier_outil(nom: str, commande: str) -> Resultat:
+    """Vérifie qu'un outil externe est présent et répond.
+
+    Args:
+        nom: Nom affiché.
+        commande: Commande configurée (chemin complet ou nom cherché dans le PATH).
+    """
     chemin = localiser(commande)
     if not chemin:
         return Resultat(
@@ -112,6 +160,11 @@ def verifier_outil(nom: str, commande: str) -> Resultat:
 
 
 def empreinte_fichier(fpcalc: str, fichier: Path) -> str:
+    """Empreinte Chromaprint calculée par fpcalc en lisant lui-même le fichier.
+
+    Returns:
+        L'empreinte brute (`-plain`), ou une chaîne vide si fpcalc échoue.
+    """
     r = subprocess.run([fpcalc, "-plain", str(fichier)], capture_output=True, text=True, timeout=60)
     return r.stdout.strip()
 
@@ -119,7 +172,11 @@ def empreinte_fichier(fpcalc: str, fichier: Path) -> str:
 def empreinte_flux(ffmpeg: str, fpcalc: str, fichier: Path) -> str:
     """Empreinte calculée par fpcalc à partir de PCM envoyé sur l'entrée standard.
 
-    C'est le mode prévu pour l'analyse en un seul décodage.
+    C'est le mode prévu pour l'analyse en un seul décodage : ffmpeg décode en PCM
+    16 bits stéréo 44,1 kHz, et fpcalc lit ce flux au lieu de relire le fichier.
+
+    Returns:
+        L'empreinte brute (`-plain`), ou une chaîne vide si fpcalc échoue.
     """
     dec = subprocess.run(
         [
@@ -150,6 +207,15 @@ def empreinte_flux(ffmpeg: str, fpcalc: str, fichier: Path) -> str:
 
 
 def verifier_fpcalc_entree_standard(ffmpeg_cmd: str, fpcalc_cmd: str) -> Resultat:
+    """Vérifie que fpcalc lit le PCM sur l'entrée standard.
+
+    Génère un court FLAC synthétique (sinus et bruit) dans un dossier temporaire,
+    puis compare l'empreinte calculée depuis le fichier à celle calculée depuis le flux.
+
+    Args:
+        ffmpeg_cmd: Commande de ffmpeg.
+        fpcalc_cmd: Commande de fpcalc.
+    """
     nom = "fpcalc par l'entrée standard"
     ffmpeg, fpcalc = localiser(ffmpeg_cmd), localiser(fpcalc_cmd)
     if not (ffmpeg and fpcalc):
@@ -195,6 +261,10 @@ def verifier_fpcalc_entree_standard(ffmpeg_cmd: str, fpcalc_cmd: str) -> Resulta
 
 # --------------------------------------------------------------------- Windows
 def verifier_chemins_longs() -> Resultat:
+    """Vérifie que Windows accepte les chemins de plus de 260 caractères.
+
+    Lit `LongPathsEnabled` dans le registre ; sans objet hors Windows.
+    """
     nom = "Chemins longs Windows"
     if sys.platform != "win32":
         return Resultat(nom, OK, "sans objet hors Windows")
@@ -218,6 +288,14 @@ def verifier_chemins_longs() -> Resultat:
 
 # --------------------------------------------------------------- Configuration
 def verifier_config(cfg: Config) -> list[Resultat]:
+    """Vérifie les chemins de la configuration.
+
+    - la racine doit exister ; un dossier de premier niveau non déclaré dans
+      `[categories]` est signalé ;
+    - sortie, base et cache peuvent manquer s'ils peuvent être créés ;
+    - les chemins facultatifs (baladeur, sauvegarde, références) absents ne sont
+      qu'un point d'attention : un baladeur peut simplement ne pas être branché.
+    """
     fichiers = " + ".join(str(s) for s in cfg.sources)
     res = [Resultat("Configuration", OK, fichiers or "aucun fichier : configuration par défaut")]
     if cfg.racine.is_dir():
@@ -266,6 +344,17 @@ def verifier_config(cfg: Config) -> list[Resultat]:
 
 # --------------------------------------------------------------------- Ensemble
 def diagnostic(cfg: Config | None, erreur_config: ErreurConfig | None = None) -> list[Resultat]:
+    """Lance toutes les vérifications.
+
+    Args:
+        cfg: Configuration chargée, ou None si elle n'a pas pu l'être : les outils
+            sont alors cherchés dans le PATH.
+        erreur_config: Erreur de chargement de la configuration, affichée comme
+            résultat quand `cfg` vaut None.
+
+    Returns:
+        Les résultats, dans l'ordre d'affichage.
+    """
     res = [verifier_python(), *verifier_modules(), verifier_sqlite()]
     ffmpeg = cfg.ffmpeg if cfg else "ffmpeg"
     ffprobe = cfg.ffprobe if cfg else "ffprobe"

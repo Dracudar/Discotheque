@@ -1,3 +1,23 @@
+"""
+test_cli.py - Tests de la ligne de commande
+
+Description:
+    Tests de « disco config » : affichage de la configuration et de l'origine
+    de chaque valeur, configuration absente, configuration par défaut seule.
+
+Auteur :
+    Dracudar
+
+Version :
+    1.0
+
+Date de création :
+    2026.10.06
+
+Date de modification :
+    2026.10.08
+"""
+
 from disco import config
 from disco.cli import main
 

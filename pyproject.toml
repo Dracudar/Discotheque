@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "discotheque"
-version = "0.1.0.dev0"
+dynamic = ["version"]
 description = "Indexation, analyses qualité et pages de la discothèque"
 readme = "README.md"
 license = "MIT"
@@ -27,6 +27,10 @@ disco = "disco.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.dynamic]
+# Seule source de la version du programme : __version__ dans src/disco/__init__.py
+version = { attr = "disco.__version__" }
 
 [tool.setuptools.package-data]
 disco = ["modeles/*"]

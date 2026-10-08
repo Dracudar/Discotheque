@@ -1,3 +1,24 @@
+"""
+test_doctor.py - Tests du diagnostic
+
+Description:
+    Tests de « disco doctor » : Python et modules, fonctions SQLite, outils
+    externes, fpcalc sur l'entrée standard, chemins de la configuration,
+    diagnostic sans configuration ou avec une configuration cassée.
+
+Auteur :
+    Dracudar
+
+Version :
+    1.0
+
+Date de création :
+    2026.10.06
+
+Date de modification :
+    2026.10.08
+"""
+
 import os
 
 import pytest

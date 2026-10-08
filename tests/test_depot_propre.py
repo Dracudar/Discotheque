@@ -1,8 +1,24 @@
-"""Garde-fou : aucune donnée de la discothèque ne doit entrer dans le dépôt.
+"""
+test_depot_propre.py - Garde-fou du dépôt public
 
-Le dépôt ne contient que du code, des tests sur données fictives et de la
-documentation de mise en place. Ce test échoue si un fichier suivi par Git
-ressemble à une donnée réelle (fiche, index, paroles, audio, journal…).
+Description:
+    Garde-fou : aucune donnée de la discothèque ne doit entrer dans le dépôt.
+
+    Le dépôt ne contient que du code, des tests sur données fictives et de la
+    documentation de mise en place. Ce test échoue si un fichier suivi par Git
+    ressemble à une donnée réelle (fiche, index, paroles, audio, journal…).
+
+Auteur :
+    Dracudar
+
+Version :
+    1.0
+
+Date de création :
+    2026.10.06
+
+Date de modification :
+    2026.10.08
 """
 
 import re
