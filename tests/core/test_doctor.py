@@ -10,7 +10,7 @@ Auteur :
     Dracudar
 
 Version :
-    1.0
+    1.1
 
 Date de création :
     2026.10.06
@@ -23,7 +23,8 @@ import os
 
 import pytest
 
-from disco import config, doctor
+from src.backend import config
+from src.core import doctor
 
 
 def test_python_et_modules():

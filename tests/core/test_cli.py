@@ -9,7 +9,7 @@ Auteur :
     Dracudar
 
 Version :
-    1.0
+    1.1
 
 Date de création :
     2026.10.06
@@ -18,8 +18,8 @@ Date de modification :
     2026.10.08
 """
 
-from disco import config
-from disco.cli import main
+from src.backend import config
+from src.core.cli import main
 
 
 def test_config(config_exemple, capsys):

@@ -23,17 +23,19 @@ dev = [
 ]
 
 [project.scripts]
-disco = "disco.cli:main"
+disco = "src.core.cli:main"
 
+# src/ est lui-même le paquet (voir docs/ARCHITECTURE.md)
 [tool.setuptools.packages.find]
-where = ["src"]
+where = ["."]
+include = ["src*"]
 
 [tool.setuptools.dynamic]
-# Seule source de la version du programme : __version__ dans src/disco/__init__.py
-version = { attr = "disco.__version__" }
+# Seule source de la version du programme : src/assets/versions.toml, lu par src/__versions__.py
+version = { attr = "src.__versions__.__version__" }
 
 [tool.setuptools.package-data]
-disco = ["modeles/*"]
+src = ["assets/*", "py.typed"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

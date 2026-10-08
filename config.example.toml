@@ -1,7 +1,7 @@
 # Réglages personnels de la discothèque. Tout est facultatif.
 #
 # Le programme embarque une configuration par défaut complète (structure de la racine,
-# catégories standard, réglages d'analyse : src/disco/modeles/config_defaut.toml).
+# catégories standard, réglages d'analyse : src/assets/config_defaut.toml).
 # Ce fichier ne contient que ce qui diffère ; chaque clé écrite l'emporte sur le défaut.
 # « disco config » affiche l'origine de chaque valeur (défaut, _bot, clone, déduit).
 #
@@ -27,12 +27,12 @@ racine = 'X:\Musique'
 # arrivees = 'X:\Musique\_sort'             # arrivées depuis le baladeur
 
 [dap]
-# Dossier de musique du baladeur, pour les commandes lancées depuis le PC.
-# Le lanceur posé sur le baladeur (« disco dap lanceur ») donne ce chemin lui-même.
+# Dossier de musique du baladeur. Les copies sont en refonte (issue #54) :
+# cette clé et [sauvegarde] seront sans doute retirées.
 destination = 'X:\Baladeur\Music'
 
 [sauvegarde]
-# Copie froide sur un autre disque (« disco sauvegarde envoyer »).
+# Copie froide sur un autre disque.
 destination = 'X:\Sauvegarde\Musique'
 
 [references]

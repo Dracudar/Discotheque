@@ -8,7 +8,7 @@ La configuration se superpose en trois couches. Pour chaque clé, la couche la p
 
 | Couche | Fichier | Contient | Obligatoire |
 |---|---|---|---|
-| 1. `défaut` | `src/disco/modeles/config_defaut.toml` (intégré au programme) | réglages d'analyse, catégories standard | — |
+| 1. `défaut` | `src/assets/config_defaut.toml` (intégré au programme) | réglages d'analyse, catégories standard | — |
 | 2. `_bot` | `<racine>\_bot\config.toml` | réglages personnels : baladeur, sauvegarde, références, catégories en plus | non |
 | 3. `clone` | `config.toml` du clone de développement | `racine` (la sandbox), et toute surcharge | non (en développement : `racine`) |
 
@@ -141,4 +141,4 @@ Pour une catégorie, l'origine est celle de la couche la plus haute qui la touch
 
 ## Toutes les clés
 
-Voir [`config.example.toml`](../config.example.toml), commenté, et [`config_defaut.toml`](../src/disco/modeles/config_defaut.toml) pour les valeurs par défaut.
+Voir [`config.example.toml`](../config.example.toml), commenté, et [`config_defaut.toml`](../src/assets/config_defaut.toml) pour les valeurs par défaut.

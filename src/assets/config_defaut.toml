@@ -1,7 +1,7 @@
 # Configuration par défaut, intégrée au programme.
 # Elle s'applique toujours, sous <racine>\_bot\config.toml puis le config.toml du clone :
 # ces fichiers ne contiennent que ce qui diffère (voir config.example.toml).
-# Les chemins des dossiers système se déduisent de la racine (voir disco.config).
+# Les chemins des dossiers système se déduisent de la racine (voir src.backend.config).
 
 [analyse]
 # ReplayGain 2 : référence -18 LUFS (BS.1770). Crête vraie par suréchantillonnage x8.

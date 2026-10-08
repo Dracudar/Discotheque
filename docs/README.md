@@ -2,6 +2,7 @@
 
 | Document | Contenu |
 |---|---|
+| `ARCHITECTURE.md` | Couches du code, règle de dépendance, circulation par la base, où ranger un nouveau module. |
 | `ia-locale.md` | Besoin et matériel pour l'IA locale (cas ambigus uniquement). |
 | `sqlite/` | Notes du cours SQLite (mode mentor), créées en phase 1. |
 
@@ -41,4 +42,4 @@ Les branches de livrable partent de `develop`, et leurs PR visent `develop`. `ma
 | `_sort` | arrivées (surveillance) | non | après rangement |
 | `_data`, `_bot`, `_log`, `_reports`, `_to_delete` | dossiers système (tout `_…` non déclaré), ignorés | — | — |
 
-Ce sont les catégories par défaut, intégrées au programme : la table fait foi dans `src/disco/modeles/config_defaut.toml`. Les catégories propres à un usage (une copie de `Soundtrack` pour un genre précis, une archive séparée de `Bulk` comme `Night`) s'ajoutent dans `<racine>/_bot/config.toml` ; une catégorie par défaut peut y être redéfinie clé par clé, ou retirée avec `type = "ignore"`.
+Ce sont les catégories par défaut, intégrées au programme : la table fait foi dans `src/assets/config_defaut.toml`. Les catégories propres à un usage (une copie de `Soundtrack` pour un genre précis, une archive séparée de `Bulk` comme `Night`) s'ajoutent dans `<racine>/_bot/config.toml` ; une catégorie par défaut peut y être redéfinie clé par clé, ou retirée avec `type = "ignore"`.
