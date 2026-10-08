@@ -1,10 +1,26 @@
-"""Fiches d'achat : format et ancien gabarit.
+"""
+test_fiches_ref.py - Tests des fiches d'achat
 
-- En CI : une fiche **fictive** (`fixtures/fiche_fictive.json`), aucune donnée réelle.
-- Sur le PC : les fiches réelles, lues **hors du dépôt**, dans le dossier indiqué par la
-  variable d'environnement DISCO_FICHES_REF ou, à défaut, par `[references] fiches_achat`
-  de config.toml. Elles serviront de jeu de validation au jalon 4.1. Sans l'un ou l'autre,
-  ces tests sont sautés.
+Description:
+    Fiches d'achat : format et ancien gabarit.
+
+    - En CI : une fiche **fictive** (`fixtures/fiche_fictive.json`), aucune donnée réelle.
+    - Sur le PC : les fiches réelles, lues **hors du dépôt**, dans le dossier indiqué par la
+      variable d'environnement DISCO_FICHES_REF ou, à défaut, par `[references] fiches_achat`
+      de config.toml. Elles serviront de jeu de validation au jalon 4.1. Sans l'un ou l'autre,
+      ces tests sont sautés.
+
+Auteur :
+    Dracudar
+
+Version :
+    1.0
+
+Date de création :
+    2026.10.06
+
+Date de modification :
+    2026.10.08
 """
 
 import importlib.util

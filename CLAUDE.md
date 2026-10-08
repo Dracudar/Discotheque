@@ -104,7 +104,7 @@ On n'écrit jamais un chemin en dur dans le code ni dans la doc : tout passe par
 
 ## Conventions
 - **Langue :** code, noms et commentaires en français, sans accents dans les identifiants (`reference_lufs`, `rg_album`), avec accents dans les textes et les docstrings.
-- **En-tête des fichiers Python :** chaque nouveau fichier `.py` de `src/` commence par le bloc d'en-tête commun aux projets de Dracudar (voir un module existant, par ex. `src/disco/copie.py`) :
+- **En-tête des fichiers Python :** chaque nouveau fichier `.py` de `src/` et de `tests/` commence par le bloc d'en-tête commun aux projets de Dracudar (voir un module existant, par ex. `src/disco/copie.py`) :
   ```
   """
   <fichier>.py - <titre court>
@@ -125,7 +125,8 @@ On n'écrit jamais un chemin en dur dans le code ni dans la doc : tout passe par
       aaaa.mm.jj
   """
   ```
-  **Chaque fichier a sa propre version**, au format `majeur.mineur` (pas de correctif au niveau du fichier), indépendante de celle du programme (`__version__`, au format `majeur.mineur.correctif`). Un nouveau fichier commence à `1.0`. **À chaque modification d'un fichier**, on met à jour sa `Date de modification` (date du jour) et on incrémente sa `Version` : le mineur pour une modification (`1.0` → `1.1`), une seule fois par PR ; le majeur pour une réécriture ou un changement de son interface (`1.4` → `2.0`). Chaque fonction, méthode et classe a une docstring, avec les rubriques `Args:`, `Returns:`, `Raises:` ou `Attributes:` quand elles apportent quelque chose. `tests/test_entetes.py` vérifie la présence de l'en-tête et des docstrings et le format de la version, mais pas que la date et la version sont à jour : c'est une règle de relecture.
+  **Chaque fichier a sa propre version**, au format `majeur.mineur` (pas de correctif au niveau du fichier), indépendante de celle du programme. Un nouveau fichier commence à `1.0`. **À chaque modification d'un fichier**, on met à jour sa `Date de modification` (date du jour). Sa `Version` ne change que si son **code** change : le mineur pour une modification (`1.0` → `1.1`), une seule fois par PR ; le majeur pour une réécriture ou un changement de son interface (`1.4` → `2.0`). Une modification qui ne touche pas au code (docstrings, commentaires, en-tête, numéro de version du programme) change la date, pas la version du fichier. Chaque fonction, méthode et classe a une docstring, avec les rubriques `Args:`, `Returns:`, `Raises:` ou `Attributes:` quand elles apportent quelque chose. `tests/test_entetes.py` vérifie la présence de l'en-tête (`src/disco` et `tests`) et des docstrings (`src/disco`) et le format de la version, mais pas que la date et la version sont à jour : c'est une règle de relecture.
+- **Version du programme :** au format `majeur.mineur.correctif`, dans `__version__` de `src/disco/__init__.py`, sa **seule** source : `pyproject.toml` la lit à l'installation (`dynamic`), et `disco --version` l'affiche. Attention, ce fichier ne porte pas qu'elle : la changer est une modification de `__init__.py` (date de modification à jour, version du fichier inchangée, voir ci-dessus).
 - **Git :**
   - **`main` = production uniquement.** Rien n'y est poussé ni proposé directement. Seul Dracudar y fusionne `develop` quand il met une version en service.
   - **`develop` = intégration.** Chaque branche de livrable part de `develop` (`phase-1.1/index`), et sa PR vise `develop`. Dracudar la relit et la fusionne.

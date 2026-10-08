@@ -1,9 +1,26 @@
-"""Garde-fou : chaque module de `src/disco` porte son en-tête et documente ses fonctions.
+"""
+test_entetes.py - Garde-fou des en-têtes et docstrings
 
-L'en-tête suit le modèle commun aux projets de Dracudar : nom du fichier et titre,
-puis les rubriques Description, Auteur, Version, Date de création et Date de
-modification (dates au format aaaa.mm.jj). La version est propre au fichier, au format
-majeur.mineur, distincte de celle du programme (majeur.mineur.correctif).
+Description:
+    Garde-fou : chaque fichier Python de `src/disco` et de `tests` porte son en-tête, et
+    chaque module de `src/disco` documente ses fonctions et ses classes.
+
+    L'en-tête suit le modèle commun aux projets de Dracudar : nom du fichier et titre,
+    puis les rubriques Description, Auteur, Version, Date de création et Date de
+    modification (dates au format aaaa.mm.jj). La version est propre au fichier, au format
+    majeur.mineur, distincte de celle du programme (majeur.mineur.correctif).
+
+Auteur :
+    Dracudar
+
+Version :
+    1.0
+
+Date de création :
+    2026.10.07
+
+Date de modification :
+    2026.10.08
 """
 
 import ast
@@ -12,8 +29,9 @@ from pathlib import Path
 
 import pytest
 
-SRC = Path(__file__).resolve().parents[1] / "src" / "disco"
-MODULES = sorted(SRC.glob("*.py"))
+DEPOT = Path(__file__).resolve().parents[1]
+MODULES = sorted((DEPOT / "src" / "disco").glob("*.py"))
+TESTS = sorted((DEPOT / "tests").glob("*.py"))
 RUBRIQUES = (
     "Description:",
     "Auteur :",
@@ -25,7 +43,7 @@ DATE = re.compile(r"^\s+\d{4}\.\d{2}\.\d{2}$", re.MULTILINE)
 VERSION = re.compile(r"\nVersion :\n\s+\d+\.\d+\n")
 
 
-@pytest.mark.parametrize("module", MODULES, ids=lambda p: p.name)
+@pytest.mark.parametrize("module", MODULES + TESTS, ids=lambda p: p.relative_to(DEPOT).as_posix())
 def test_entete(module):
     doc = ast.get_docstring(ast.parse(module.read_text(encoding="utf-8")), clean=False)
     assert doc, f"{module.name} : en-tête absent"

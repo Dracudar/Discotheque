@@ -1,4 +1,21 @@
-"""Baladeur et sauvegarde froide, sur des arborescences temporaires fictives."""
+"""
+test_dap.py - Tests du baladeur et de la sauvegarde
+
+Description:
+    Baladeur et sauvegarde froide, sur des arborescences temporaires fictives.
+
+Auteur :
+    Dracudar
+
+Version :
+    1.0
+
+Date de création :
+    2026.10.06
+
+Date de modification :
+    2026.10.08
+"""
 
 import os
 from pathlib import Path
