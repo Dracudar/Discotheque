@@ -35,14 +35,25 @@ jobs:
       - name: Outils audio (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
+        # En pwsh, l'échec d'un programme externe n'arrête pas le script : on vérifie
+        # nous-mêmes que chaque outil est bien là, sinon l'étape échoue ici, pas dans pytest.
         run: |
-          choco install ffmpeg -y --no-progress
+          # Le serveur Chocolatey est parfois indisponible (504) : jusqu'à 3 essais.
+          # choco peut aussi finir sans erreur sans rien installer, d'où le Get-Command.
+          for ($essai = 1; $essai -le 3; $essai++) {
+            choco install ffmpeg -y --no-progress
+            if ($LASTEXITCODE -eq 0 -and (Get-Command ffmpeg -ErrorAction SilentlyContinue)) { break }
+            if ($essai -eq 3) { throw "ffmpeg n'a pas pu être installé (Chocolatey), après 3 essais" }
+            Write-Host "ffmpeg absent après l'essai $essai, nouvel essai dans 30 s"
+            Start-Sleep -Seconds 30
+          }
           $zip = "chromaprint-fpcalc-$env:FPCALC_VERSION-windows-x86_64"
           Invoke-WebRequest "https://github.com/acoustid/chromaprint/releases/download/v$env:FPCALC_VERSION/$zip.zip" -OutFile fpcalc.zip
           Expand-Archive fpcalc.zip -DestinationPath "$env:RUNNER_TEMP\fpcalc"
-          Get-ChildItem -Recurse "$env:RUNNER_TEMP\fpcalc" -Filter fpcalc.exe |
-            ForEach-Object { $_.DirectoryName } | Select-Object -First 1 |
-            Out-File -Append -Encoding utf8 $env:GITHUB_PATH
+          $dossier = Get-ChildItem -Recurse "$env:RUNNER_TEMP\fpcalc" -Filter fpcalc.exe |
+            ForEach-Object { $_.DirectoryName } | Select-Object -First 1
+          if (-not $dossier) { throw "fpcalc.exe introuvable dans l'archive $zip.zip" }
+          $dossier | Out-File -Append -Encoding utf8 $env:GITHUB_PATH
 
       - name: Outils audio (Linux)
         if: runner.os == 'Linux'
