@@ -105,6 +105,11 @@ Le développement se fait sur une **copie de travail de la discothèque** (sandb
    ```
    La CI les relance sous Windows (Python 3.14) et Linux (Python 3.13).
 
+**Réinstaller après un changement de structure.** `pip install -e` n'installe pas une copie du code : il pose dans `.venv` la commande `disco` et un lien vers le clone, figés au moment de l'installation. Modifier un fichier `.py` ne demande rien, mais après un changement de `pyproject.toml` (commande `disco`, paquets, dépendances) ou un déplacement de paquet, l'environnement pointe encore vers l'ancien état : `disco` échoue par exemple avec `ModuleNotFoundError`. Il suffit de relancer, environnement activé, à la racine du clone :
+```
+pip install -e .[dev]
+```
+
 Le dépôt ne contient aucune donnée réelle : les tests utilisent des données fictives ou synthétiques. Sur sa propre machine, on peut en plus vérifier les fiches d'achat réelles, lues hors dépôt via `[references] fiches_achat` (ou la variable `DISCO_FICHES_REF`).
 
 ### Structure du dépôt

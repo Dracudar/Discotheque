@@ -156,3 +156,5 @@ disco config          # affiche la configuration chargée
 pytest                # tests
 ruff check . && ruff format src tests
 ```
+
+Après un changement de `pyproject.toml` (point d'entrée, paquets, dépendances) ou un déplacement de paquet, relancer `pip install -e .[dev]` : l'installation éditable fige la commande `disco` et le chemin du paquet (sinon `ModuleNotFoundError` au lancement). Le signaler dans la description de la PR.
