@@ -12,13 +12,13 @@ Auteur :
     Dracudar
 
 Version :
-    1.0
+    1.1
 
 Date de création :
     2026.10.06
 
 Date de modification :
-    2026.10.07
+    2026.10.08
 """
 
 from __future__ import annotations
@@ -27,8 +27,8 @@ import argparse
 import sys
 from pathlib import Path
 
-from disco import __version__
-from disco.config import ErreurConfig, charger
+from src.backend.config import ErreurConfig, charger
+from src.core.version import __version__
 
 
 def _doctor(args: argparse.Namespace) -> int:
@@ -37,7 +37,7 @@ def _doctor(args: argparse.Namespace) -> int:
     Une configuration illisible n'arrête pas le diagnostic : elle y figure comme un
     résultat parmi les autres.
     """
-    from disco import doctor
+    from src.core import doctor
 
     try:
         cfg, erreur = charger(args.config), None
@@ -93,7 +93,7 @@ def _dap(args: argparse.Namespace) -> int:
 
     `--dap` remplace `dap.destination` de la configuration.
     """
-    from disco import dap
+    from src.mod.copies import dap
 
     try:
         cfg = charger(args.config)
@@ -115,7 +115,7 @@ def _dap(args: argparse.Namespace) -> int:
 
 def _sauvegarde(args: argparse.Namespace) -> int:
     """« disco sauvegarde <sens> » : copie froide de la discothèque, ou sa restauration."""
-    from disco import dap
+    from src.mod.copies import dap
 
     try:
         cfg = charger(args.config)

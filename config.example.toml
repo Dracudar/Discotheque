@@ -1,7 +1,7 @@
 # Réglages personnels de la discothèque. Tout est facultatif.
 #
 # Le programme embarque une configuration par défaut complète (structure de la racine,
-# catégories standard, réglages d'analyse : src/disco/modeles/config_defaut.toml).
+# catégories standard, réglages d'analyse : src/assets/config_defaut.toml).
 # Ce fichier ne contient que ce qui diffère ; chaque clé écrite l'emporte sur le défaut.
 # « disco config » affiche l'origine de chaque valeur (défaut, _bot, clone, déduit).
 #

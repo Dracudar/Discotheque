@@ -8,7 +8,7 @@ Auteur :
     Dracudar
 
 Version :
-    1.0
+    1.1
 
 Date de création :
     2026.10.06
@@ -22,7 +22,8 @@ from pathlib import Path
 
 import pytest
 
-from disco import config, dap
+from src.backend import config
+from src.mod.copies import dap
 
 
 def ecrire(p: Path, contenu: str = "x", age: float = 0) -> Path:
@@ -102,7 +103,7 @@ def test_fichier_modifie_recopie(monde):
     cfg, racine, baladeur, _ = monde
     dap.operation_dap(cfg, "envoyer", console=False)
     ecrire(racine / "Bulk" / "piste.opus", "audio3 retagué")
-    from disco import copie
+    from src.backend import copie
 
     plan, _ = dap.envoyer(cfg, baladeur, lambda m: None)
     assert plan.modifies == ["Bulk/piste.opus"] and not plan.nouveaux

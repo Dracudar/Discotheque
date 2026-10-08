@@ -10,7 +10,7 @@ Auteur :
     Dracudar
 
 Version :
-    1.0
+    1.1
 
 Date de création :
     2026.10.06
@@ -23,7 +23,7 @@ import os
 
 import pytest
 
-from disco import config
+from src.backend import config
 
 
 def test_exemple_valide(config_exemple):

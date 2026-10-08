@@ -118,22 +118,21 @@ Le dépôt ne contient aucune donnée réelle : les tests utilisent des données
 
 ```
 Discotheque/
-├── src/disco/                  code du projet (commande « disco »)
-│   ├── cli.py                  commandes et options
-│   ├── config.py               recherche, lecture et validation de config.toml
-│   ├── doctor.py               diagnostic de l'environnement
-│   ├── copie.py                moteur de copie miroir (atomique, corbeille, simulation)
-│   ├── dap.py                  baladeur et sauvegarde froide
-│   ├── journal.py              journaux (_log) et rapports (_reports)
-│   └── modeles/
-│       ├── config_defaut.toml        configuration par défaut intégrée
-│       └── synchro_discotheque.cmd   lanceur posé sur le baladeur
-├── tests/                      tests pytest, sur données fictives uniquement
+├── src/                        le paquet lui-même (commande « disco », « python -m src »)
+│   ├── core/                   entrée : commandes (cli), diagnostic (doctor), version
+│   ├── backend/                services communs : configuration, journaux, moteur de copie
+│   ├── assets/                 configuration par défaut, lanceur du baladeur
+│   └── mod/                    le métier, un dossier par mod
+│       └── copies/             baladeur et sauvegarde froide (dap)
+├── tests/                      tests pytest, sur données fictives, rangés en miroir de src/
 │   ├── fixtures/               fiche d'achat fictive
-│   └── test_depot_propre.py    garde-fou : aucune donnée réelle ni chemin du poste
+│   ├── test_architecture.py    garde-fou : règle de dépendance entre couches
+│   ├── test_depot_propre.py    garde-fou : aucune donnée réelle ni chemin du poste
+│   └── test_entetes.py         garde-fou : en-têtes et docstrings
 ├── legacy/fiches/              ancien gabarit des fiches d'achat (gen.py, _head.html), pour référence
 ├── docs/
 │   ├── README.md               feuille de route (jalons) et catégories
+│   ├── ARCHITECTURE.md         couches du code et règle de dépendance
 │   ├── configuration.md        couches, catégories, origines des valeurs
 │   └── ia-locale.md            besoin et matériel pour l'IA locale
 ├── .github/workflows/ci.yml    CI : ruff, pytest, disco doctor (Windows et Linux)

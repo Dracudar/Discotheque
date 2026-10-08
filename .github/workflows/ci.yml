@@ -69,4 +69,4 @@ jobs:
       - name: Diagnostic de l'environnement
         # Sans config.toml, la configuration n'est qu'un point d'attention :
         # le diagnostic échoue seulement si Python, SQLite ou un outil pose problème.
-        run: python -m disco doctor
+        run: python -m src doctor

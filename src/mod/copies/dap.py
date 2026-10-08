@@ -28,13 +28,13 @@ Auteur :
     Dracudar
 
 Version :
-    1.0
+    1.1
 
 Date de création :
     2026.10.06
 
 Date de modification :
-    2026.10.07
+    2026.10.08
 """
 
 from __future__ import annotations
@@ -42,9 +42,9 @@ from __future__ import annotations
 from importlib import resources
 from pathlib import Path
 
-from disco import copie
-from disco.config import Config, ErreurConfig
-from disco.journal import Journal, ecrire_rapport, horodatage
+from src.backend import copie
+from src.backend.config import Config, ErreurConfig
+from src.backend.journal import Journal, ecrire_rapport, horodatage
 
 NOM_LANCEUR = "synchro_discotheque.cmd"
 
@@ -279,7 +279,7 @@ def operation_sauvegarde(
 
 def texte_lanceur() -> str:
     """Contenu du lanceur à poser à la racine du baladeur (fins de ligne Windows)."""
-    texte = resources.files("disco").joinpath("modeles", NOM_LANCEUR).read_text("utf-8")
+    texte = resources.files("src").joinpath("assets", NOM_LANCEUR).read_text("utf-8")
     return texte.replace("\r\n", "\n").replace("\n", "\r\n")
 
 

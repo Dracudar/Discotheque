@@ -14,7 +14,7 @@ Auteur :
     Dracudar
 
 Version :
-    1.0
+    1.1
 
 Date de création :
     2026.10.06
@@ -77,7 +77,7 @@ def _dossier_reel() -> str | None:
     if os.environ.get("DISCO_FICHES_REF"):
         return os.environ["DISCO_FICHES_REF"]
     try:
-        from disco.config import charger
+        from src.backend.config import charger
 
         dossier = charger().references.fiches_achat
     except Exception:

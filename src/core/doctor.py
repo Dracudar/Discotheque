@@ -13,13 +13,13 @@ Auteur :
     Dracudar
 
 Version :
-    1.0
+    1.1
 
 Date de création :
     2026.10.06
 
 Date de modification :
-    2026.10.07
+    2026.10.08
 """
 
 from __future__ import annotations
@@ -34,7 +34,7 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
-from disco.config import Config, ErreurConfig, RacineIntrouvable
+from src.backend.config import Config, ErreurConfig, RacineIntrouvable
 
 OK, ATTENTION, ERREUR = "ok", "attention", "erreur"
 MARQUES = {OK: "[OK]", ATTENTION: "[!!]", ERREUR: "[XX]"}

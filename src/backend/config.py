@@ -19,7 +19,7 @@ Description:
 
     La configuration se superpose en trois couches, la plus haute l'emportant clé par clé :
 
-    1. la configuration par défaut, intégrée au programme (`modeles/config_defaut.toml`) ;
+    1. la configuration par défaut, intégrée au programme (`assets/config_defaut.toml`) ;
     2. `<racine>/_bot/config.toml`, facultatif : seulement ce qui diffère (baladeur,
        sauvegarde, références, catégories en plus) ;
     3. le `config.toml` trouvé ailleurs (le clone, en développement) : `racine` et toute
@@ -32,13 +32,13 @@ Auteur :
     Dracudar
 
 Version :
-    1.0
+    1.1
 
 Date de création :
     2026.10.06
 
 Date de modification :
-    2026.10.07
+    2026.10.08
 """
 
 from __future__ import annotations
@@ -63,7 +63,7 @@ TYPES_CATEGORIE = {
 # Préfixe des dossiers système à la racine de la discothèque
 PREFIXE_SYSTEME = "_"
 
-# Racine du dépôt : src/disco/config.py -> ../../
+# Racine du dépôt : src/backend/config.py -> ../../
 RACINE_DEPOT = Path(__file__).resolve().parents[2]
 
 NOM_CONFIG = "config.toml"
@@ -272,7 +272,7 @@ def _racine_de_bot(dossier: Path | None) -> Path | None:
 
 def defaut() -> dict:
     """Configuration par défaut, intégrée au programme."""
-    texte = resources.files("disco").joinpath("modeles", NOM_DEFAUT).read_text("utf-8")
+    texte = resources.files("src").joinpath("assets", NOM_DEFAUT).read_text("utf-8")
     return tomllib.loads(texte)
 
 

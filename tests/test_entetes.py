@@ -2,8 +2,8 @@
 test_entetes.py - Garde-fou des en-têtes et docstrings
 
 Description:
-    Garde-fou : chaque fichier Python de `src/disco` et de `tests` porte son en-tête, et
-    chaque module de `src/disco` documente ses fonctions et ses classes.
+    Garde-fou : chaque fichier Python de `src` et de `tests` (sous-dossiers compris) porte
+    son en-tête, et chaque module de `src` documente ses fonctions et ses classes.
 
     L'en-tête suit le modèle commun aux projets de Dracudar : nom du fichier et titre,
     puis les rubriques Description, Auteur, Version, Date de création et Date de
@@ -14,7 +14,7 @@ Auteur :
     Dracudar
 
 Version :
-    1.0
+    1.1
 
 Date de création :
     2026.10.07
@@ -30,8 +30,8 @@ from pathlib import Path
 import pytest
 
 DEPOT = Path(__file__).resolve().parents[1]
-MODULES = sorted((DEPOT / "src" / "disco").glob("*.py"))
-TESTS = sorted((DEPOT / "tests").glob("*.py"))
+MODULES = sorted((DEPOT / "src").rglob("*.py"))
+TESTS = sorted((DEPOT / "tests").rglob("*.py"))
 RUBRIQUES = (
     "Description:",
     "Auteur :",
@@ -54,7 +54,7 @@ def test_entete(module):
     assert VERSION.search(doc), f"{module.name} : version du fichier au format majeur.mineur"
 
 
-@pytest.mark.parametrize("module", MODULES, ids=lambda p: p.name)
+@pytest.mark.parametrize("module", MODULES, ids=lambda p: p.relative_to(DEPOT).as_posix())
 def test_docstrings(module):
     arbre = ast.parse(module.read_text(encoding="utf-8"))
     sans = [
