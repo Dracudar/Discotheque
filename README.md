@@ -112,10 +112,10 @@ Le dépôt ne contient aucune donnée réelle : les tests utilisent des données
 ```
 Discotheque/
 ├── src/                        le paquet lui-même (commande « disco », « python -m src »)
-│   ├── __versions__.py         versions du programme (puis outils, dépendances, modèles)
+│   ├── __versions__.py         lecteur des versions (assets/versions.toml)
 │   ├── core/                   entrée : commandes (cli), diagnostic (doctor)
 │   ├── backend/                services communs : configuration, journaux, moteur de copie
-│   ├── assets/                 configuration par défaut
+│   ├── assets/                 configuration par défaut, versions (programme, puis outils…)
 │   └── mod/                    le métier, un dossier par mod
 ├── tests/                      tests pytest, sur données fictives, rangés en miroir de src/
 │   ├── fixtures/               fiche d'achat fictive

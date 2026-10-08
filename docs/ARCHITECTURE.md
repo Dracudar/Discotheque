@@ -11,7 +11,7 @@ Le code est rangé en **couches**, sur le modèle de Morphoz_SnackApp (branche `
 ```
 src/
 ├── __init__.py, __main__.py   « python -m src »
-├── __versions__.py    versions du programme, puis des outils, dépendances et modèles
+├── __versions__.py    lecteur de assets/versions.toml (versions de la livraison)
 ├── core/              entrée et environnement
 │   ├── cli.py         commandes, envoi vers les mod
 │   └── doctor.py      diagnostic de l'environnement
@@ -22,7 +22,7 @@ src/
 │   ├── base.py        (1.1) SQLite : WAL, migrations
 │   └── outils.py      (1.1) ffmpeg, ffprobe, fpcalc
 ├── UI/                (2) gabarits HTML, CSS, JS communs aux pages
-├── assets/            config_defaut.toml, lanceurs (fichiers intégrés au paquet)
+├── assets/            config_defaut.toml, versions.toml (fichiers intégrés au paquet)
 └── mod/
     ├── analyse/       (1.1) scan, mesures versionnées, lots de tags
     ├── catalogue/     (3.x) MusicBrainz, AcoustID, Wikidata, paroles → base
@@ -41,13 +41,13 @@ Les dossiers marqués d'un jalon n'existent pas encore : ils naissent avec le li
 | `UI` | Composants d'affichage communs aux pages (gabarits, styles, scripts). | `backend`, `assets` |
 | `backend` | Services communs sans métier : configuration, journaux, copie, base SQLite, outils externes. | `assets`, lui-même |
 | `assets` | Fichiers intégrés au paquet (pas de code Python), lus par `importlib.resources`. | — |
-| racine de `src` | `__versions__.py` : les versions de la livraison, lisibles par toutes les couches. `__main__.py` : lancement, comme `core`. | rien de `src` (sauf `__main__.py`) |
+| racine de `src` | `__versions__.py` : lecteur de `assets/versions.toml`, les versions de la livraison, lisibles par toutes les couches. `__main__.py` : lancement, comme `core`. | rien de `src` (sauf `__main__.py`) |
 
 ## Règle de dépendance
 
 - **Un `mod` n'importe jamais un autre `mod`.** Ce qui est partagé remonte dans `backend/` (données, services) ou `UI/` (composants d'affichage).
 - **Un `mod` n'importe pas `core`**, et `backend` n'importe ni `core`, ni `UI`, ni `mod` : les dépendances descendent toujours de l'entrée vers les services.
-- **Les modules à la racine de `src`** (`__versions__.py`) sont des feuilles : toutes les couches peuvent les importer, eux n'importent rien du paquet. `__versions__.py` n'importe même rien du tout, pour qu'un script de CI ou de compilation puisse l'exécuter sans installer le programme.
+- **Les modules à la racine de `src`** (`__versions__.py`) sont des feuilles : toutes les couches peuvent les importer, eux n'importent rien du paquet. `__versions__.py` n'importe que la bibliothèque standard (`tomllib`), pour qu'un script de CI ou de compilation puisse l'exécuter sans installer le programme.
 - `tests/test_architecture.py` lit les `import` de chaque fichier de `src` (y compris ceux faits dans une fonction, et les imports relatifs) et échoue à la moindre entorse. Il vérifie aussi que chaque dossier de `src` est une couche connue.
 
 ## Circulation par la base

@@ -164,5 +164,5 @@ def test_imports_autorises(tmp_path):
     _ecrire(tmp_path, "mod/a/v.py", "from src.__versions__ import __version__\n")
     _ecrire(tmp_path, "backend/v.py", "from src import __versions__\n")
     _ecrire(tmp_path, "__main__.py", "from src.core.cli import main\n")
-    _ecrire(tmp_path, "__versions__.py", "__version__ = '0'\n")
+    _ecrire(tmp_path, "__versions__.py", "import tomllib\n__version__ = '0'\n")
     assert violations(tmp_path / "src") == []

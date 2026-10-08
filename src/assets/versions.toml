@@ -1,0 +1,11 @@
+# Versions de la livraison : seule source, lue par src/__versions__.py.
+#
+# Ce sont des données : les modifier ne touche pas au code (pas de version de fichier
+# à changer). Recevra, avec les issues #52 et #55 :
+#   [outils.<nom>]   version, URL et empreinte SHA-256 par plateforme (ffmpeg, fpcalc…)
+#   [dependances]    versions exactes des dépendances Python (→ requirements.txt)
+#   [modeles.<nom>]  modèles de l'IA locale (palier, taille, URL, empreinte)
+
+[programme]
+# Format majeur.mineur.correctif, affiché par « disco --version »
+version = "0.1.0.dev0"

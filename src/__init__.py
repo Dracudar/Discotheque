@@ -6,7 +6,7 @@ Description:
     `src/` est lui-même le paquet, rangé en couches (voir docs/ARCHITECTURE.md) :
     core (entrée et environnement), backend (services communs), UI (affichage commun),
     assets (fichiers intégrés) et mod (métier). Les versions (programme, puis outils et
-    dépendances) sont dans `src.__versions__`.
+    dépendances) sont dans `assets/versions.toml`, lu par `src.__versions__`.
 
 Auteur :
     Dracudar
