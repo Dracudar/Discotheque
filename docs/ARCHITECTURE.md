@@ -2,9 +2,9 @@
 
 Le code est rangé en **couches**, sur le modèle de Morphoz_SnackApp (branche `Refactor`), pour que les deux projets suivent la même convention.
 
-- **`src/` est lui-même le paquet** : pas de sous-dossier au nom du projet. Les imports s'écrivent `from src.backend.config import charger`. La commande installée reste `disco` (`python -m src` en est l'équivalent).
+- **`src/` est lui-même le paquet** : pas de sous-dossier au nom du projet. Les imports s'écrivent `from src.backend.config import load`. La commande installée reste `disco` (`python -m src` en est l'équivalent).
 - **Une seule distribution, un seul dépôt** : les dossiers rangent le code, ils ne sont pas publiés séparément.
-- **Noms des couches en anglais** (`core`, `backend`, `UI`, `mod`), comme dans SnackApp. Les dossiers métier et le code restent en français, sans accents dans les identifiants.
+- **Noms en anglais** : les couches (`core`, `backend`, `UI`, `mod`), comme dans SnackApp, mais aussi les modules, les identifiants, les tables SQL et les clés de configuration. Les docstrings, les commentaires et les messages affichés restent en français.
 
 ## Les couches
 
@@ -17,18 +17,18 @@ src/
 │   └── doctor.py      diagnostic de l'environnement
 ├── backend/           services communs, aucun métier
 │   ├── config.py      couches de configuration
-│   ├── journal.py     _log et _reports
-│   ├── copie.py       moteur miroir, corbeille
-│   ├── base.py        (1.1) SQLite : WAL, migrations
-│   └── outils.py      (1.1) ffmpeg, ffprobe, fpcalc
+│   ├── oplog.py       journal (_log) et rapport (_reports) d'une opération
+│   ├── mirror.py      moteur miroir, corbeille
+│   ├── db.py          (1.1) SQLite : connexion, WAL, migrations
+│   └── tools.py       (1.1) ffmpeg, ffprobe, fpcalc
 ├── UI/                (2) gabarits HTML, CSS, JS communs aux pages
-├── assets/            config_defaut.toml, versions.toml (fichiers intégrés au paquet)
+├── assets/            config_default.toml, config.example.toml, versions.toml (fichiers intégrés)
 └── mod/
-    ├── analyse/       (1.1) scan, mesures versionnées, lots de tags
-    ├── catalogue/     (3.x) MusicBrainz, AcoustID, Wikidata, paroles → base
-    ├── ia/            (4.2) traductions, cas ambigus → base
+    ├── analysis/      (1.1) scan, mesures versionnées, lots de tags
+    ├── catalog/       (3.x) MusicBrainz, AcoustID, Wikidata, paroles → base
+    ├── ai/            (4.2) traductions, cas ambigus → base
     ├── pages/         (2, 4.1, 5) base → _data
-    │   └── modules/   album, artiste, projet, compositeur
+    │   └── modules/   album, artist, project, composer
     └── copies/        (1.1, #54) baladeur, archivage
 ```
 
@@ -55,9 +55,9 @@ Les dossiers marqués d'un jalon n'existent pas encore : ils naissent avec le li
 Les `mod` communiquent **par la base SQLite** : chacun lit ou écrit la base, aucun n'appelle les autres.
 
 ```
-musique ──► mod/analyse ───┐
-web ──────► mod/catalogue ─┼──► base SQLite ──► mod/pages ──► _data
-            mod/ia ────────┘
+musique ──► mod/analysis ──┐
+web ──────► mod/catalog ───┼──► base SQLite ──► mod/pages ──► _data
+            mod/ai ────────┘
 ```
 
 - Les pages ne lisent que la base : elles se régénèrent hors ligne à tout moment.

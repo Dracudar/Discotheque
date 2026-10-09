@@ -12,13 +12,13 @@ Auteur :
     Dracudar
 
 Version :
-    1.1
+    2.0
 
 Date de création :
     2026.10.06
 
 Date de modification :
-    2026.10.08
+    2026.10.09
 """
 
 from __future__ import annotations
@@ -27,7 +27,7 @@ import argparse
 import sys
 
 from src.__versions__ import __version__
-from src.backend.config import ErreurConfig, charger
+from src.backend.config import ConfigError, load
 
 
 def _doctor(args: argparse.Namespace) -> int:
@@ -39,59 +39,61 @@ def _doctor(args: argparse.Namespace) -> int:
     from src.core import doctor
 
     try:
-        cfg, erreur = charger(args.config), None
-    except ErreurConfig as e:
-        cfg, erreur = None, e
-    return doctor.afficher(doctor.diagnostic(cfg, erreur))
+        cfg, error = load(args.config), None
+    except ConfigError as e:
+        cfg, error = None, e
+    return doctor.show(doctor.diagnose(cfg, error))
 
 
 def _config(args: argparse.Namespace) -> int:
     """« disco config » : affiche la configuration chargée et l'origine de chaque valeur."""
     try:
-        cfg = charger(args.config)
-    except ErreurConfig as e:
+        cfg = load(args.config)
+    except ConfigError as e:
         print(e, file=sys.stderr)
         return 2
 
-    def ligne(titre: str, valeur: object, cle: str) -> None:
+    def line(title: str, value: object, key: str) -> None:
         """Affiche une valeur, suivie de son origine entre crochets (défaut, _bot…)."""
-        print(f"{titre:<10}: {valeur}  [{cfg.origine(cle)}]")
+        print(f"{title:<10}: {value}  [{cfg.origin(key)}]")
 
-    fichiers = " + ".join(str(s) for s in cfg.sources) or "aucun (configuration par défaut)"
-    print(f"Fichiers  : {fichiers}")
-    ligne("Racine", cfg.racine, "chemins.racine")
-    ligne("Sortie", cfg.sortie, "chemins.sortie")
-    ligne("Base", cfg.base, "chemins.base")
-    ligne("Cache", cfg.cache, "chemins.cache")
-    ligne("Journaux", cfg.journaux, "chemins.journaux")
-    ligne("Rapports", cfg.rapports, "chemins.rapports")
-    ligne("Corbeille", cfg.corbeille, "chemins.corbeille")
-    ligne("Bot", cfg.bot, "chemins.bot")
-    ligne("Arrivées", cfg.arrivees, "chemins.arrivees")
-    ligne("DAP", cfg.dap or "(non défini)", "dap.destination")
-    ligne("Sauvegarde", cfg.sauvegarde or "(non définie)", "sauvegarde.destination")
-    ligne("Audit", cfg.references.audit or "(non défini)", "references.audit")
-    ligne("Fiches", cfg.references.fiches_achat or "(non défini)", "references.fiches_achat")
-    ligne("ffmpeg", cfg.ffmpeg, "outils.ffmpeg")
-    ligne("ffprobe", cfg.ffprobe, "outils.ffprobe")
-    ligne("fpcalc", cfg.fpcalc, "outils.fpcalc")
-    ligne("Référence", f"{cfg.reference_lufs} LUFS", "analyse.reference_lufs")
-    ligne("Crête", f"vraie x{cfg.surechantillonnage_crete}", "analyse.surechantillonnage_crete")
-    ligne("Processus", cfg.processus or "auto", "analyse.processus")
+    files = " + ".join(str(s) for s in cfg.sources) or "aucun (configuration par défaut)"
+    print(f"Fichiers  : {files}")
+    line("Racine", cfg.root, "paths.root")
+    line("Sortie", cfg.output, "paths.output")
+    line("Base", cfg.db, "paths.db")
+    line("Cache", cfg.cache, "paths.cache")
+    line("Journaux", cfg.logs, "paths.logs")
+    line("Rapports", cfg.reports, "paths.reports")
+    line("Corbeille", cfg.trash, "paths.trash")
+    line("Bot", cfg.bot, "paths.bot")
+    line("Arrivées", cfg.incoming, "paths.incoming")
+    line("Audit", cfg.references.audit or "(non défini)", "references.audit")
+    line(
+        "Fiches",
+        cfg.references.purchase_sheets or "(non défini)",
+        "references.purchase_sheets",
+    )
+    line("ffmpeg", cfg.ffmpeg, "tools.ffmpeg")
+    line("ffprobe", cfg.ffprobe, "tools.ffprobe")
+    line("fpcalc", cfg.fpcalc, "tools.fpcalc")
+    line("Référence", f"{cfg.reference_lufs} LUFS", "analysis.reference_lufs")
+    line("Crête", f"vraie x{cfg.true_peak_oversampling}", "analysis.true_peak_oversampling")
+    line("Processus", cfg.workers or "auto", "analysis.workers")
     print("Catégories :")
     for c in cfg.categories.values():
         print(
-            f"  {c.nom:<26} {c.type:<12} pages={'oui' if c.pages else 'non':<3} "
-            f"RG album={'oui' if c.rg_album else 'non':<3}  [{cfg.origine('categories.' + c.nom)}]"
+            f"  {c.name:<26} {c.type:<12} pages={'oui' if c.pages else 'non':<3} "
+            f"RG album={'oui' if c.rg_album else 'non':<3}  [{cfg.origin('categories.' + c.name)}]"
         )
     return 0
 
 
-def construire_parseur() -> argparse.ArgumentParser:
+def build_parser() -> argparse.ArgumentParser:
     """Construit le parseur de « disco » et de ses sous-commandes.
 
     Returns:
-        Le parseur ; chaque sous-commande range sa fonction dans l'attribut `fonction`
+        Le parseur ; chaque sous-commande range sa fonction dans l'attribut `func`
         des arguments analysés.
     """
     p = argparse.ArgumentParser(prog="disco", description="Outils de la discothèque.")
@@ -100,13 +102,11 @@ def construire_parseur() -> argparse.ArgumentParser:
         "--config",
         help="chemin de config.toml (sinon DISCO_CONFIG, celui de _bot ou du clone ; facultatif)",
     )
-    sous = p.add_subparsers(dest="commande", required=True)
-    sous.add_parser("doctor", help="vérifie l'environnement (ne modifie rien)").set_defaults(
-        fonction=_doctor
+    sub = p.add_subparsers(dest="command", required=True)
+    sub.add_parser("doctor", help="vérifie l'environnement (ne modifie rien)").set_defaults(
+        func=_doctor
     )
-    sous.add_parser("config", help="affiche la configuration chargée").set_defaults(
-        fonction=_config
-    )
+    sub.add_parser("config", help="affiche la configuration chargée").set_defaults(func=_config)
     return p
 
 
@@ -121,8 +121,8 @@ def main(argv: list[str] | None = None) -> int:
         Le code de retour du processus.
     """
     # Sortie console en UTF-8, y compris dans un terminal Windows
-    for flux in (sys.stdout, sys.stderr):
-        if hasattr(flux, "reconfigure"):
-            flux.reconfigure(encoding="utf-8", errors="replace")
-    args = construire_parseur().parse_args(argv)
-    return args.fonction(args)
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
+    args = build_parser().parse_args(argv)
+    return args.func(args)

@@ -8,10 +8,10 @@ L'ancien gabarit des fiches d'achat par artiste, réalisées à la main avant ce
 | `gen.py` | Générateur : `recap.json` → `recap.html` |
 | `_head.html` | En-tête commun : thème clair ou sombre, lecture sur téléphone, en-têtes de tableau fixes, pastilles de qualité |
 
-`tests/test_fiches_ref.py` vérifie qu'il relit une fiche fictive. Sur la machine de l'auteur, il relit aussi les fiches réelles, qui restent hors dépôt (`[references] fiches_achat`).
+`tests/test_purchase_sheets.py` vérifie qu'il relit une fiche fictive. Sur la machine de l'auteur, il relit aussi les fiches réelles, qui restent hors dépôt (`[references] purchase_sheets`).
 
 ## `dap/`
-L'ancienne synchronisation du baladeur et la sauvegarde froide (commandes `disco dap` et `disco sauvegarde`, jalon 0), retirées du programme parce qu'elles ne sont plus d'actualité : elles seront réécrites dans `src/mod/copies/` (issue #54). Le moteur de copie qu'elles utilisaient reste en service (`src/backend/copie.py`, testé par `tests/backend/test_copie.py`).
+L'ancienne synchronisation du baladeur et la sauvegarde froide (commandes `disco dap` et `disco sauvegarde`, jalon 0), retirées du programme parce qu'elles ne sont plus d'actualité : elles seront réécrites dans `src/mod/copies/` (issue #54). Le moteur de copie qu'elles utilisaient reste en service (`src/backend/mirror.py`, testé par `tests/backend/test_mirror.py`).
 
 | Fichier | Rôle |
 |---|---|

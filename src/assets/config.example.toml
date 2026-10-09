@@ -1,0 +1,67 @@
+# Réglages personnels de la discothèque : modèle de <racine>\_bot\config.toml.
+#
+# Ce fichier est entièrement commenté : tel quel, il ne change rien. Le programme
+# embarque une configuration par défaut complète (structure de la racine, catégories
+# standard, réglages d'analyse : config_default.toml, à côté de ce fichier).
+# Décommenter seulement ce qui doit différer : chaque clé écrite l'emporte sur le défaut.
+# « disco config » affiche l'origine de chaque valeur (défaut, _bot, clone, déduit).
+#
+# Les chaînes entre apostrophes sont littérales : les « \ » de Windows n'ont pas à être doublés.
+# Les exemples utilisent le lecteur fictif X:.
+
+# [paths]
+# Racine de la discothèque : inutile ici, elle se déduit de l'emplacement de ce fichier
+# (le dossier parent de _bot).
+# root = 'X:\Musique'
+#
+# Dossiers système, à la racine par défaut (décommenter pour les déplacer) :
+# output = 'X:\Musique\_data'               # pages (miroir de la discothèque)
+# db = 'X:\Musique\_data\_base'             # index SQLite : jamais effacé
+# cache = 'X:\Musique\_data\_cache'         # réponses des services en ligne
+# logs = 'X:\Musique\_log'                  # journaux détaillés
+# reports = 'X:\Musique\_reports'           # rapports lisibles des résultats
+# trash = 'X:\Musique\_to_delete'           # ce que les opérations retirent (jamais supprimé)
+# bot = 'X:\Musique\_bot'                   # installation de production
+# incoming = 'X:\Musique\_sort'             # arrivées depuis le baladeur
+
+# [tools]
+# Par défaut, les outils sont cherchés dans <racine>\_bot\tools, puis dans le PATH.
+# Indiquer un chemin complet seulement pour en utiliser un autre.
+# ffmpeg = 'X:\Outils\ffmpeg.exe'
+# ffprobe = 'X:\Outils\ffprobe.exe'
+# fpcalc = 'X:\Outils\fpcalc.exe'
+
+# [analysis]
+# Sonie de référence du ReplayGain 2, en LUFS
+# reference_lufs = -18.0
+# Suréchantillonnage pour la crête vraie
+# true_peak_oversampling = 8
+# Nombre de pistes analysées en parallèle (0 = nombre de cœurs - 2)
+# workers = 4
+
+# Catégories : celles par défaut (Artists, Classical music, Compilations, Musicals,
+# Soundtrack, Bulk, _sort) s'appliquent toujours. Ici, seulement les ajouts et les
+# changements, clé par clé.
+# type : artists, classical, compilations, projects, bulk, incoming, ignore
+# pages : génère des pages (album, artiste, projet, compositeur)
+# rg_album : calcule et écrit le ReplayGain album (sinon piste seulement)
+
+# Ajout : une copie de Soundtrack pour un genre précis.
+# [categories."Soundtrack Exemple"]
+# type = "projects"
+# pages = true
+# rg_album = true
+
+# Ajout : une archive séparée, traitée comme Bulk.
+# [categories."Archive Exemple"]
+# type = "bulk"
+# pages = false
+# rg_album = false
+
+# Changement d'une seule clé d'une catégorie par défaut (le reste est conservé).
+# [categories."Compilations"]
+# rg_album = false
+
+# Retrait d'une catégorie par défaut : la déclarer ignorée.
+# [categories."Musicals"]
+# type = "ignore"

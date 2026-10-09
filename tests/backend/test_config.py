@@ -2,159 +2,209 @@
 test_config.py - Tests de la configuration
 
 Description:
-    Tests du chargement de la configuration : fichier d'exemple, catégories,
-    chemins déduits de la racine, superposition des couches (défaut, _bot, clone),
-    ordre de recherche, anciennes clés et valeurs refusées, outils externes.
+    Tests du chargement de la configuration : exemples de production et de
+    développement, catégories, chemins déduits de la racine, superposition des couches
+    (défaut, _bot, clone), ordre de recherche, anciens noms et valeurs refusés, outils
+    externes.
 
 Auteur :
     Dracudar
 
 Version :
-    1.1
+    2.0
 
 Date de création :
     2026.10.06
 
 Date de modification :
-    2026.10.08
+    2026.10.09
 """
 
 import os
+import shutil
 
 import pytest
 
 from src.backend import config
 
 
-def test_exemple_valide(config_exemple):
-    cfg = config.charger(config_exemple)
-    assert cfg.sources == (config_exemple,)
+def test_dev_example_is_valid(dev_example):
+    cfg = config.load(dev_example)
+    assert cfg.sources == (dev_example,)
     # Les apostrophes TOML gardent les « \ » de Windows tels quels
-    assert str(cfg.racine) == r"X:\Musique"
-    assert cfg.surechantillonnage_crete == 8
-    assert str(cfg.dap).startswith("X:") and str(cfg.sauvegarde).startswith("X:")
-    assert cfg.references.fiches_achat is not None
+    assert str(cfg.root) == r"X:\Musique"
+    assert cfg.true_peak_oversampling == 8
+    assert cfg.references.purchase_sheets is not None and cfg.references.audit is not None
     # Dossiers système déduits de la racine
-    assert cfg.sortie.name == "_data" and cfg.journaux.name == "_log"
-    assert cfg.base.name == "_base" and cfg.base.parent == cfg.sortie
-    assert cfg.rapports.name == "_reports" and cfg.corbeille.name == "_to_delete"
-    assert cfg.bot.name == "_bot" and cfg.arrivees.name == "_sort"
+    assert cfg.output.name == "_data" and cfg.logs.name == "_log"
+    assert cfg.db.name == "_base" and cfg.db.parent == cfg.output
+    assert cfg.reports.name == "_reports" and cfg.trash.name == "_to_delete"
+    assert cfg.bot.name == "_bot" and cfg.incoming.name == "_sort"
     assert cfg.reference_lufs == -18.0
-    # L'exemple n'ajoute aucune catégorie active : celles par défaut seulement
+    # L'exemple n'ajoute aucune catégorie : celles par défaut seulement
     assert len(cfg.categories) == 7
 
 
-def test_categories_exemple(config_exemple):
-    cfg = config.charger(config_exemple)
-    assert cfg.categorie("Artists").pages and cfg.categorie("Artists").rg_album
+def test_prod_example_changes_nothing(prod_example, tmp_path):
+    """L'exemple de production, entièrement commenté, donne exactement le défaut."""
+    bot = tmp_path / "Musique" / "_bot"
+    bot.mkdir(parents=True)
+    shutil.copy(prod_example, bot / "config.toml")
+    cfg = config.load(bot / "config.toml")
+    expected = config.from_dict({"paths": {"root": str(tmp_path / "Musique")}})
+    assert cfg.root == tmp_path / "Musique"
+    assert cfg.categories == expected.categories
+    assert (cfg.reference_lufs, cfg.true_peak_oversampling, cfg.workers) == (
+        expected.reference_lufs,
+        expected.true_peak_oversampling,
+        expected.workers,
+    )
+    assert cfg.origins == {"paths.root": config.ORIGIN_DERIVED}  # aucune clé écrite
+
+
+def test_default_categories():
+    cfg = config.from_dict({"paths": {"root": "M"}})
+    assert cfg.category("Artists").pages and cfg.category("Artists").rg_album
     # Bulk : pas de pages, ReplayGain piste seulement
-    c = cfg.categorie("Bulk")
-    assert c.type == "vrac" and not c.pages and not c.rg_album
-    assert cfg.categorie("_data").type == "ignore"  # dossier système implicite
-    assert cfg.categorie("Inconnu") is None
+    c = cfg.category("Bulk")
+    assert c.type == "bulk" and not c.pages and not c.rg_album
+    assert cfg.category("_data").type == "ignore"  # dossier système implicite
+    assert cfg.category("Inconnu") is None
 
 
-def test_base_et_cache_par_defaut():
-    cfg = config.depuis_dict({"chemins": {"racine": "M", "sortie": "S"}})
-    assert cfg.base.as_posix() == "S/_base" and cfg.cache.as_posix() == "S/_cache"
-    assert cfg.journaux.as_posix() == "M/_log"
-    assert cfg.dap is None and cfg.sauvegarde is None and cfg.references.audit is None
+def test_db_and_cache_default_paths():
+    cfg = config.from_dict({"paths": {"root": "M", "output": "S"}})
+    assert cfg.db.as_posix() == "S/_base" and cfg.cache.as_posix() == "S/_cache"
+    assert cfg.logs.as_posix() == "M/_log"
+    assert cfg.references.audit is None
     assert cfg.ffmpeg == "ffmpeg"
     assert cfg.reference_lufs == -18.0 and len(cfg.categories) == 7  # défaut
 
 
-def test_type_inconnu_refuse():
-    with pytest.raises(config.ErreurConfig, match="Type inconnu"):
-        config.depuis_dict(
-            {
-                "chemins": {"racine": "M", "sortie": "S"},
-                "categories": {"X": {"type": "nimporte"}},
-            }
+def test_unknown_type_rejected():
+    with pytest.raises(config.ConfigError, match="Type inconnu"):
+        config.from_dict(
+            {"paths": {"root": "M"}, "categories": {"X": {"type": "nimporte"}}},
         )
 
 
-def test_racine_manquante():
-    with pytest.raises(config.ErreurConfig, match="racine"):
-        config.depuis_dict({"chemins": {"sortie": "S"}})
+def test_missing_root():
+    with pytest.raises(config.RootNotFound, match="root"):
+        config.from_dict({"paths": {"output": "S"}})
 
 
-@pytest.mark.parametrize(("ancienne", "nouvelle"), [("musique", "racine"), ("donnees", "base")])
-def test_anciennes_cles_signalees(ancienne, nouvelle):
-    with pytest.raises(config.ErreurConfig, match=nouvelle):
-        config.depuis_dict({"chemins": {ancienne: "M"}, "categories": {}})
+@pytest.mark.parametrize(
+    ("written", "expected"),
+    [
+        # Ancienne section : le message donne la nouvelle et les clés renommées
+        ({"chemins": {"racine": "M"}}, r"\[chemins\] s'appelle désormais \[paths\].*racine → root"),
+        ({"outils": {"ffmpeg": "f"}}, r"\[outils\] s'appelle désormais \[tools\]"),
+        ({"analyse": {"processus": 2}}, r"\[analysis\].*processus → workers"),
+        # Ancienne clé dans une section au nouveau nom
+        ({"paths": {"root": "M", "base": "B"}}, r"\[paths\] base s'appelle désormais db"),
+        ({"references": {"fiches_achat": "F"}}, "purchase_sheets"),
+        # Ancien type de catégorie
+        ({"categories": {"X": {"type": "vrac"}}}, "'vrac' s'appelle désormais 'bulk'"),
+        # Sections retirées
+        ({"dap": {"destination": "D"}}, r"\[dap\] n'est plus lue"),
+        ({"sauvegarde": {"destination": "S"}}, r"\[sauvegarde\] n'est plus lue"),
+    ],
+)
+def test_old_names_rejected(written, expected):
+    with pytest.raises(config.ConfigError, match=expected):
+        config.from_dict({"paths": {"root": "M"}} | written)
 
 
-CATEGORIES = '[categories."Mon Ajout"]\ntype = "projets"\npages = true\n'
+def test_old_section_reported_before_missing_root(tmp_path):
+    """Une racine écrite sous l'ancienne section est signalée comme telle, pas comme absente."""
+    f = tmp_path / "config.toml"
+    f.write_text("[chemins]\nracine = 'M'\n", encoding="utf-8")
+    with pytest.raises(config.ConfigError, match=r"\[chemins\] s'appelle désormais \[paths\]"):
+        config.load(f)
 
 
-def test_racine_deduite_de_bot(tmp_path):
-    """Production : <racine>/_bot/config.toml, sans clé racine."""
+CATEGORIES = '[categories."Mon Ajout"]\ntype = "projects"\npages = true\n'
+
+
+def test_root_derived_from_bot(tmp_path):
+    """Production : <racine>/_bot/config.toml, sans clé root."""
     bot = tmp_path / "Musique" / "_bot"
     bot.mkdir(parents=True)
     (bot / "config.toml").write_text(CATEGORIES, encoding="utf-8")
-    cfg = config.charger(bot / "config.toml")
-    assert cfg.racine == tmp_path / "Musique" and cfg.bot == bot
-    assert cfg.sortie == tmp_path / "Musique" / "_data"
+    cfg = config.load(bot / "config.toml")
+    assert cfg.root == tmp_path / "Musique" and cfg.bot == bot
+    assert cfg.output == tmp_path / "Musique" / "_data"
 
 
-def test_config_du_clone_surcharge_celle_de_bot(tmp_path):
+def test_clone_config_overrides_bot_config(tmp_path):
     """Développement : le clone ne donne que la racine, le reste vient de _bot."""
     sandbox = tmp_path / "Sandbox"
     (sandbox / "_bot").mkdir(parents=True)
     (sandbox / "_bot" / "config.toml").write_text(
-        CATEGORIES + '[dap]\ndestination = "D"\n[outils]\nfpcalc = "F"\n', encoding="utf-8"
+        CATEGORIES + '[tools]\nffmpeg = "E"\nfpcalc = "F"\n', encoding="utf-8"
     )
     clone = tmp_path / "clone" / "config.toml"
     clone.parent.mkdir()
-    clone.write_text(f"[chemins]\nracine = '{sandbox}'\n[outils]\nfpcalc = 'G'\n", encoding="utf-8")
-    cfg = config.charger(clone)
-    assert cfg.racine == sandbox
+    clone.write_text(f"[paths]\nroot = '{sandbox}'\n[tools]\nfpcalc = 'G'\n", encoding="utf-8")
+    cfg = config.load(clone)
+    assert cfg.root == sandbox
     assert cfg.sources == (sandbox / "_bot" / "config.toml", clone)
-    assert str(cfg.dap) == "D"  # lu dans _bot
+    assert cfg.ffmpeg == "E"  # lu dans _bot
     assert cfg.fpcalc == "G"  # le clone l'emporte
     assert "Mon Ajout" in cfg.categories and "Artists" in cfg.categories
     # Origine de chaque valeur
-    assert cfg.origine("chemins.racine") == config.CLONE
-    assert cfg.origine("dap.destination") == config.BOT
-    assert cfg.origine("outils.fpcalc") == config.CLONE
-    assert cfg.origine("categories.Mon Ajout") == config.BOT
-    assert cfg.origine("categories.Artists") == config.DEFAUT
-    assert cfg.origine("chemins.sortie") == config.DEDUIT
+    assert cfg.origin("paths.root") == config.ORIGIN_CLONE
+    assert cfg.origin("tools.ffmpeg") == config.ORIGIN_BOT
+    assert cfg.origin("tools.fpcalc") == config.ORIGIN_CLONE
+    assert cfg.origin("categories.Mon Ajout") == config.ORIGIN_BOT
+    assert cfg.origin("categories.Artists") == config.ORIGIN_DEFAULT
+    assert cfg.origin("paths.output") == config.ORIGIN_DERIVED
 
 
-def test_config_a_cote_de_l_environnement(tmp_path, monkeypatch):
+def test_old_names_in_bot_config_rejected(tmp_path):
+    """Un ancien nom dans le _bot/config.toml lu en dessous du clone est aussi signalé."""
+    sandbox = tmp_path / "Sandbox"
+    (sandbox / "_bot").mkdir(parents=True)
+    (sandbox / "_bot" / "config.toml").write_text('[dap]\ndestination = "D"\n', encoding="utf-8")
+    clone = tmp_path / "config.toml"
+    clone.write_text(f"[paths]\nroot = '{sandbox}'\n", encoding="utf-8")
+    with pytest.raises(config.ConfigError, match=r"\[dap\] n'est plus lue"):
+        config.load(clone)
+
+
+def test_config_next_to_environment(tmp_path, monkeypatch):
     monkeypatch.delenv("DISCO_CONFIG", raising=False)
     monkeypatch.chdir(tmp_path)
     bot = tmp_path / "_bot"
     bot.mkdir()
     (bot / "config.toml").write_text(CATEGORIES, encoding="utf-8")
-    monkeypatch.setattr(config, "dossier_environnement", lambda: bot)
-    assert config.trouver() == bot / "config.toml"
+    monkeypatch.setattr(config, "environment_dir", lambda: bot)
+    assert config.find() == bot / "config.toml"
 
 
-def _sans_fichier(tmp_path, monkeypatch, programme):
-    """Aucun config.toml nulle part ; le programme tourne depuis `programme`."""
+def _no_file(tmp_path, monkeypatch, program):
+    """Aucun config.toml nulle part ; le programme tourne depuis `program`."""
     monkeypatch.delenv("DISCO_CONFIG", raising=False)
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setattr(config, "RACINE_DEPOT", tmp_path)
-    monkeypatch.setattr(config, "dossier_programme", lambda: programme)
+    monkeypatch.setattr(config, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(config, "program_dir", lambda: program)
 
 
-def test_aucun_fichier_trouve(tmp_path, monkeypatch):
-    _sans_fichier(tmp_path, monkeypatch, None)
-    assert config.trouver() is None
+def test_no_file_found(tmp_path, monkeypatch):
+    _no_file(tmp_path, monkeypatch, None)
+    assert config.find() is None
 
 
-def test_fichier_explicite_absent(tmp_path):
-    with pytest.raises(config.ErreurConfig, match="introuvable"):
-        config.trouver(tmp_path / "rien.toml")
+def test_explicit_file_missing(tmp_path):
+    with pytest.raises(config.ConfigError, match="introuvable"):
+        config.find(tmp_path / "rien.toml")
 
 
-def test_sans_config_depuis_bot(tmp_path, monkeypatch):
+def test_no_config_from_bot(tmp_path, monkeypatch):
     """Production sans config.toml : racine déduite de _bot, configuration par défaut."""
-    _sans_fichier(tmp_path, monkeypatch, tmp_path / "Musique" / "_bot")
-    cfg = config.charger()
-    assert cfg.racine == tmp_path / "Musique" and cfg.sources == ()
+    _no_file(tmp_path, monkeypatch, tmp_path / "Musique" / "_bot")
+    cfg = config.load()
+    assert cfg.root == tmp_path / "Musique" and cfg.sources == ()
     assert set(cfg.categories) == {
         "Artists",
         "Classical music",
@@ -164,19 +214,19 @@ def test_sans_config_depuis_bot(tmp_path, monkeypatch):
         "Bulk",
         "_sort",
     }
-    assert not cfg.categorie("Bulk").rg_album and cfg.categorie("_sort").type == "arrivees"
-    assert cfg.origine("chemins.racine") == config.DEDUIT
-    assert cfg.origine("categories.Bulk") == config.DEFAUT
+    assert not cfg.category("Bulk").rg_album and cfg.category("_sort").type == "incoming"
+    assert cfg.origin("paths.root") == config.ORIGIN_DERIVED
+    assert cfg.origin("categories.Bulk") == config.ORIGIN_DEFAULT
 
 
-def test_sans_config_hors_bot(tmp_path, monkeypatch):
+def test_no_config_outside_bot(tmp_path, monkeypatch):
     """Ni config ni programme dans _bot : la racine est introuvable."""
-    _sans_fichier(tmp_path, monkeypatch, tmp_path / "clone")
-    with pytest.raises(config.ErreurConfig, match="Racine introuvable"):
-        config.charger()
+    _no_file(tmp_path, monkeypatch, tmp_path / "clone")
+    with pytest.raises(config.RootNotFound, match="Racine introuvable"):
+        config.load()
 
 
-def test_surcharge_partielle_de_categorie(tmp_path):
+def test_partial_category_override(tmp_path):
     """Une clé redéfinie garde les autres clés du défaut ; « ignore » retire la catégorie."""
     bot = tmp_path / "_bot"
     bot.mkdir()
@@ -184,29 +234,29 @@ def test_surcharge_partielle_de_categorie(tmp_path):
         '[categories.Soundtrack]\npages = false\n[categories.Musicals]\ntype = "ignore"\n',
         encoding="utf-8",
     )
-    cfg = config.charger(bot / "config.toml")
-    st = cfg.categorie("Soundtrack")
-    assert st.type == "projets" and not st.pages and st.rg_album
-    assert cfg.origine("categories.Soundtrack") == config.BOT
-    assert cfg.origine("categories.Soundtrack.type") == config.DEFAUT
-    mu = cfg.categorie("Musicals")
+    cfg = config.load(bot / "config.toml")
+    st = cfg.category("Soundtrack")
+    assert st.type == "projects" and not st.pages and st.rg_album
+    assert cfg.origin("categories.Soundtrack") == config.ORIGIN_BOT
+    assert cfg.origin("categories.Soundtrack.type") == config.ORIGIN_DEFAULT
+    mu = cfg.category("Musicals")
     assert mu.type == "ignore" and not mu.pages and not mu.rg_album
 
 
-def test_variable_environnement(config_exemple, monkeypatch):
-    monkeypatch.setenv("DISCO_CONFIG", str(config_exemple))
-    assert config.trouver() == config_exemple
+def test_environment_variable(dev_example, monkeypatch):
+    monkeypatch.setenv("DISCO_CONFIG", str(dev_example))
+    assert config.find() == dev_example
 
 
-def test_outils_dans_bot_tools(tmp_path):
-    """Sans chemin dans [outils], un outil posé dans <bot>/tools est utilisé ; sinon le PATH."""
+def test_tools_in_bot_tools(tmp_path):
+    """Sans chemin dans [tools], un outil posé dans <bot>/tools est utilisé ; sinon le PATH."""
     tools = tmp_path / "_bot" / "tools"
     tools.mkdir(parents=True)
-    nom = "fpcalc.exe" if os.name == "nt" else "fpcalc"
-    (tools / nom).write_bytes(b"")
-    d = {"chemins": {"racine": str(tmp_path)}, "categories": {"A": {"type": "artistes"}}}
-    cfg = config.depuis_dict(d)
-    assert cfg.fpcalc == str(tools / nom)
+    name = "fpcalc.exe" if os.name == "nt" else "fpcalc"
+    (tools / name).write_bytes(b"")
+    d = {"paths": {"root": str(tmp_path)}, "categories": {"A": {"type": "artists"}}}
+    cfg = config.from_dict(d)
+    assert cfg.fpcalc == str(tools / name)
     assert cfg.ffmpeg == "ffmpeg"  # absent de tools : PATH
-    d["outils"] = {"fpcalc": "autre"}
-    assert config.depuis_dict(d).fpcalc == "autre"  # la config l'emporte
+    d["tools"] = {"fpcalc": "autre"}
+    assert config.from_dict(d).fpcalc == "autre"  # la config l'emporte

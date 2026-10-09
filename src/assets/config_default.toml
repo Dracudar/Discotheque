@@ -1,26 +1,26 @@
 # Configuration par défaut, intégrée au programme.
 # Elle s'applique toujours, sous <racine>\_bot\config.toml puis le config.toml du clone :
-# ces fichiers ne contiennent que ce qui diffère (voir config.example.toml).
+# ces fichiers ne contiennent que ce qui diffère (voir config.example.toml, à côté).
 # Les chemins des dossiers système se déduisent de la racine (voir src.backend.config).
 
-[analyse]
+[analysis]
 # ReplayGain 2 : référence -18 LUFS (BS.1770). Crête vraie par suréchantillonnage x8.
 reference_lufs = -18.0
-surechantillonnage_crete = 8
+true_peak_oversampling = 8
 # Nombre de pistes analysées en parallèle (0 = nombre de cœurs - 2)
-processus = 0
+workers = 0
 
 # Dossiers de premier niveau de la discothèque.
-# type : artistes, classique, compilations, projets, vrac, arrivees, ignore
+# type : artists, classical, compilations, projects, bulk, incoming, ignore
 # pages : génère des pages (album, artiste, projet, compositeur)
 # rg_album : calcule et écrit le ReplayGain album (sinon piste seulement)
 [categories."Artists"]
-type = "artistes"
+type = "artists"
 pages = true
 rg_album = true
 
 [categories."Classical music"]
-type = "classique"
+type = "classical"
 pages = true
 rg_album = true
 
@@ -30,22 +30,22 @@ pages = true
 rg_album = true
 
 [categories."Musicals"]
-type = "projets"
+type = "projects"
 pages = true
 rg_album = true
 
 [categories."Soundtrack"]
-type = "projets"
+type = "projects"
 pages = true
 rg_album = true
 
 [categories."Bulk"]
-type = "vrac"
+type = "bulk"
 pages = false
 rg_album = false
 
 [categories."_sort"]
-type = "arrivees"
+type = "incoming"
 pages = false
 rg_album = false
 

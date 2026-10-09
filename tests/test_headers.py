@@ -1,5 +1,5 @@
 """
-test_entetes.py - Garde-fou des en-têtes et docstrings
+test_headers.py - Garde-fou des en-têtes et docstrings
 
 Description:
     Garde-fou : chaque fichier Python de `src` et de `tests` (sous-dossiers compris) porte
@@ -14,13 +14,13 @@ Auteur :
     Dracudar
 
 Version :
-    1.1
+    2.0
 
 Date de création :
     2026.10.07
 
 Date de modification :
-    2026.10.08
+    2026.10.09
 """
 
 import ast
@@ -29,10 +29,10 @@ from pathlib import Path
 
 import pytest
 
-DEPOT = Path(__file__).resolve().parents[1]
-MODULES = sorted((DEPOT / "src").rglob("*.py"))
-TESTS = sorted((DEPOT / "tests").rglob("*.py"))
-RUBRIQUES = (
+REPO_ROOT = Path(__file__).resolve().parents[1]
+MODULES = sorted((REPO_ROOT / "src").rglob("*.py"))
+TESTS = sorted((REPO_ROOT / "tests").rglob("*.py"))
+SECTIONS = (
     "Description:",
     "Auteur :",
     "Version :",
@@ -43,24 +43,26 @@ DATE = re.compile(r"^\s+\d{4}\.\d{2}\.\d{2}$", re.MULTILINE)
 VERSION = re.compile(r"\nVersion :\n\s+\d+\.\d+\n")
 
 
-@pytest.mark.parametrize("module", MODULES + TESTS, ids=lambda p: p.relative_to(DEPOT).as_posix())
-def test_entete(module):
+@pytest.mark.parametrize(
+    "module", MODULES + TESTS, ids=lambda p: p.relative_to(REPO_ROOT).as_posix()
+)
+def test_header(module):
     doc = ast.get_docstring(ast.parse(module.read_text(encoding="utf-8")), clean=False)
     assert doc, f"{module.name} : en-tête absent"
     assert doc.lstrip("\n").startswith(f"{module.name} - "), "première ligne : « nom - titre »"
-    for rubrique in RUBRIQUES:
-        assert f"\n{rubrique}\n" in doc, f"{module.name} : rubrique « {rubrique} » absente"
+    for section in SECTIONS:
+        assert f"\n{section}\n" in doc, f"{module.name} : rubrique « {section} » absente"
     assert len(DATE.findall(doc)) == 2, f"{module.name} : dates au format aaaa.mm.jj"
     assert VERSION.search(doc), f"{module.name} : version du fichier au format majeur.mineur"
 
 
-@pytest.mark.parametrize("module", MODULES, ids=lambda p: p.relative_to(DEPOT).as_posix())
+@pytest.mark.parametrize("module", MODULES, ids=lambda p: p.relative_to(REPO_ROOT).as_posix())
 def test_docstrings(module):
-    arbre = ast.parse(module.read_text(encoding="utf-8"))
-    sans = [
+    tree = ast.parse(module.read_text(encoding="utf-8"))
+    missing = [
         n.name
-        for n in ast.walk(arbre)
+        for n in ast.walk(tree)
         if isinstance(n, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef)
         and not ast.get_docstring(n)
     ]
-    assert not sans, f"{module.name} : sans docstring : {', '.join(sans)}"
+    assert not missing, f"{module.name} : sans docstring : {', '.join(missing)}"

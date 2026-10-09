@@ -46,7 +46,7 @@ La production est une **version compilée**, publiée dans les releases GitHub �
 
 1. **Lancer l'installateur** téléchargé depuis la [dernière release](https://github.com/Dracudar/Discotheque/releases/latest) (Windows signale un programme non signé : « Informations complémentaires », puis « Exécuter quand même »).
 2. **Choisir le dossier de la discothèque.** Le programme s'installe dans `<racine>\_bot` et crée les dossiers système. Une case permet de créer aussi l'arborescence de musique (`Artists`, `Compilations`…), et un choix permet d'installer un modèle d'IA adapté à la machine.
-3. **Personnaliser si besoin** `<racine>\_bot\config.toml` : baladeur, sauvegarde, catégories en plus (voir [`config.example.toml`](config.example.toml)).
+3. **Personnaliser si besoin** `<racine>\_bot\config.toml` : catégories en plus, autres outils. Le modèle [`config.example.toml`](src/assets/config.example.toml), livré avec le programme, est entièrement commenté : il suffit de décommenter ce qui doit différer.
 4. **Chemins longs** (pages de plus de 260 caractères) : une fois, dans PowerShell lancé en administrateur :
    ```
    New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name LongPathsEnabled -Value 1 -PropertyType DWORD -Force
@@ -82,8 +82,8 @@ Le suivi se fait dans les issues, les jalons et le GitHub Project du dépôt. Le
 Le développement se fait sur une **copie de travail de la discothèque** (sandbox), jamais sur la vraie.
 
 1. **Préparer la sandbox** comme une installation de production, sans le programme :
-   - `_bot\tools` : `ffmpeg.exe` et `ffprobe.exe` (build Windows *essentials* ou *full* sur [gyan.dev](https://www.gyan.dev/ffmpeg/builds/), dossier `bin`), `fpcalc.exe` ([Chromaprint 1.6.1](https://github.com/acoustid/chromaprint/releases/tag/v1.6.1), `chromaprint-fpcalc-1.6.1-windows-x86_64.zip`). Ils sont trouvés sans configuration ; un autre emplacement peut être donné dans `[outils]` ;
-   - `_bot\config.toml` (facultatif) : seulement les réglages personnels, voir [`config.example.toml`](config.example.toml).
+   - `_bot\tools` : `ffmpeg.exe` et `ffprobe.exe` (build Windows *essentials* ou *full* sur [gyan.dev](https://www.gyan.dev/ffmpeg/builds/), dossier `bin`), `fpcalc.exe` ([Chromaprint 1.6.1](https://github.com/acoustid/chromaprint/releases/tag/v1.6.1), `chromaprint-fpcalc-1.6.1-windows-x86_64.zip`). Ils sont trouvés sans configuration ; un autre emplacement peut être donné dans `[tools]` ;
+   - `_bot\config.toml` (facultatif) : seulement les réglages personnels, voir [`src/assets/config.example.toml`](src/assets/config.example.toml).
 2. **Installer Python 3.14** (ou 3.13) depuis [python.org](https://www.python.org/downloads/), cloner le dépôt (la branche `develop` est prise par défaut) et créer l'environnement de développement :
    ```
    git clone https://github.com/Dracudar/Discotheque
@@ -92,10 +92,10 @@ Le développement se fait sur une **copie de travail de la discothèque** (sandb
    .venv\Scripts\activate
    pip install -e .[dev]
    ```
-3. **Créer `config.toml` dans le clone** (jamais versionné), avec au minimum la racine de la sandbox :
+3. **Créer `config.toml` dans le clone** (jamais versionné), à partir de [`config.dev_example.toml`](config.dev_example.toml), avec au minimum la racine de la sandbox :
    ```toml
-   [chemins]
-   racine = 'X:\Sandbox\Musique'
+   [paths]
+   root = 'X:\Sandbox\Musique'
    ```
    Le reste vient de la configuration par défaut, puis du `_bot\config.toml` de la sandbox s'il existe. Ce qui est écrit dans le clone l'emporte.
 4. **Vérifier** avec `disco doctor`, puis lancer les vérifications à passer avant toute PR :
@@ -110,7 +110,7 @@ Le développement se fait sur une **copie de travail de la discothèque** (sandb
 pip install -e .[dev]
 ```
 
-Le dépôt ne contient aucune donnée réelle : les tests utilisent des données fictives ou synthétiques. Sur sa propre machine, on peut en plus vérifier les fiches d'achat réelles, lues hors dépôt via `[references] fiches_achat` (ou la variable `DISCO_FICHES_REF`).
+Le dépôt ne contient aucune donnée réelle : les tests utilisent des données fictives ou synthétiques. Sur sa propre machine, on peut en plus vérifier les fiches d'achat réelles, lues hors dépôt via `[references] purchase_sheets` dans le `config.toml` du clone (ou la variable `DISCO_PURCHASE_SHEETS`).
 
 ### Structure du dépôt
 
@@ -120,13 +120,13 @@ Discotheque/
 │   ├── __versions__.py         lecteur des versions (assets/versions.toml)
 │   ├── core/                   entrée : commandes (cli), diagnostic (doctor)
 │   ├── backend/                services communs : configuration, journaux, moteur de copie
-│   ├── assets/                 configuration par défaut, versions (programme, puis outils…)
+│   ├── assets/                 configuration par défaut et son modèle commenté, versions
 │   └── mod/                    le métier, un dossier par mod
 ├── tests/                      tests pytest, sur données fictives, rangés en miroir de src/
 │   ├── fixtures/               fiche d'achat fictive
 │   ├── test_architecture.py    garde-fou : règle de dépendance entre couches
-│   ├── test_depot_propre.py    garde-fou : aucune donnée réelle ni chemin du poste
-│   └── test_entetes.py         garde-fou : en-têtes et docstrings
+│   ├── test_clean_repo.py      garde-fou : aucune donnée réelle ni chemin du poste
+│   └── test_headers.py         garde-fou : en-têtes et docstrings
 ├── legacy/                     l'existant, archivé pour référence (non importé)
 │   ├── fiches/                 ancien gabarit des fiches d'achat (gen.py, _head.html)
 │   └── dap/                    ancienne synchro du baladeur et sauvegarde froide (refonte : #54)
@@ -136,7 +136,7 @@ Discotheque/
 │   ├── configuration.md        couches, catégories, origines des valeurs
 │   └── ia-locale.md            besoin et matériel pour l'IA locale
 ├── .github/workflows/ci.yml    CI : ruff, pytest, disco doctor (Windows et Linux)
-├── config.example.toml         modèle de configuration (chemins fictifs)
+├── config.dev_example.toml     modèle du config.toml du clone (chemins fictifs)
 ├── pyproject.toml              paquet, dépendances, ruff
 ├── CLAUDE.md                   consignes pour Claude
 └── LICENSE
