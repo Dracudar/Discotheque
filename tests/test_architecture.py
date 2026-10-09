@@ -102,11 +102,7 @@ def violations(src: Path = SRC) -> list[str]:
         source = layer(module_name(file, src))
         if file.parent == src and file.stem not in ENTRY_POINTS:
             # module feuille de la racine : n'importe rien du paquet
-            found += [
-                f"{file.relative_to(src.parent).as_posix()} → {m}"
-                for m in sorted(imported(file, src))
-                if m.split(".")[0] == PACKAGE
-            ]
+            found += [f"{file.relative_to(src.parent).as_posix()} → {m}" for m in sorted(imported(file, src)) if m.split(".")[0] == PACKAGE]
             continue
         if source is None or source == "core":
             continue

@@ -103,9 +103,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="chemin de config.toml (sinon DISCO_CONFIG, celui de _bot ou du clone ; facultatif)",
     )
     sub = p.add_subparsers(dest="command", required=True)
-    sub.add_parser("doctor", help="vérifie l'environnement (ne modifie rien)").set_defaults(
-        func=_doctor
-    )
+    sub.add_parser("doctor", help="vérifie l'environnement (ne modifie rien)").set_defaults(func=_doctor)
     sub.add_parser("config", help="affiche la configuration chargée").set_defaults(func=_config)
     return p
 

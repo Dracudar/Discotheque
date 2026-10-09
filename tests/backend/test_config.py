@@ -140,9 +140,7 @@ def test_clone_config_overrides_bot_config(tmp_path):
     """Développement : le clone ne donne que la racine, le reste vient de _bot."""
     sandbox = tmp_path / "Sandbox"
     (sandbox / "_bot").mkdir(parents=True)
-    (sandbox / "_bot" / "config.toml").write_text(
-        CATEGORIES + '[tools]\nffmpeg = "E"\nfpcalc = "F"\n', encoding="utf-8"
-    )
+    (sandbox / "_bot" / "config.toml").write_text(CATEGORIES + '[tools]\nffmpeg = "E"\nfpcalc = "F"\n', encoding="utf-8")
     clone = tmp_path / "clone" / "config.toml"
     clone.parent.mkdir()
     clone.write_text(f"[paths]\nroot = '{sandbox}'\n[tools]\nfpcalc = 'G'\n", encoding="utf-8")

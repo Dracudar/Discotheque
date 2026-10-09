@@ -90,9 +90,7 @@ class Outcome:
     errors: list[str] = field(default_factory=list)
 
 
-def list_files(
-    root: Path, excluded: set[str] | None = None, ignored: set[Path] | None = None
-) -> dict[str, tuple[int, float]]:
+def list_files(root: Path, excluded: set[str] | None = None, ignored: set[Path] | None = None) -> dict[str, tuple[int, float]]:
     """Fichiers sous `root` : {chemin relatif « a/b.flac » : (taille, date)}.
 
     Les fichiers temporaires (`TEMP_SUFFIX`) et système (`IGNORED_FILES`) sont
@@ -268,10 +266,7 @@ def mirror(
     source, destination = Path(source), Path(destination)
     plan = make_plan(list_files(source, excluded, ignored), list_files(destination, excluded))
     outcome = Outcome()
-    log(
-        f"Plan : {len(plan.new)} nouveaux, {len(plan.modified)} modifiés, "
-        f"{len(plan.extra)} en trop, {plan.total_bytes / 1e9:.2f} Go à copier"
-    )
+    log(f"Plan : {len(plan.new)} nouveaux, {len(plan.modified)} modifiés, {len(plan.extra)} en trop, {plan.total_bytes / 1e9:.2f} Go à copier")
     if dry_run:
         for rel in plan.new:
             log(f"[simulation] nouveau   {rel}")
@@ -353,9 +348,7 @@ def move_incoming(
                     continue
                 n = 2
                 while target.exists():
-                    target = destination / Path(rel).with_name(
-                        f"{Path(rel).stem} ({n}){Path(rel).suffix}"
-                    )
+                    target = destination / Path(rel).with_name(f"{Path(rel).stem} ({n}){Path(rel).suffix}")
                     n += 1
             outcome.total_bytes += copy_file(source / rel, target)
             (source / rel).unlink()

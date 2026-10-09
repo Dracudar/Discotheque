@@ -86,8 +86,7 @@ def sqlite_features() -> dict[str, bool]:
     trials = {
         "FTS5": "CREATE VIRTUAL TABLE t USING fts5(x)",
         "JSON": "SELECT json_extract('{\"a\":1}', '$.a')",
-        "UPSERT": "CREATE TABLE u(k PRIMARY KEY, v); "
-        "INSERT INTO u VALUES (1, 1) ON CONFLICT(k) DO UPDATE SET v = excluded.v",
+        "UPSERT": "CREATE TABLE u(k PRIMARY KEY, v); INSERT INTO u VALUES (1, 1) ON CONFLICT(k) DO UPDATE SET v = excluded.v",
         "RETURNING": "CREATE TABLE r(x); INSERT INTO r VALUES (1) RETURNING x",
         "STRICT": "CREATE TABLE s(x INTEGER) STRICT",
     }
@@ -109,9 +108,7 @@ def check_sqlite() -> Result:
     """
     available = sqlite_features()
     missing = [k for k, v in available.items() if not v]
-    detail = f"SQLite {sqlite3.sqlite_version} : " + ", ".join(
-        f"{k} {'oui' if v else 'NON'}" for k, v in available.items()
-    )
+    detail = f"SQLite {sqlite3.sqlite_version} : " + ", ".join(f"{k} {'oui' if v else 'NON'}" for k, v in available.items())
     if missing:
         return Result("SQLite", ERROR if "FTS5" in missing else WARNING, detail)
     return Result("SQLite", OK, detail)
@@ -269,9 +266,7 @@ def check_long_paths() -> Result:
     import winreg
 
     try:
-        with winreg.OpenKey(
-            winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\FileSystem"
-        ) as k:
+        with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\FileSystem") as k:
             value, _ = winreg.QueryValueEx(k, "LongPathsEnabled")
     except OSError:
         value = 0

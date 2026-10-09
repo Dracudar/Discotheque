@@ -43,9 +43,7 @@ DATE = re.compile(r"^\s+\d{4}\.\d{2}\.\d{2}$", re.MULTILINE)
 VERSION = re.compile(r"\nVersion :\n\s+\d+\.\d+\n")
 
 
-@pytest.mark.parametrize(
-    "module", MODULES + TESTS, ids=lambda p: p.relative_to(REPO_ROOT).as_posix()
-)
+@pytest.mark.parametrize("module", MODULES + TESTS, ids=lambda p: p.relative_to(REPO_ROOT).as_posix())
 def test_header(module):
     doc = ast.get_docstring(ast.parse(module.read_text(encoding="utf-8")), clean=False)
     assert doc, f"{module.name} : en-tête absent"
@@ -59,10 +57,5 @@ def test_header(module):
 @pytest.mark.parametrize("module", MODULES, ids=lambda p: p.relative_to(REPO_ROOT).as_posix())
 def test_docstrings(module):
     tree = ast.parse(module.read_text(encoding="utf-8"))
-    missing = [
-        n.name
-        for n in ast.walk(tree)
-        if isinstance(n, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef)
-        and not ast.get_docstring(n)
-    ]
+    missing = [n.name for n in ast.walk(tree) if isinstance(n, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef) and not ast.get_docstring(n)]
     assert not missing, f"{module.name} : sans docstring : {', '.join(missing)}"

@@ -349,10 +349,7 @@ def reject_old_names(d: dict) -> None:
     for name, c in d.get("categories", {}).items():
         type_ = c.get("type") if isinstance(c, dict) else None
         if type_ in RENAMED_TYPES:
-            raise ConfigError(
-                f"[categories.{name}] : le type {type_!r} s'appelle désormais "
-                f"{RENAMED_TYPES[type_]!r}."
-            )
+            raise ConfigError(f"[categories.{name}] : le type {type_!r} s'appelle désormais {RENAMED_TYPES[type_]!r}.")
 
 
 def default() -> dict:
@@ -361,9 +358,7 @@ def default() -> dict:
     return tomllib.loads(text)
 
 
-def from_dict(
-    d: dict, sources: tuple[Path, ...] = (), origins: dict[str, str] | None = None
-) -> Config:
+def from_dict(d: dict, sources: tuple[Path, ...] = (), origins: dict[str, str] | None = None) -> Config:
     """Construit et valide une Config à partir du contenu TOML déjà lu.
 
     `d` est posé sur la configuration par défaut ; `paths.root` y est obligatoire
@@ -391,10 +386,7 @@ def from_dict(
 
     root = _path(paths, "root")
     if root is None:
-        raise RootNotFound(
-            "Racine introuvable : lancer le programme depuis <racine>/_bot, ou indiquer "
-            "[paths] root dans config.toml."
-        )
+        raise RootNotFound("Racine introuvable : lancer le programme depuis <racine>/_bot, ou indiquer [paths] root dans config.toml.")
     output = _path(paths, "output") or root / "_data"
     bot = _path(paths, "bot") or root / "_bot"
 
@@ -403,9 +395,7 @@ def from_dict(
         type_ = _require(c, "type", f"categories.{name}")
         if type_ not in CATEGORY_TYPES:
             allowed = ", ".join(sorted(CATEGORY_TYPES))
-            raise ConfigError(
-                f"Type inconnu pour [categories.{name}] : {type_!r} (permis : {allowed})"
-            )
+            raise ConfigError(f"Type inconnu pour [categories.{name}] : {type_!r} (permis : {allowed})")
         # Une catégorie par défaut retirée (type = "ignore") garde ses autres clés à la
         # fusion : on les neutralise
         active = type_ != "ignore"
@@ -437,9 +427,7 @@ def from_dict(
         true_peak_oversampling=oversampling,
         workers=int(_require(analysis, "workers", "analysis")),
         categories=categories,
-        references=References(
-            audit=_path(refs, "audit"), purchase_sheets=_path(refs, "purchase_sheets")
-        ),
+        references=References(audit=_path(refs, "audit"), purchase_sheets=_path(refs, "purchase_sheets")),
         sources=sources,
         origins=origins or {},
     )
