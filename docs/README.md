@@ -6,7 +6,7 @@
 | `ia-locale.md` | Besoin et matériel pour l'IA locale (cas ambigus uniquement). |
 | `sqlite/` | Notes du cours SQLite (mode mentor), créées en phase 1. |
 
-La spécification des fiches d'achat reste **hors dépôt**, parce qu'elle contient des exemples tirés de la discothèque. Elle se trouve à côté des fiches réelles (`[references] fiches_achat`), avec une copie dans le projet Claude de l'auteur.
+La spécification des fiches d'achat reste **hors dépôt**, parce qu'elle contient des exemples tirés de la discothèque. Elle se trouve à côté des fiches réelles (`[references] purchase_sheets`), avec une copie dans le projet Claude de l'auteur.
 
 Le plan complet (décisions, phases, chiffrage, risques) est tenu dans un projet Claude privé. En voici le résumé.
 
@@ -34,12 +34,12 @@ Les branches de livrable partent de `develop`, et leurs PR visent `develop`. `ma
 
 | Dossier | Type | Pages | ReplayGain album |
 |---|---|---|---|
-| Artists | artistes | oui | oui |
-| Classical music | classique | oui | oui |
+| Artists | artists | oui | oui |
+| Classical music | classical | oui | oui |
 | Compilations | compilations | oui | oui |
-| Musicals, Soundtrack | projets | oui | oui |
-| Bulk | vrac | non | non (piste seulement) |
+| Musicals, Soundtrack | projects | oui | oui |
+| Bulk | bulk | non | non (piste seulement) |
 | `_sort` | arrivées (surveillance) | non | après rangement |
 | `_data`, `_bot`, `_log`, `_reports`, `_to_delete` | dossiers système (tout `_…` non déclaré), ignorés | — | — |
 
-Ce sont les catégories par défaut, intégrées au programme : la table fait foi dans `src/assets/config_defaut.toml`. Les catégories propres à un usage (une copie de `Soundtrack` pour un genre précis, une archive séparée de `Bulk` comme `Night`) s'ajoutent dans `<racine>/_bot/config.toml` ; une catégorie par défaut peut y être redéfinie clé par clé, ou retirée avec `type = "ignore"`.
+Ce sont les catégories par défaut, intégrées au programme : la table fait foi dans `src/assets/config_default.toml`. Les catégories propres à un usage (une copie de `Soundtrack` pour un genre précis, une archive séparée de `Bulk` comme `Night`) s'ajoutent dans `<racine>/_bot/config.toml` ; une catégorie par défaut peut y être redéfinie clé par clé, ou retirée avec `type = "ignore"`.

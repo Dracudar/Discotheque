@@ -20,25 +20,25 @@ Le dépôt est **public**. Il contient **uniquement** du code, des tests sur don
 - les paroles, les pochettes, les spectrogrammes, l'audio ;
 - les chemins du poste (lecteurs, dossiers) : ils sont dans `config.toml`. Les exemples utilisent le lecteur fictif `X:`.
 
-Le test `tests/test_depot_propre.py` bloque les types de fichiers concernés et les chemins de lecteur réels. Pour le reste, c'est une règle de relecture : un exemple dans le code ou la doc utilise un nom inventé.
+Le test `tests/test_clean_repo.py` bloque les types de fichiers concernés et les chemins de lecteur réels. Pour le reste, c'est une règle de relecture : un exemple dans le code ou la doc utilise un nom inventé.
 
 Les références réelles restent sur le poste, et leurs emplacements dans `config.toml` (`[references]`) :
 - **spécification des fiches d'achat** : à côté des fiches, avec une copie dans le projet Claude (`claude/specification-fiches.md`) ;
-- **fiches réelles**, pour les tests locaux (`fiches_achat`, ou la variable `DISCO_FICHES_REF`) ;
+- **fiches réelles**, pour les tests locaux (`purchase_sheets`, ou la variable `DISCO_PURCHASE_SHEETS`) ;
 - **résultats et scripts de l'audit** de septembre 2026 (`audit`), référence des algorithmes à réécrire.
 
 Les emplacements réels du poste de Dracudar sont notés dans le document d'état du projet Claude, pas ici.
 
 ## Architecture du code
 Détail dans `docs/ARCHITECTURE.md` (même convention que Morphoz_SnackApp, branche `Refactor`) :
-- **`src/` est le paquet** (pas de sous-dossier `disco`) : `from src.backend.config import charger`. La commande reste `disco`, `python -m src` en est l'équivalent ;
-- **couches** aux noms anglais : `core/` (entrée : cli, doctor), `backend/` (services communs sans métier : config, journal, copie, puis base SQLite et outils), `UI/` (affichage commun aux pages), `assets/` (fichiers intégrés), `mod/<nom>/` (métier : analyse, catalogue, ia, pages, copies). Dossiers métier et code en français. À la racine de `src`, `__versions__.py` lit `assets/versions.toml` (versions du programme, puis des outils, dépendances et modèles) : lisible par toutes les couches, il n'importe que la bibliothèque standard ;
+- **`src/` est le paquet** (pas de sous-dossier `disco`) : `from src.backend.config import load`. La commande reste `disco`, `python -m src` en est l'équivalent ;
+- **couches** aux noms anglais : `core/` (entrée : cli, doctor), `backend/` (services communs sans métier : config, oplog, mirror, puis base SQLite et outils), `UI/` (affichage commun aux pages), `assets/` (fichiers intégrés), `mod/<nom>/` (métier : analysis, catalog, ai, pages, copies). À la racine de `src`, `__versions__.py` lit `assets/versions.toml` (versions du programme, puis des outils, dépendances et modèles) : lisible par toutes les couches, il n'importe que la bibliothèque standard ;
 - **règle de dépendance** : un `mod` n'importe jamais un autre `mod` ni `core` ; `backend` n'importe ni `core`, ni `UI`, ni `mod`. Ce qui est partagé remonte dans `backend/` ou `UI/`. Vérifié par `tests/test_architecture.py` ;
 - **les `mod` communiquent par la base SQLite** : chacun lit ou écrit la base, aucun n'appelle les autres. Les pages ne lisent que la base ;
 - **tests en miroir de `src/`** (`tests/backend/`, `tests/mod/<nom>/`…), sans deux fichiers de même nom.
 
 ## Règles absolues (sécurité de la discothèque)
-1. **La discothèque (`chemins.racine` en production) est en lecture seule.** Exceptions :
+1. **La discothèque (`paths.root` en production) est en lecture seule.** Exceptions :
    - les données générées (`_data`) : les pages peuvent être effacées et régénérées à tout moment, **pas la base** (`_data/_base`), coûteuse à reconstruire ;
    - les **lots de tags validés** (ReplayGain, rangement de `_sort`), **lancés par Dracudar depuis son PC**, jamais depuis une session cloud.
 2. **L'audio n'est jamais modifié.** Seuls les tags peuvent l'être, par lots.
@@ -48,36 +48,36 @@ Détail dans `docs/ARCHITECTURE.md` (même convention que Morphoz_SnackApp, bran
    - une empreinte audio vérifiée avant et après ;
    - un journal (`journal.csv`) ;
    - un script d'annulation.
-4. **Le développement se fait sur une copie de travail (sandbox)** : en développement, `chemins.racine` pointe vers elle.
-5. **Rien n'est supprimé directement.** Ce qui doit disparaître va dans `chemins.corbeille\<lot>\`, que seul Dracudar vide.
-6. Les catégories `vrac` (`Bulk` par défaut, `Night` déclaré dans `_bot`) ne sont jamais réorganisées : elles sont indexées et analysées, sans pages.
+4. **Le développement se fait sur une copie de travail (sandbox)** : en développement, `paths.root` pointe vers elle.
+5. **Rien n'est supprimé directement.** Ce qui doit disparaître va dans `paths.trash\<lot>\`, que seul Dracudar vide.
+6. Les catégories `bulk` (`Bulk` par défaut, `Night` déclaré dans `_bot`) ne sont jamais réorganisées : elles sont indexées et analysées, sans pages.
 
 ## Racine et configuration (`config.toml`, non versionné)
-Tout part de la racine de la discothèque (`chemins.racine`) : la sandbox en développement, la discothèque elle-même en production. Les dossiers système sont à la racine et commencent par `_` ; chacun peut être déplacé dans la config.
+Tout part de la racine de la discothèque (`paths.root`) : la sandbox en développement, la discothèque elle-même en production. Les dossiers système sont à la racine et commencent par `_` ; chacun peut être déplacé dans la config.
 
 La configuration se superpose en trois couches, la plus haute l'emportant clé par clé (une catégorie peut être ajoutée ou redéfinie clé par clé) :
-1. **défaut**, intégrée au programme (`src/assets/config_defaut.toml`) : réglages d'analyse et catégories standard. **Aucun `config.toml` n'est obligatoire** ;
-2. **`<racine>/_bot/config.toml`**, facultatif : seulement ce qui diffère (baladeur, sauvegarde, références, catégories en plus) ;
-3. **le `config.toml` du clone** (développement) : `racine = …` (la sandbox) et toute surcharge.
+1. **défaut**, intégrée au programme (`src/assets/config_default.toml`) : réglages d'analyse et catégories standard. **Aucun `config.toml` n'est obligatoire** ;
+2. **`<racine>/_bot/config.toml`**, facultatif : seulement ce qui diffère (catégories en plus, outils). Modèle tout commenté : `src/assets/config.example.toml`, livré avec le programme ;
+3. **le `config.toml` du clone** (développement) : `root = …` (la sandbox), `[references]` et toute surcharge. Modèle : `config.dev_example.toml`.
 
-Sans `racine` écrite, elle se déduit de `_bot` (son dossier parent) : emplacement de la config, ou, sans aucun fichier, dossier du programme (exe compilé ou `.venv`). `disco config` indique l'origine de chaque valeur.
+Sans `root` écrite, la racine se déduit de `_bot` (son dossier parent) : emplacement de la config, ou, sans aucun fichier, dossier du programme (exe compilé ou `.venv`). `disco config` indique l'origine de chaque valeur.
 
-Ordre de recherche (`src.backend.config.trouver`) : option `--config`, variable `DISCO_CONFIG` (le fichier doit alors exister), `config.toml` à côté du programme (`_bot` en production, le clone en développement), puis `./config.toml`.
+Ordre de recherche (`src.backend.config.find`) : option `--config`, variable `DISCO_CONFIG` (le fichier doit alors exister), `config.toml` à côté du programme (`_bot` en production, le clone en développement), puis `./config.toml`.
 
 | Dossier | Clé | Rôle |
 |---|---|---|
-| `_data` | `chemins.sortie` | Pages générées (miroir de la discothèque, `index.html` à la racine) ; ses dossiers internes commencent par `_` |
-| `_data/_base` | `chemins.base` | Index SQLite. **Jamais effacé** |
-| `_data/_cache` | `chemins.cache` | Réponses des services en ligne |
-| `_bot` | `chemins.bot` | Installation de production : environnement, version publiée depuis `main`, `config.toml`, outils externes (`tools`). **Distinct du clone de développement** |
-| `_sort` | `chemins.arrivees` | Arrivées depuis le baladeur |
-| `_log` | `chemins.journaux` | Journaux détaillés (aussi affichés dans la console) |
-| `_reports` | `chemins.rapports` | Rapports lisibles des résultats, avec lien vers le journal (Markdown, puis intégrés à l'interface) |
-| `_to_delete` | `chemins.corbeille` | Corbeille : ce que les opérations retirent, pour pouvoir annuler |
+| `_data` | `paths.output` | Pages générées (miroir de la discothèque, `index.html` à la racine) ; ses dossiers internes commencent par `_` |
+| `_data/_base` | `paths.db` | Index SQLite. **Jamais effacé** |
+| `_data/_cache` | `paths.cache` | Réponses des services en ligne |
+| `_bot` | `paths.bot` | Installation de production : environnement, version publiée depuis `main`, `config.toml`, outils externes (`tools`). **Distinct du clone de développement** |
+| `_sort` | `paths.incoming` | Arrivées depuis le baladeur |
+| `_log` | `paths.logs` | Journaux détaillés (aussi affichés dans la console) |
+| `_reports` | `paths.reports` | Rapports lisibles des résultats, avec lien vers le journal (Markdown, puis intégrés à l'interface) |
+| `_to_delete` | `paths.trash` | Corbeille : ce que les opérations retirent, pour pouvoir annuler |
 
-Autres clés : `dap.destination` (baladeur, pour les commandes lancées depuis le PC), `sauvegarde.destination` (copie froide), `references.*` (données hors dépôt), `outils.*`, `analyse.*`, `categories.*`. Tout dossier `_…` non déclaré dans `categories` est ignoré par l'indexation.
+Autres clés : `references.*` (données hors dépôt, dans le config du clone), `tools.*`, `analysis.*`, `categories.*`. Les anciens noms français (`[chemins]`…) et les sections retirées (`[dap]`, `[sauvegarde]`) sont refusés avec le nouveau nom (`src.backend.config.reject_old_names`). Tout dossier `_…` non déclaré dans `categories` est ignoré par l'indexation.
 
-Toute opération du bot écrit un journal dans `_log` et un rapport dans `_reports` (`src.backend.journal`).
+Toute opération du bot écrit un journal dans `_log` et un rapport dans `_reports` (`src.backend.oplog`).
 
 On n'écrit jamais un chemin en dur dans le code ni dans la doc : tout passe par la configuration.
 
@@ -96,7 +96,7 @@ On n'écrit jamais un chemin en dur dans le code ni dans la doc : tout passe par
   - référence −18 LUFS ;
   - crête vraie ×8, écrite dans les tags de crête ;
   - gain album calculé par addition des histogrammes de sonie des pistes, sans re-décoder ;
-  - pas de gain album pour les catégories `vrac` (`Bulk`, `Night` ; voir `rg_album` dans la config) ;
+  - pas de gain album pour les catégories `bulk` (`Bulk`, `Night` ; voir `rg_album` dans la config) ;
   - tag générique `REPLAYGAIN_*` partout, plus `R128_*` pour les Opus si retenu ;
   - on ne réécrit un fichier que si la valeur change.
 - **SQLite :** mode WAL, `busy_timeout`, migrations versionnées (`PRAGMA user_version`), un seul écrivain à la fois.
@@ -111,8 +111,8 @@ On n'écrit jamais un chemin en dur dans le code ni dans la doc : tout passe par
 - **Activable à la demande** pour toute autre partie : « en mode mentor ».
 
 ## Conventions
-- **Langue :** code, noms et commentaires en français, sans accents dans les identifiants (`reference_lufs`, `rg_album`), avec accents dans les textes et les docstrings.
-- **En-tête des fichiers Python :** chaque nouveau fichier `.py` de `src/` et de `tests/` commence par le bloc d'en-tête commun aux projets de Dracudar (voir un module existant, par ex. `src/backend/copie.py`) :
+- **Langue :** identifiants (modules, fonctions, variables, tables et colonnes SQL, clés de configuration, sous-commandes) **en anglais** (`reference_lufs`, `rg_album`, `open_db`). Docstrings, commentaires, messages affichés, journaux et rapports **en français**, avec accents.
+- **En-tête des fichiers Python :** chaque nouveau fichier `.py` de `src/` et de `tests/` commence par le bloc d'en-tête commun aux projets de Dracudar (voir un module existant, par ex. `src/backend/mirror.py`) :
   ```
   """
   <fichier>.py - <titre court>
@@ -133,8 +133,8 @@ On n'écrit jamais un chemin en dur dans le code ni dans la doc : tout passe par
       aaaa.mm.jj
   """
   ```
-  **Chaque fichier a sa propre version**, au format `majeur.mineur` (pas de correctif au niveau du fichier), indépendante de celle du programme. Un nouveau fichier commence à `1.0`. **À chaque modification d'un fichier**, on met à jour sa `Date de modification` (date du jour). Sa `Version` ne change que si son **code** change : le mineur pour une modification (`1.0` → `1.1`), une seule fois par PR ; le majeur pour une réécriture ou un changement de son interface (`1.4` → `2.0`). Une modification qui ne touche pas au code (docstrings, commentaires, en-tête, numéro de version du programme) change la date, pas la version du fichier. Chaque fonction, méthode et classe a une docstring, avec les rubriques `Args:`, `Returns:`, `Raises:` ou `Attributes:` quand elles apportent quelque chose. `tests/test_entetes.py` vérifie la présence de l'en-tête (`src` et `tests`, sous-dossiers compris) et des docstrings (`src`) et le format de la version, mais pas que la date et la version sont à jour : c'est une règle de relecture.
-- **Version du programme :** au format `majeur.mineur.correctif`, dans `src/assets/versions.toml` (`[programme] version`), sa **seule** source : `src/__versions__.py` l'expose (`__version__`), `pyproject.toml` la lit à l'installation (`dynamic`), et `disco --version` l'affiche. La changer ne modifie que ce fichier de données : aucune version de fichier Python à changer.
+  **Chaque fichier a sa propre version**, au format `majeur.mineur` (pas de correctif au niveau du fichier), indépendante de celle du programme. Un nouveau fichier commence à `1.0`. **À chaque modification d'un fichier**, on met à jour sa `Date de modification` (date du jour). Sa `Version` ne change que si son **code** change : le mineur pour une modification (`1.0` → `1.1`), une seule fois par PR ; le majeur pour une réécriture ou un changement de son interface (`1.4` → `2.0`). Une modification qui ne touche pas au code (docstrings, commentaires, en-tête, numéro de version du programme) change la date, pas la version du fichier. Chaque fonction, méthode et classe a une docstring, avec les rubriques `Args:`, `Returns:`, `Raises:` ou `Attributes:` quand elles apportent quelque chose. `tests/test_headers.py` vérifie la présence de l'en-tête (`src` et `tests`, sous-dossiers compris) et des docstrings (`src`) et le format de la version, mais pas que la date et la version sont à jour : c'est une règle de relecture.
+- **Version du programme :** au format `majeur.mineur.correctif`, dans `src/assets/versions.toml` (`[program] version`), sa **seule** source : `src/__versions__.py` l'expose (`__version__`), `pyproject.toml` la lit à l'installation (`dynamic`), et `disco --version` l'affiche. La changer ne modifie que ce fichier de données : aucune version de fichier Python à changer.
 - **Git :**
   - **`main` = production uniquement.** Rien n'y est poussé ni proposé directement. Seul Dracudar y fusionne `develop` quand il met une version en service.
   - **`develop` = intégration.** Chaque branche de livrable part de `develop` (`phase-1.1/index`), et sa PR vise `develop`. Dracudar la relit et la fusionne.
@@ -145,7 +145,7 @@ On n'écrit jamais un chemin en dur dans le code ni dans la doc : tout passe par
   - un tag Git par version mise en production sur `main` (`v0.1` = jalon 1.1) ;
   - ne jamais travailler en même temps sur la même branche depuis le cloud et depuis le PC.
 - **Qualité :** `ruff check .`, `ruff format src tests` et `pytest` doivent passer avant toute PR. La CI le vérifie sous Windows (Python 3.14) et Linux (Python 3.13).
-- **Tests :** pas de fichiers audio réels dans le dépôt. Les fixtures audio sont synthétiques, générées par ffmpeg pendant les tests. Les fiches réelles, référence du jalon 4.1, restent hors dépôt et sont lues par les tests locaux (`references.fiches_achat` ou `DISCO_FICHES_REF`).
+- **Tests :** pas de fichiers audio réels dans le dépôt. Les fixtures audio sont synthétiques, générées par ffmpeg pendant les tests. Les fiches réelles, référence du jalon 4.1, restent hors dépôt et sont lues par les tests locaux (`references.purchase_sheets` ou `DISCO_PURCHASE_SHEETS`).
 - **`legacy/` :** l'existant archivé, jamais importé par `src/` : `fiches/` (ancien gabarit des fiches d'achat, gardé pour référence et testé) et `dap/` (ancienne synchro du baladeur et sauvegarde froide, non testée, à réécrire dans `mod/copies/`, #54). Un code qui n'est plus d'actualité y est déplacé plutôt que supprimé. Les scripts de l'audit restent hors dépôt (`references.audit`) : on s'en inspire pour réécrire proprement dans `src/`.
 
 ## Commandes utiles

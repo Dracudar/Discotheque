@@ -17,13 +17,13 @@ Auteur :
     Dracudar
 
 Version :
-    1.0
+    2.0
 
 Date de création :
     2026.10.08
 
 Date de modification :
-    2026.10.08
+    2026.10.09
 """
 
 import ast
@@ -31,16 +31,16 @@ from pathlib import Path
 
 import pytest
 
-DEPOT = Path(__file__).resolve().parents[1]
-SRC = DEPOT / "src"
-PAQUET = "src"
-COUCHES = {"core", "backend", "UI", "assets", "mod"}
+REPO_ROOT = Path(__file__).resolve().parents[1]
+SRC = REPO_ROOT / "src"
+PACKAGE = "src"
+LAYERS = {"core", "backend", "UI", "assets", "mod"}
 
 # Modules de la racine de `src` qui peuvent importer le paquet (points d'entrée)
-ENTREES = {"__main__"}
+ENTRY_POINTS = {"__main__"}
 
 # Couches que chacune peut importer, en plus d'elle-même (un mod : lui seul, pas les autres)
-AUTORISE = {
+ALLOWED = {
     "core": {"backend", "UI", "assets", "mod"},
     "mod": {"backend", "UI", "assets"},
     "UI": {"backend", "assets"},
@@ -48,7 +48,7 @@ AUTORISE = {
 }
 
 
-def couche(module: str) -> str | None:
+def layer(module: str) -> str | None:
     """Couche d'un module du paquet : « core », « backend », « UI », « mod.<nom> »…
 
     Args:
@@ -58,86 +58,82 @@ def couche(module: str) -> str | None:
         La couche, « mod.<nom> » pour un mod, ou None hors du paquet ou à sa racine
         (`__main__.py`, point d'entrée comme core).
     """
-    parties = module.split(".")
-    if parties[0] != PAQUET or len(parties) < 2 or parties[1] not in COUCHES:
+    parts = module.split(".")
+    if parts[0] != PACKAGE or len(parts) < 2 or parts[1] not in LAYERS:
         return None
-    if parties[1] == "mod" and len(parties) >= 3:
-        return f"mod.{parties[2]}"
-    return parties[1]
+    if parts[1] == "mod" and len(parts) >= 3:
+        return f"mod.{parts[2]}"
+    return parts[1]
 
 
-def nom_module(fichier: Path, src: Path = SRC) -> str:
+def module_name(file: Path, src: Path = SRC) -> str:
     """Nom pointé d'un fichier de `src` (`src/mod/copies/dap.py` → « src.mod.copies.dap »)."""
-    parties = list(fichier.relative_to(src.parent).with_suffix("").parts)
-    if parties[-1] == "__init__":
-        parties.pop()
-    return ".".join(parties)
+    parts = list(file.relative_to(src.parent).with_suffix("").parts)
+    if parts[-1] == "__init__":
+        parts.pop()
+    return ".".join(parts)
 
 
-def importes(fichier: Path, src: Path = SRC) -> set[str]:
+def imported(file: Path, src: Path = SRC) -> set[str]:
     """Modules importés par un fichier, imports relatifs résolus.
 
     Pour « from a import b », donne « a.b » : `b` peut être un sous-module (« from src
     import mod »), et la couche se lit de toute façon sur le début du nom.
     """
-    arbre = ast.parse(fichier.read_text(encoding="utf-8"))
-    paquet = nom_module(fichier, src).split(".")
-    if fichier.name != "__init__.py":
-        paquet.pop()
-    noms: set[str] = set()
-    for n in ast.walk(arbre):
+    tree = ast.parse(file.read_text(encoding="utf-8"))
+    package = module_name(file, src).split(".")
+    if file.name != "__init__.py":
+        package.pop()
+    names: set[str] = set()
+    for n in ast.walk(tree):
         if isinstance(n, ast.Import):
-            noms.update(a.name for a in n.names)
+            names.update(a.name for a in n.names)
         elif isinstance(n, ast.ImportFrom):
-            base = paquet[: len(paquet) - n.level + 1] if n.level else []
+            base = package[: len(package) - n.level + 1] if n.level else []
             module = ".".join([*base, *([n.module] if n.module else [])])
-            noms.update(f"{module}.{a.name}" for a in n.names)
-    return noms
+            names.update(f"{module}.{a.name}" for a in n.names)
+    return names
 
 
 def violations(src: Path = SRC) -> list[str]:
     """Imports interdits par la règle de dépendance, sous la forme « fichier → module »."""
-    trouvees = []
-    for fichier in sorted(src.rglob("*.py")):
-        source = couche(nom_module(fichier, src))
-        if fichier.parent == src and fichier.stem not in ENTREES:
+    found = []
+    for file in sorted(src.rglob("*.py")):
+        source = layer(module_name(file, src))
+        if file.parent == src and file.stem not in ENTRY_POINTS:
             # module feuille de la racine : n'importe rien du paquet
-            trouvees += [
-                f"{fichier.relative_to(src.parent).as_posix()} → {m}"
-                for m in sorted(importes(fichier, src))
-                if m.split(".")[0] == PAQUET
-            ]
+            found += [f"{file.relative_to(src.parent).as_posix()} → {m}" for m in sorted(imported(file, src)) if m.split(".")[0] == PACKAGE]
             continue
         if source is None or source == "core":
             continue
-        famille = source.split(".")[0]
-        for module in sorted(importes(fichier, src)):
-            cible = couche(module)
-            if cible is None or cible == source:
+        family = source.split(".")[0]
+        for module in sorted(imported(file, src)):
+            target = layer(module)
+            if target is None or target == source:
                 continue
-            if cible.split(".")[0] not in AUTORISE[famille]:
-                trouvees.append(f"{fichier.relative_to(src.parent).as_posix()} → {module}")
-    return trouvees
+            if target.split(".")[0] not in ALLOWED[family]:
+                found.append(f"{file.relative_to(src.parent).as_posix()} → {module}")
+    return found
 
 
-def test_regle_de_dependance():
+def test_dependency_rule():
     assert violations() == []
 
 
-def test_couches_connues():
-    dossiers = {d.name for d in SRC.iterdir() if d.is_dir() and d.name != "__pycache__"}
-    assert dossiers <= COUCHES, f"dossier hors couche : {', '.join(sorted(dossiers - COUCHES))}"
+def test_known_layers():
+    folders = {d.name for d in SRC.iterdir() if d.is_dir() and d.name != "__pycache__"}
+    assert folders <= LAYERS, f"dossier hors couche : {', '.join(sorted(folders - LAYERS))}"
 
 
-def _ecrire(racine: Path, chemin: str, texte: str = "") -> None:
-    """Écrit un fichier Python fictif sous `racine/src`."""
-    f = racine / "src" / chemin
+def _write(root: Path, path: str, text: str = "") -> None:
+    """Écrit un fichier Python fictif sous `root/src`."""
+    f = root / "src" / path
     f.parent.mkdir(parents=True, exist_ok=True)
-    f.write_text(texte, encoding="utf-8")
+    f.write_text(text, encoding="utf-8")
 
 
 @pytest.mark.parametrize(
-    ("chemin", "texte", "interdit"),
+    ("path", "text", "forbidden"),
     [
         ("mod/a/x.py", "from src.mod.b import y\n", "src.mod.b.y"),
         ("mod/a/x.py", "from src.core import cli\n", "src.core.cli"),
@@ -151,18 +147,18 @@ def _ecrire(racine: Path, chemin: str, texte: str = "") -> None:
         ("__versions__.py", "from . import core\n", "src.core"),
     ],
 )
-def test_violations_detectees(tmp_path, chemin, texte, interdit):
-    _ecrire(tmp_path, chemin, texte)
-    assert violations(tmp_path / "src") == [f"src/{chemin} → {interdit}"]
+def test_violations_detected(tmp_path, path, text, forbidden):
+    _write(tmp_path, path, text)
+    assert violations(tmp_path / "src") == [f"src/{path} → {forbidden}"]
 
 
-def test_imports_autorises(tmp_path):
-    _ecrire(tmp_path, "core/cli.py", "from src.mod.a import x\nfrom src.backend import c\n")
-    _ecrire(tmp_path, "mod/a/x.py", "from src.backend import c\nfrom . import y\nimport os\n")
-    _ecrire(tmp_path, "mod/a/y.py", "from src.mod.a import x\n")
-    _ecrire(tmp_path, "UI/z.py", "from src.backend.config import charger\n")
-    _ecrire(tmp_path, "mod/a/v.py", "from src.__versions__ import __version__\n")
-    _ecrire(tmp_path, "backend/v.py", "from src import __versions__\n")
-    _ecrire(tmp_path, "__main__.py", "from src.core.cli import main\n")
-    _ecrire(tmp_path, "__versions__.py", "import tomllib\n__version__ = '0'\n")
+def test_allowed_imports(tmp_path):
+    _write(tmp_path, "core/cli.py", "from src.mod.a import x\nfrom src.backend import c\n")
+    _write(tmp_path, "mod/a/x.py", "from src.backend import c\nfrom . import y\nimport os\n")
+    _write(tmp_path, "mod/a/y.py", "from src.mod.a import x\n")
+    _write(tmp_path, "UI/z.py", "from src.backend.config import load\n")
+    _write(tmp_path, "mod/a/v.py", "from src.__versions__ import __version__\n")
+    _write(tmp_path, "backend/v.py", "from src import __versions__\n")
+    _write(tmp_path, "__main__.py", "from src.core.cli import main\n")
+    _write(tmp_path, "__versions__.py", "import tomllib\n__version__ = '0'\n")
     assert violations(tmp_path / "src") == []

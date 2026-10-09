@@ -1,0 +1,21 @@
+# Configuration de développement : modèle du config.toml du clone (jamais versionné).
+#
+# Copier ce fichier en config.toml à la racine du clone et l'adapter. Il se pose
+# au-dessus de <racine>\_bot\config.toml de la sandbox, lui-même au-dessus de la
+# configuration par défaut : il ne contient que ce qui est propre au développement.
+# Les réglages de production (catégories, outils, analyse) : voir
+# src/assets/config.example.toml.
+#
+# Les chaînes entre apostrophes sont littérales : les « \ » de Windows n'ont pas à être doublés.
+# Aucun chemin réel ne doit figurer dans le dépôt : les exemples utilisent le lecteur X:.
+
+[paths]
+# Racine de la discothèque : la sandbox, copie de travail (jamais la discothèque elle-même).
+root = 'X:\Musique'
+
+[references]
+# Données de référence hors dépôt, lues par les tests locaux et les comparaisons.
+# Résultats et scripts de l'audit de septembre 2026.
+audit = 'X:\Travail\_audit'
+# Fiches d'achat réalisées à la main (recap.json), référence du jalon 4.1.
+purchase_sheets = 'X:\Travail\Fiches artistes'

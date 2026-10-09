@@ -8,9 +8,9 @@ La configuration se superpose en trois couches. Pour chaque clé, la couche la p
 
 | Couche | Fichier | Contient | Obligatoire |
 |---|---|---|---|
-| 1. `défaut` | `src/assets/config_defaut.toml` (intégré au programme) | réglages d'analyse, catégories standard | — |
-| 2. `_bot` | `<racine>\_bot\config.toml` | réglages personnels : baladeur, sauvegarde, références, catégories en plus | non |
-| 3. `clone` | `config.toml` du clone de développement | `racine` (la sandbox), et toute surcharge | non (en développement : `racine`) |
+| 1. `défaut` | `src/assets/config_default.toml` (intégré au programme) | réglages d'analyse, catégories standard | — |
+| 2. `_bot` | `<racine>\_bot\config.toml` | réglages personnels : catégories en plus, outils | non |
+| 3. `clone` | `config.toml` du clone de développement | `root` (la sandbox), références hors dépôt, et toute surcharge | non (en développement : `root`) |
 
 Les chemins des dossiers système (`_data`, `_log`…) et des outils ne sont écrits nulle part par défaut : ils se **déduisent** de la racine.
 
@@ -29,7 +29,7 @@ Si le fichier trouvé n'est pas celui de `_bot`, le programme lit **aussi** `<ra
 
 ### Comment la racine est trouvée
 
-1. La clé `[chemins] racine`, si elle est écrite (cas du clone de développement).
+1. La clé `[paths] root`, si elle est écrite (cas du clone de développement).
 2. Sinon, le dossier parent de `_bot` :
    - si la config est rangée dans `<racine>\_bot\config.toml` ;
    - ou, sans aucun fichier, si le programme tourne depuis `<racine>\_bot` (version compilée ou environnement `.venv`).
@@ -37,21 +37,31 @@ Si le fichier trouvé n'est pas celui de `_bot`, le programme lit **aussi** `<ra
 
 ## Production et développement
 
-**Production.** Rien n'est obligatoire. `<racine>\_bot\config.toml` ne contient que les réglages personnels, sans `racine` (elle se déduit) :
+Deux modèles sont fournis :
+
+| Modèle | Copier vers | Contenu |
+|---|---|---|
+| [`src/assets/config.example.toml`](../src/assets/config.example.toml), livré avec le programme | `<racine>\_bot\config.toml` | **tout commenté** : utilisable tel quel (il ne change rien), on décommente seulement ce qui diffère |
+| [`config.dev_example.toml`](../config.dev_example.toml), à la racine du dépôt | `config.toml` du clone | `root` (la sandbox) et `[references]` |
+
+**Production.** Rien n'est obligatoire. `<racine>\_bot\config.toml` ne contient que les réglages personnels, sans `root` (elle se déduit), par exemple une catégorie en plus :
 
 ```toml
-[dap]
-destination = 'X:\Baladeur\Music'
-
-[sauvegarde]
-destination = 'X:\Sauvegarde\Musique'
+[categories."Archive Exemple"]
+type = "bulk"
+pages = false
+rg_album = false
 ```
 
-**Développement.** Le `config.toml` du clone (jamais versionné) donne seulement la racine de la sandbox. Le reste vient du défaut, puis du `_bot\config.toml` de la sandbox :
+**Développement.** Le `config.toml` du clone (jamais versionné) donne la racine de la sandbox et les données de référence hors dépôt. Le reste vient du défaut, puis du `_bot\config.toml` de la sandbox :
 
 ```toml
-[chemins]
-racine = 'X:\Sandbox\Musique'
+[paths]
+root = 'X:\Sandbox\Musique'
+
+[references]
+audit = 'X:\Travail\_audit'
+purchase_sheets = 'X:\Travail\Fiches artistes'
 ```
 
 Les chaînes entre apostrophes sont littérales : les `\` de Windows n'ont pas à être doublés.
@@ -62,7 +72,7 @@ Une catégorie est un dossier de premier niveau de la racine.
 
 | Clé | Rôle |
 |---|---|
-| `type` | `artistes`, `classique`, `compilations`, `projets`, `vrac`, `arrivees`, `ignore` |
+| `type` | `artists`, `classical`, `compilations`, `projects`, `bulk`, `incoming`, `ignore` |
 | `pages` | génère des pages (album, artiste, projet, compositeur) |
 | `rg_album` | calcule et écrit le ReplayGain album (sinon piste seulement) |
 
@@ -70,13 +80,13 @@ Une catégorie est un dossier de premier niveau de la racine.
 
 | Dossier | Type | Pages | ReplayGain album |
 |---|---|---|---|
-| Artists | artistes | oui | oui |
-| Classical music | classique | oui | oui |
+| Artists | artists | oui | oui |
+| Classical music | classical | oui | oui |
 | Compilations | compilations | oui | oui |
-| Musicals | projets | oui | oui |
-| Soundtrack | projets | oui | oui |
-| Bulk | vrac | non | non |
-| `_sort` | arrivees | non | non |
+| Musicals | projects | oui | oui |
+| Soundtrack | projects | oui | oui |
+| Bulk | bulk | non | non |
+| `_sort` | incoming | non | non |
 
 Les autres dossiers qui commencent par `_` (`_data`, `_bot`, `_log`…) sont ignorés automatiquement. `disco doctor` signale tout autre dossier de la racine qui n'est déclaré nulle part.
 
@@ -88,7 +98,7 @@ Ces réglages se font dans `<racine>\_bot\config.toml`.
 
 ```toml
 [categories."Ma Catégorie"]
-type = "projets"
+type = "projects"
 pages = true
 rg_album = true
 ```
@@ -109,9 +119,22 @@ type = "ignore"
 
 ## Règles de fusion
 
-- **Tables** (`[chemins]`, `[categories."…"]`…) : fusionnées clé par clé.
+- **Tables** (`[paths]`, `[categories."…"]`…) : fusionnées clé par clé.
 - **Valeurs simples** (texte, nombre, booléen) : la couche du dessus remplace celle du dessous.
 - **Listes** : remplacées **en bloc**, jamais fusionnées. Pour ajouter un élément à une liste du défaut, il faut réécrire la liste complète.
+
+## Anciens noms
+
+Jusqu'à la version 0.1, la configuration était en français. Un ancien nom n'est pas ignoré en silence : le programme s'arrête et donne le nouveau nom.
+
+| Ancien | Nouveau |
+|---|---|
+| `[chemins] racine, sortie, base, cache, journaux, rapports, corbeille, bot, arrivees` | `[paths] root, output, db, cache, logs, reports, trash, bot, incoming` |
+| `[outils]` | `[tools]` |
+| `[analyse] reference_lufs, surechantillonnage_crete, processus` | `[analysis] reference_lufs, true_peak_oversampling, workers` |
+| `[references] fiches_achat` | `[references] purchase_sheets` |
+| types `artistes, classique, projets, vrac, arrivees` | `artists, classical, projects, bulk, incoming` |
+| `[dap]`, `[sauvegarde]` | retirées : les copies sont refaites dans l'issue #54 |
 
 ## Lire la configuration chargée
 
@@ -121,11 +144,11 @@ type = "ignore"
 Fichiers  : X:\Musique\_bot\config.toml + X:\Projets\Discotheque\config.toml
 Racine    : X:\Musique  [clone]
 Sortie    : X:\Musique\_data  [déduit]
-Sauvegarde: X:\Sauvegarde\Musique  [_bot]
+Fiches    : X:\Travail\Fiches artistes  [clone]
 Référence : -18.0 LUFS  [défaut]
 Catégories :
-  Artists                    artistes     pages=oui RG album=oui  [défaut]
-  Ma Catégorie               projets      pages=oui RG album=oui  [_bot]
+  Artists                    artists      pages=oui RG album=oui  [défaut]
+  Ma Catégorie               projects     pages=oui RG album=oui  [_bot]
 ```
 
 | Origine | Signification |
@@ -141,4 +164,4 @@ Pour une catégorie, l'origine est celle de la couche la plus haute qui la touch
 
 ## Toutes les clés
 
-Voir [`config.example.toml`](../config.example.toml), commenté, et [`config_defaut.toml`](../src/assets/config_defaut.toml) pour les valeurs par défaut.
+Voir [`config.example.toml`](../src/assets/config.example.toml), commenté, et [`config_default.toml`](../src/assets/config_default.toml) pour les valeurs par défaut.

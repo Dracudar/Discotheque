@@ -10,13 +10,13 @@ Auteur :
     Dracudar
 
 Version :
-    1.0
+    2.0
 
 Date de création :
     2026.10.08
 
 Date de modification :
-    2026.10.08
+    2026.10.09
 """
 
 import re
@@ -29,18 +29,18 @@ from src.core.cli import main
 FORMAT = re.compile(r"^\d+\.\d+\.\d+(\S*)$")
 
 
-def test_format():
+def test_version_format():
     assert FORMAT.match(__versions__.__version__)
 
 
-def test_lue_dans_le_toml(tmp_path):
+def test_read_from_toml(tmp_path):
     f = tmp_path / "versions.toml"
-    f.write_text('[programme]\nversion = "9.8.7"\n', encoding="utf-8")
-    assert __versions__.lire(f)["programme"]["version"] == "9.8.7"
-    assert __versions__.lire()["programme"]["version"] == __versions__.__version__
+    f.write_text('[program]\nversion = "9.8.7"\n', encoding="utf-8")
+    assert __versions__.read(f)["program"]["version"] == "9.8.7"
+    assert __versions__.read()["program"]["version"] == __versions__.__version__
 
 
-def test_meme_version_a_l_installation():
+def test_same_version_when_installed():
     assert metadata.version("discotheque") == __versions__.__version__
 
 

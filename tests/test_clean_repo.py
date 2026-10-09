@@ -1,5 +1,5 @@
 """
-test_depot_propre.py - Garde-fou du dépôt public
+test_clean_repo.py - Garde-fou du dépôt public
 
 Description:
     Garde-fou : aucune donnée de la discothèque ne doit entrer dans le dépôt.
@@ -12,13 +12,13 @@ Auteur :
     Dracudar
 
 Version :
-    1.0
+    2.0
 
 Date de création :
     2026.10.06
 
 Date de modification :
-    2026.10.08
+    2026.10.09
 """
 
 import re
@@ -27,7 +27,7 @@ from pathlib import PurePosixPath
 
 import pytest
 
-INTERDITS_EXT = {
+FORBIDDEN_EXT = {
     ".flac",
     ".mp3",
     ".m4a",
@@ -48,13 +48,14 @@ INTERDITS_EXT = {
     ".png",
     ".webp",  # pochettes, spectrogrammes
 }
-INTERDITS_NOMS = {"recap.json", "recap.html", "registry.json", "artists.txt", "config.toml"}
-AUTORISES = {"tests/fixtures/fiche_fictive.json"}
+FORBIDDEN_NAMES = {"recap.json", "recap.html", "registry.json", "artists.txt", "config.toml"}
+ALLOWED = {"tests/fixtures/fiche_fictive.json"}
 
 
-def fichiers_suivis(racine) -> list[str]:
+def tracked_files(repo_root) -> list[str]:
+    """Fichiers suivis par Git (le test est sauté hors d'un dépôt Git)."""
     try:
-        r = subprocess.run(["git", "ls-files"], cwd=racine, capture_output=True, text=True)
+        r = subprocess.run(["git", "ls-files"], cwd=repo_root, capture_output=True, text=True)
     except FileNotFoundError:
         pytest.skip("git absent")
     if r.returncode != 0:
@@ -62,20 +63,20 @@ def fichiers_suivis(racine) -> list[str]:
     return r.stdout.splitlines()
 
 
-def test_aucune_donnee_reelle(racine):
-    fautifs = []
-    for f in fichiers_suivis(racine):
+def test_no_real_data(repo_root):
+    culprits = []
+    for f in tracked_files(repo_root):
         p = PurePosixPath(f)
-        if f in AUTORISES:
+        if f in ALLOWED:
             continue
-        if p.suffix.lower() in INTERDITS_EXT or p.name in INTERDITS_NOMS:
-            fautifs.append(f)
-    assert not fautifs, "Données de la discothèque dans le dépôt : " + ", ".join(fautifs)
+        if p.suffix.lower() in FORBIDDEN_EXT or p.name in FORBIDDEN_NAMES:
+            culprits.append(f)
+    assert not culprits, "Données de la discothèque dans le dépôt : " + ", ".join(culprits)
 
 
 # Chemins absolus Windows : seul le lecteur fictif X: est permis (exemples de configuration).
-LECTEUR = re.compile(r"(?<![A-Za-z0-9])([A-WYZ]):" + re.escape("\\"))
-TEXTES = {
+DRIVE = re.compile(r"(?<![A-Za-z0-9])([A-WYZ]):" + re.escape("\\"))
+TEXT_EXT = {
     ".py",
     ".md",
     ".toml",
@@ -91,13 +92,13 @@ TEXTES = {
 }
 
 
-def test_aucun_chemin_du_poste(racine):
-    fautifs = []
-    for f in fichiers_suivis(racine):
-        if PurePosixPath(f).suffix.lower() not in TEXTES:
+def test_no_local_path(repo_root):
+    culprits = []
+    for f in tracked_files(repo_root):
+        if PurePosixPath(f).suffix.lower() not in TEXT_EXT:
             continue
-        texte = (racine / f).read_text(encoding="utf-8", errors="replace")
-        for n, ligne in enumerate(texte.splitlines(), 1):
-            if LECTEUR.search(ligne):
-                fautifs.append(f"{f}:{n}")
-    assert not fautifs, "Chemins de lecteur réels (utiliser X:) : " + ", ".join(fautifs)
+        text = (repo_root / f).read_text(encoding="utf-8", errors="replace")
+        for n, line in enumerate(text.splitlines(), 1):
+            if DRIVE.search(line):
+                culprits.append(f"{f}:{n}")
+    assert not culprits, "Chemins de lecteur réels (utiliser X:) : " + ", ".join(culprits)

@@ -17,33 +17,33 @@ Auteur :
     Dracudar
 
 Version :
-    1.0
+    2.0
 
 Date de création :
     2026.10.08
 
 Date de modification :
-    2026.10.08
+    2026.10.09
 """
 
 import tomllib
 from pathlib import Path
 
-FICHIER = Path(__file__).resolve().parent / "assets" / "versions.toml"
+FILE = Path(__file__).resolve().parent / "assets" / "versions.toml"
 
 
-def lire(chemin: Path = FICHIER) -> dict:
+def read(path: Path = FILE) -> dict:
     """Contenu du fichier des versions.
 
     Args:
-        chemin: Fichier TOML à lire ; celui du paquet par défaut.
+        path: Fichier TOML à lire ; celui du paquet par défaut.
 
     Returns:
-        Les tables du fichier (`programme`, puis `outils`, `dependances`…).
+        Les tables du fichier (`program`, puis `tools`, `dependencies`…).
     """
-    with open(chemin, "rb") as f:
+    with open(path, "rb") as f:
         return tomllib.load(f)
 
 
-VERSIONS = lire()
-__version__: str = VERSIONS["programme"]["version"]
+VERSIONS = read()
+__version__: str = VERSIONS["program"]["version"]
