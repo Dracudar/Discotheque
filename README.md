@@ -12,7 +12,7 @@ Outils pour indexer et documenter une discothèque personnelle (fichiers FLAC, A
 
 **Prévues**
 - **Analyses qualité par piste, en un seul décodage** : intégrité, spectre (faux lossless, faux Hi-Res, faux 24 bits), ReplayGain 2 avec crête vraie ×8, plage dynamique, écrêtage, empreinte AcoustID.
-- **Pages HTML** par album, artiste, projet (BO, OST, comédies musicales) et compositeur, consultables hors ligne, puis servies par un serveur local.
+- **Application de bureau (Qt)** : pages par album, artiste, projet (BO, OST, comédies musicales) et compositeur, recherche globale, artistes favoris, et configurateur pour régler le programme sans éditer de fichier. Plus tard, une interface web servie par un serveur local.
 - **Suivi** des achats (Qobuz) et des nouveautés (MusicBrainz), paroles synchronisées, traductions.
 
 ## Organisation de la discothèque
@@ -27,7 +27,7 @@ Tout part d'un dossier racine. Les dossiers de musique y sont rangés par catég
 │   ├── _internal/          Python et dépendances embarqués
 │   ├── tools/              ffmpeg.exe, ffprobe.exe, fpcalc.exe
 │   └── config.toml         réglages personnels, facultatif (la racine s'en déduit)
-├── _data/                  pages générées, en miroir de la discothèque
+├── _data/                  données générées (spectrogrammes…), régénérables
 │   ├── _base/              index SQLite (jamais effacé : long à reconstruire)
 │   └── _cache/             réponses des services en ligne
 ├── _sort/                  arrivées depuis le baladeur, RIP de CD ou achats numériques (à trier)
@@ -47,7 +47,7 @@ La production est une **version compilée**, publiée dans les releases GitHub �
 1. **Lancer l'installateur** téléchargé depuis la [dernière release](https://github.com/Dracudar/Discotheque/releases/latest) (Windows signale un programme non signé : « Informations complémentaires », puis « Exécuter quand même »).
 2. **Choisir le dossier de la discothèque.** Le programme s'installe dans `<racine>\_bot` et crée les dossiers système. Une case permet de créer aussi l'arborescence de musique (`Artists`, `Compilations`…), et un choix permet d'installer un modèle d'IA adapté à la machine.
 3. **Personnaliser si besoin** `<racine>\_bot\config.toml` : catégories en plus, autres outils. Le modèle [`config.example.toml`](src/assets/config.example.toml), livré avec le programme, est entièrement commenté : il suffit de décommenter ce qui doit différer.
-4. **Chemins longs** (pages de plus de 260 caractères) : une fois, dans PowerShell lancé en administrateur :
+4. **Chemins longs** (plus de 260 caractères) : une fois, dans PowerShell lancé en administrateur :
    ```
    New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name LongPathsEnabled -Value 1 -PropertyType DWORD -Force
    ```

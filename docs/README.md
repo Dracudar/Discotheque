@@ -5,6 +5,7 @@
 | `ARCHITECTURE.md` | Couches du code, règle de dépendance, circulation par la base, où ranger un nouveau module. |
 | `ia-locale.md` | Besoin et matériel pour l'IA locale (cas ambigus uniquement). |
 | `sqlite/` | Notes du cours SQLite (mode mentor), créées en phase 1. |
+| `qt/` | Notes du cours Qt (mode mentor), créées au jalon 2. |
 
 La spécification des fiches d'achat reste **hors dépôt**, parce qu'elle contient des exemples tirés de la discothèque. Elle se trouve à côté des fiches réelles (`[references] purchase_sheets`), avec une copie dans le projet Claude de l'auteur.
 
@@ -21,14 +22,14 @@ Les branches de livrable partent de `develop`, et leurs PR visent `develop`. `ma
 | 0 | Socle : dépôt, configuration, `disco doctor`, CI Windows, import de l'existant | `phase-0/socle` |
 | 1.1 | Index SQLite (mode mentor) + moteur d'analyse en un seul décodage | `phase-1.1/…` |
 | 1.2 | Lot ReplayGain sur toute la discothèque (lancé par Dracudar) | |
-| 2 | Pages album, navigation, recherche globale hors ligne | |
+| 2 | Application Qt (usage local) : navigation, pages album, recherche globale, configurateur | |
 | 3.1 | Catalogue de référence : MusicBrainz, AcoustID, Wikidata | |
 | 3.2 | Paroles : existant puis LRCLIB, `.lrc` à côté des pistes (lot validé) | |
 | 4.1 | Pages artiste et achats (Qobuz), validation sur les fiches réelles (hors dépôt) | |
 | 4.2 | Traductions (IA locale, FR / EN) et romanisation des langues non latines | |
 | 5 | Pages projet (franchise → œuvre) et compositeur | |
 | 6 | Mises à jour hebdo et à la demande, surveillance de `_sort` | |
-| 7 | Serveur local, puis accès distant (lecteur : à cadrer) | |
+| 7 | Serveur, interface web (téléphone, accès distant jamais public), lecteur à cadrer, projets secondaires (déplacement de la discothèque) | |
 
 ## Catégories (dossiers de premier niveau)
 

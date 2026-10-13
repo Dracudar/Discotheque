@@ -15,7 +15,7 @@
 # root = 'X:\Musique'
 #
 # Dossiers système, à la racine par défaut (décommenter pour les déplacer) :
-# output = 'X:\Musique\_data'               # pages (miroir de la discothèque)
+# output = 'X:\Musique\_data'               # données générées (spectrogrammes…)
 # db = 'X:\Musique\_data\_base'             # index SQLite : jamais effacé
 # cache = 'X:\Musique\_data\_cache'         # réponses des services en ligne
 # logs = 'X:\Musique\_log'                  # journaux détaillés
@@ -43,7 +43,7 @@
 # Soundtrack, Bulk, _sort) s'appliquent toujours. Ici, seulement les ajouts et les
 # changements, clé par clé.
 # type : artists, classical, compilations, projects, bulk, incoming, ignore
-# pages : génère des pages (album, artiste, projet, compositeur)
+# pages : a des pages dans l'interface (album, artiste, projet, compositeur)
 # rg_album : calcule et écrit le ReplayGain album (sinon piste seulement)
 
 # Ajout : une copie de Soundtrack pour un genre précis.
