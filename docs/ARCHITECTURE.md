@@ -19,27 +19,27 @@ src/
 │   ├── config.py      couches de configuration
 │   ├── oplog.py       journal (_log) et rapport (_reports) d'une opération
 │   ├── mirror.py      moteur miroir, corbeille
-│   ├── db.py          (1.1) SQLite : connexion, WAL, migrations
-│   └── tools.py       (1.1) ffmpeg, ffprobe, fpcalc
+│   ├── db.py          (1) SQLite : connexion, WAL, migrations
+│   └── tools.py       (2) ffmpeg, ffprobe, fpcalc
 ├── UI/                interfaces : elles ne font qu'afficher la base
-│   ├── qt/            (2) application de bureau : navigation, recherche, configurateur
-│   └── web/           (7) pages générées par le serveur
+│   ├── qt/            (8) application de bureau : navigation, recherche, configurateur
+│   └── web/           (9) pages générées par le serveur
 ├── assets/            config_default.toml, config.example.toml, versions.toml (fichiers intégrés)
 └── mod/
-    ├── analysis/      (1.1) scan, mesures versionnées, lots de tags
-    ├── catalog/       (3.x) MusicBrainz, AcoustID, Wikidata, paroles → base
-    ├── rules/         (4.1, 5) complétude, livrables d'achat → base
-    ├── ai/            (4.2) traductions, cas ambigus → base
-    └── copies/        (1.1, #54) baladeur, archivage
+    ├── analysis/      (2-4) scan, mesures versionnées, vérifications, lots de tags
+    ├── catalog/       (6) MusicBrainz, AcoustID, Wikidata, paroles → base
+    ├── rules/         (6-7) complétude, livrables d'achat → base
+    ├── ai/            (6) traductions, cas ambigus → base
+    └── copies/        (5, #54) baladeur, archivage, déplacement
 ```
 
-Les dossiers marqués d'un jalon n'existent pas encore : ils naissent avec le livrable correspondant.
+Les dossiers marqués d'une étape n'existent pas encore : ils naissent avec le livrable correspondant.
 
 | Couche | Rôle | Peut importer |
 |---|---|---|
 | `core` | Entrée du programme : lit la ligne de commande, vérifie l'environnement, envoie chaque commande au mod qui la traite. Aucun traitement métier. | tout |
 | `mod/<nom>` | Un domaine métier (analyse, catalogue, règles, IA, copies). | `backend`, `UI`, `assets`, lui-même |
-| `UI` | Interfaces : application Qt (jalon 2), web (jalon 7). Elles lisent la base et n'y écrivent que des demandes et des réglages (favoris, « créer cette page »). Aucune règle métier. | `backend`, `assets` |
+| `UI` | Interfaces : application Qt (étape 8), web (étape 9). Elles lisent la base et n'y écrivent que des demandes et des réglages (favoris, « créer cette page »). Aucune règle métier. | `backend`, `assets` |
 | `backend` | Services communs sans métier : configuration, journaux, copie, base SQLite, outils externes. | `assets`, lui-même |
 | `assets` | Fichiers intégrés au paquet (pas de code Python), lus par `importlib.resources`. | — |
 | racine de `src` | `__versions__.py` : lecteur de `assets/versions.toml`, les versions de la livraison, lisibles par toutes les couches. `__main__.py` : lancement, comme `core`. | rien de `src` (sauf `__main__.py`) |
@@ -59,7 +59,7 @@ Les `mod` communiquent **par la base SQLite** : chacun lit ou écrit la base, au
 musique ──► mod/analysis ──┐                  ┌──► UI/qt  (application locale)
 web ──────► mod/catalog ───┤                  │
             mod/rules ─────┼──► base SQLite ──┤
-            mod/ai ────────┘        ▲         └──► UI/web (jalon 7, serveur)
+            mod/ai ────────┘        ▲         └──► UI/web (étape 9, serveur)
                                     │
                 demandes et réglages des interfaces
 ```

@@ -9,9 +9,9 @@ Indexer une discothèque personnelle (Windows) et la présenter par pages :
 - **projet** (BO, OST, comédies musicales) ;
 - **compositeur** (classique).
 
-L'index SQLite fait foi. Les pages s'affichent dans une **application de bureau en Qt** (PySide6) pour l'usage local, à partir du jalon 2, avec la recherche globale et le configurateur. Le **web** (pages générées par un serveur à partir de la base, pour le téléphone et l'accès distant) vient au jalon 7, avec le serveur.
+L'index SQLite fait foi. Les pages s'affichent dans une **application de bureau en Qt** (PySide6) pour l'usage local (étape 8), avec la recherche globale et le configurateur. Le **web** (pages générées par un serveur à partir de la base, pour le téléphone et l'accès distant) vient à l'étape 9, avec le serveur. **Les traitements passent avant l'interface** : base, analyses, tri et vérification des pistes, surveillance, copies, puis catalogue, paroles et traductions, sorties et achats (ordre des jalons, `docs/README.md`).
 
-Le plan détaillé et chiffré (phases 0 à 7, décisions, risques) est dans le projet Claude « Discographie - Analyse & gestion », document `claude/plan-indexation-fiches.md`. Le résumé des décisions utiles au code est dans `docs/README.md`.
+Le plan détaillé (étapes, décisions, risques) est dans le projet Claude « Discographie - Analyse & gestion », document `claude/plan-indexation-fiches.md`. Le résumé des décisions utiles au code est dans `docs/README.md`.
 
 ## Dépôt public : aucune donnée de la discothèque, aucun chemin du poste
 Le dépôt est **public**. Il contient **uniquement** du code, des tests sur données **fictives** ou synthétiques, et la documentation de mise en place. N'y entrent jamais :
@@ -32,7 +32,7 @@ Les emplacements réels du poste de Dracudar sont notés dans le document d'éta
 ## Architecture du code
 Détail dans `docs/ARCHITECTURE.md` (même convention que Morphoz_SnackApp, branche `Refactor`) :
 - **`src/` est le paquet** (pas de sous-dossier `disco`) : `from src.backend.config import load`. La commande reste `disco`, `python -m src` en est l'équivalent ;
-- **couches** aux noms anglais : `core/` (entrée : cli, doctor), `backend/` (services communs sans métier : config, oplog, mirror, puis base SQLite et outils), `UI/` (interfaces : application Qt au jalon 2, web au jalon 7), `assets/` (fichiers intégrés), `mod/<nom>/` (métier : analysis, catalog, rules, ai, copies). À la racine de `src`, `__versions__.py` lit `assets/versions.toml` (versions du programme, puis des outils, dépendances et modèles) : lisible par toutes les couches, il n'importe que la bibliothèque standard ;
+- **couches** aux noms anglais : `core/` (entrée : cli, doctor), `backend/` (services communs sans métier : config, oplog, mirror, puis base SQLite et outils), `UI/` (interfaces : application Qt à l'étape 8, web à l'étape 9), `assets/` (fichiers intégrés), `mod/<nom>/` (métier : analysis, catalog, rules, ai, copies). À la racine de `src`, `__versions__.py` lit `assets/versions.toml` (versions du programme, puis des outils, dépendances et modèles) : lisible par toutes les couches, il n'importe que la bibliothèque standard ;
 - **règle de dépendance** : un `mod` n'importe jamais un autre `mod` ni `core` ; `backend` n'importe ni `core`, ni `UI`, ni `mod`. Ce qui est partagé remonte dans `backend/` ou `UI/`. Vérifié par `tests/test_architecture.py` ;
 - **les `mod` communiquent par la base SQLite** : chacun lit ou écrit la base, aucun n'appelle les autres. Les interfaces (`UI/`) ne font qu'afficher ce que la base contient : la logique métier (qualité, complétude, livrables) reste dans les mods, pour que l'application Qt et le web montrent la même chose. Une demande faite depuis une interface (créer une page, marquer un favori) est écrite dans la base et traitée par le mod concerné ;
 - **tests en miroir de `src/`** (`tests/backend/`, `tests/mod/<nom>/`…), sans deux fichiers de même nom.
@@ -66,7 +66,7 @@ Ordre de recherche (`src.backend.config.find`) : option `--config`, variable `DI
 
 | Dossier | Clé | Rôle |
 |---|---|---|
-| `_data` | `paths.output` | Données générées (spectrogrammes, puis fichiers du web au jalon 7), régénérables ; ses dossiers internes commencent par `_` |
+| `_data` | `paths.output` | Données générées (spectrogrammes, puis fichiers du web à l'étape 9), régénérables ; ses dossiers internes commencent par `_` |
 | `_data/_base` | `paths.db` | Index SQLite. **Jamais effacé** |
 | `_data/_cache` | `paths.cache` | Réponses des services en ligne |
 | `_bot` | `paths.bot` | Installation de production : environnement, version publiée depuis `main`, `config.toml`, outils externes (`tools`). **Distinct du clone de développement** |
@@ -102,7 +102,7 @@ On n'écrit jamais un chemin en dur dans le code ni dans la doc : tout passe par
 - **SQLite :** mode WAL, `busy_timeout`, migrations versionnées (`PRAGMA user_version`), un seul écrivain à la fois.
 - **Interfaces (décision du 2026.10.13) :**
   - **application Qt** (PySide6, LGPL) pour l'usage local : lecture directe de la base, un paquet à deux points d'entrée (navigation et configurateur), fiches riches dans un `QTextBrowser` (pas de QtWebEngine). Plus de pages HTML statiques ni d'export `.js` pour `file://` ;
-  - **web** au jalon 7 : pages générées par le serveur à partir de la base. Le choix Qt / web pourra être proposé à l'installation.
+  - **web** à l'étape 9 : pages générées par le serveur à partir de la base. Le choix Qt / web pourra être proposé à l'installation.
 
 ## Mode mentor
 - **Désactivé par défaut** dans ce dépôt : Claude écrit le code, Dracudar relit les PR. Les descriptions de PR expliquent les choix.
@@ -111,13 +111,13 @@ On n'écrit jamais un chemin en dur dans le code ni dans la doc : tout passe par
   - Dracudar écrit lui-même le code SQLite (connexion, schéma, requêtes, migrations) ;
   - **Claude écrit les tests** et leur mise en place (fixtures, base temporaire), puis les explique ;
   - les notes de cours vont dans `docs/sqlite/`.
-- **Activé pour l'application Qt** (jalon 2) :
+- **Activé pour l'application Qt** (étape 8) :
   - Dracudar écrit **au moins la base** de l'application (squelette, fenêtre principale, navigation) avec l'aide de Claude ;
   - il confie certaines parties à Claude, qui les écrit en expliquant les notions nouvelles au fil des PR ;
   - **Claude écrit les tests** ;
   - les notes de cours vont dans `docs/qt/` (#73) ;
   - pas d'échéance ferme : on prend le temps d'expliquer.
-- **Cours HTML / CSS / JS** au jalon 7, à partir de l'interface web (#74).
+- **Cours HTML / CSS / JS** à l'étape 9, à partir de l'interface web (#74).
 - **Activable à la demande** pour toute autre partie : « en mode mentor ».
 
 ## Conventions
@@ -149,15 +149,15 @@ On n'écrit jamais un chemin en dur dans le code ni dans la doc : tout passe par
 - **Version du programme :** au format `majeur.mineur.correctif`, dans `src/assets/versions.toml` (`[program] version`), sa **seule** source : `src/__versions__.py` l'expose (`__version__`), `pyproject.toml` la lit à l'installation (`dynamic`), et `disco --version` l'affiche. La changer ne modifie que ce fichier de données : aucune version de fichier Python à changer.
 - **Git :**
   - **`main` = production uniquement.** Rien n'y est poussé ni proposé directement. Seul Dracudar y fusionne `develop` quand il met une version en service.
-  - **`develop` = intégration.** Chaque branche de livrable part de `develop` (`phase-1.1/index`), et sa PR vise `develop`. Dracudar la relit et la fusionne.
-  - **Chaque PR est reliée à une issue** (`Closes #n` en tête de description). Les PR ne vont pas dans le GitHub Project et n'ont pas de jalon : c'est l'issue liée qui porte le suivi. Chaque issue a un jalon ; on pose les relations utiles (sous-issues, « bloqué par »). Les issues suivent la même règle que le code : aucune donnée de la discothèque ;
+  - **`develop` = intégration.** Chaque branche de livrable part de `develop` (`etape-2/analyses`), et sa PR vise `develop`. Dracudar la relit et la fusionne.
+  - **Chaque PR est reliée à une issue** (`Closes #n` en tête de description). Les PR ne vont pas dans le GitHub Project et n'ont pas de jalon : c'est l'issue liée qui porte le suivi. Chaque issue a un jalon (les jalons sont les étapes du projet, plus « Audit et tri » et « Projets secondaires » ; pas de jalon « à détailler » : chaque jalon porte de vraies issues) ; on pose les relations utiles (sous-issues, « bloqué par »). Les issues suivent la même règle que le code : aucune donnée de la discothèque ;
   - **une issue qui demande une action à Dracudar lui est assignée.** Pas d'étiquette pour ça ;
   - **priorité dans le champ `Priority` du GitHub Project** (`Urgent`, `High`, `Normal`, `Low`) ; sans valeur, une issue est `Normal`. Pas d'étiquette de priorité. Depuis une session cloud, le Project n'est pas modifiable : Claude indique la priorité proposée en tête de la description de l'issue (``**Priorité : `High`.**``) ;
   - Conventional Commits en français (`feat(analyse): …`, `fix(scan): …`, `docs: …`) ;
-  - un tag Git par version mise en production sur `main` (`v0.1` = jalon 1.1) ;
+  - un tag Git par version sur `main` : `v0.1.0` à la fin de l'étape 3 (première version de développement appliquée), puis une version par étape ; `v1.0.0` sera la première vraie mise en production ;
   - ne jamais travailler en même temps sur la même branche depuis le cloud et depuis le PC.
 - **Qualité :** `ruff check .`, `ruff format src tests` et `pytest` doivent passer avant toute PR. La CI le vérifie sous Windows (Python 3.14) et Linux (Python 3.13).
-- **Tests :** pas de fichiers audio réels dans le dépôt. Les fixtures audio sont synthétiques, générées par ffmpeg pendant les tests. Les fiches réelles, référence du jalon 4.1, restent hors dépôt et sont lues par les tests locaux (`references.purchase_sheets` ou `DISCO_PURCHASE_SHEETS`).
+- **Tests :** pas de fichiers audio réels dans le dépôt. Les fixtures audio sont synthétiques, générées par ffmpeg pendant les tests. Les fiches réelles, référence de l'étape 7 (achats), restent hors dépôt et sont lues par les tests locaux (`references.purchase_sheets` ou `DISCO_PURCHASE_SHEETS`).
 - **`legacy/` :** l'existant archivé, jamais importé par `src/` : `fiches/` (ancien gabarit des fiches d'achat, gardé pour référence et testé) et `dap/` (ancienne synchro du baladeur et sauvegarde froide, non testée, à réécrire dans `mod/copies/`, #54). Un code qui n'est plus d'actualité y est déplacé plutôt que supprimé. Les scripts de l'audit restent hors dépôt (`references.audit`) : on s'en inspire pour réécrire proprement dans `src/`.
 
 ## Commandes utiles

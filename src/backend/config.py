@@ -33,7 +33,7 @@ Description:
     le nouveau nom.
 
 Auteur :
-    Dracudar
+    Claude (Anthropic)
 
 Version :
     2.0
@@ -146,7 +146,7 @@ class References:
 
     Attributes:
         audit: Résultats et scripts de l'audit de septembre 2026.
-        purchase_sheets: Fiches d'achat réalisées à la main (référence du jalon 4.1).
+        purchase_sheets: Fiches d'achat réalisées à la main (référence de l'étape 7, achats).
     """
 
     audit: Path | None

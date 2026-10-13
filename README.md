@@ -2,7 +2,7 @@
 
 Outils pour indexer et documenter une discothèque personnelle (fichiers FLAC, ALAC, MP3, AAC, Opus), avec une règle avant tout : **la musique est en lecture seule**. Toute écriture de tags passe par un lot validé, journalisé et réversible.
 
-> **État : jalon 0** (socle). La feuille de route complète est dans [`docs/README.md`](docs/README.md).
+> **État : étape 0 terminée** (socle) ; étape 1 (base SQLite) en cours. La feuille de route complète est dans [`docs/README.md`](docs/README.md).
 
 ## Fonctionnalités
 
@@ -40,7 +40,7 @@ Cette structure et les catégories standard sont intégrées au programme : aucu
 
 ## Installation (production, Windows)
 
-> À partir de la première version en production (`v0.1`). D'ici là, le programme ne tourne que depuis le clone de développement (voir plus bas).
+> À partir de la première version installable (`v0.1.0`, fin de l'étape 3). D'ici là, le programme ne tourne que depuis le clone de développement (voir plus bas).
 
 La production est une **version compilée**, publiée dans les releases GitHub à chaque version de `main`. Elle contient tout : le programme, Python et ses dépendances, ffmpeg, ffprobe et fpcalc. Rien à installer à côté, pas même Python, et aucune configuration obligatoire : la structure de la racine est fixe et les catégories standard sont intégrées.
 
@@ -72,8 +72,8 @@ Les copies vers le baladeur et l'archive (anciennes commandes `disco dap` et `di
 
 | Branche | Rôle |
 |---|---|
-| `develop` | **Branche par défaut**, intégration. Chaque livrable part d'elle (`phase-1.1/index`…) et y revient par une PR reliée à son issue. |
-| `main` | **Production uniquement.** Elle ne reçoit que `develop`, quand une version est mise en service, avec un tag (`v0.1`…). Chaque tag produit la version compilée installée dans `_bot`. |
+| `develop` | **Branche par défaut**, intégration. Chaque livrable part d'elle (`etape-2/analyses`…) et y revient par une PR reliée à son issue. |
+| `main` | **Production uniquement.** Elle ne reçoit que `develop`, quand une version est mise en service, avec un tag (`v0.1.0`…). Chaque tag produit la version compilée installée dans `_bot`. |
 
 Le suivi se fait dans les issues, les jalons et le GitHub Project du dépôt. Les commits suivent les Conventional Commits, en français (`feat(analyse): …`).
 
@@ -150,7 +150,7 @@ Le dépôt est public. Il ne contient ni données de la discothèque (noms, fich
 
 | Version | Date | Description |
 |---|---|---|
-| — | — | Pas encore de version en production. `v0.1` correspondra au jalon 1.1 (index SQLite et analyses). |
+| — | — | Pas encore de version. `v0.1.0` à la fin de l'étape 3 (première version de développement appliquée), puis une version par étape ; `v1.0.0` sera la première vraie mise en production. |
 
 ## Auteur et licence
 
