@@ -29,7 +29,7 @@ def open_db(db_dir: Path) -> sqlite3.Connection:
     Établit une connexion à la base de données SQLite spécifiée et la crée si elle n'existe pas.
 
     Args:
-        db_dir (Path): Dossier de la base (`Config.base`, soit `_data/_base`). 
+        db_dir (Path): Dossier de la base (`Config.base`, soit `_data/_base`).
             Il est créé s'il manque, mais son parent (`_data`) doit déjà exister.
 
     Returns:
@@ -40,8 +40,9 @@ def open_db(db_dir: Path) -> sqlite3.Connection:
         FileNotFoundError: Si le dossier `_data` n'existe pas ou si la connexion échoue.
     """
 
-    # `PRAGMA foreign_keys` est ignoré pendant une transaction : on l'active en `autocommit=True`
-    # (aucune transaction ouverte), puis on passe en `autocommit=False`, qui en ouvre une aussitôt.
+    # `PRAGMA foreign_keys` est ignoré pendant une transaction :
+    # on l'active en `autocommit=True` (aucune transaction ouverte),
+    # puis on passe en `autocommit=False`, qui en ouvre une aussitôt.
     db_dir.mkdir(parents=False, exist_ok=True)
     db_path = db_dir / DB_NAME
 
