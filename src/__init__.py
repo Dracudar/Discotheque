@@ -9,7 +9,7 @@ Description:
     dépendances) sont dans `assets/versions.toml`, lu par `src.__versions__`.
 
 Auteur :
-    Dracudar
+    Claude (Anthropic)
 
 Version :
     2.0
@@ -18,5 +18,5 @@ Date de création :
     2026.10.06
 
 Date de modification :
-    2026.10.08
+    2026.10.13
 """

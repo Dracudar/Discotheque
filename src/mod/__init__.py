@@ -6,7 +6,7 @@ Description:
     communiquent par la base SQLite, et ce qu'ils partagent remonte dans backend ou UI.
 
 Auteur :
-    Dracudar
+    Claude (Anthropic)
 
 Version :
     1.0
@@ -15,5 +15,5 @@ Date de création :
     2026.10.08
 
 Date de modification :
-    2026.10.08
+    2026.10.13
 """

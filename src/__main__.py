@@ -6,7 +6,7 @@ Description:
     par pip. Le code de retour de `src.core.cli.main` devient celui du processus.
 
 Auteur :
-    Dracudar
+    Claude (Anthropic)
 
 Version :
     1.1
@@ -15,7 +15,7 @@ Date de création :
     2026.10.06
 
 Date de modification :
-    2026.10.08
+    2026.10.13
 """
 
 from src.core.cli import main

@@ -14,7 +14,7 @@ Description:
     (`<aaaa-mm-jj_hhmmss>_<operation>`), avec l'extension `.log` ou `.md`.
 
 Auteur :
-    Dracudar
+    Claude (Anthropic)
 
 Version :
     2.0
@@ -23,7 +23,7 @@ Date de création :
     2026.10.06
 
 Date de modification :
-    2026.10.09
+    2026.10.13
 """
 
 from __future__ import annotations

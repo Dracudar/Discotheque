@@ -6,7 +6,7 @@ Description:
     chaque commande vers le mod qui la traite ; peut importer backend et mod.
 
 Auteur :
-    Dracudar
+    Claude (Anthropic)
 
 Version :
     1.0
@@ -15,5 +15,5 @@ Date de création :
     2026.10.08
 
 Date de modification :
-    2026.10.08
+    2026.10.13
 """
