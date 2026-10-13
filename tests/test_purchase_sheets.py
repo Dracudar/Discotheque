@@ -8,11 +8,11 @@ Description:
     - Sur le PC : les fiches réelles, lues **hors du dépôt**, dans le dossier indiqué par la
       variable d'environnement DISCO_PURCHASE_SHEETS ou, à défaut, par
       `[references] purchase_sheets`
-      de config.toml. Elles serviront de jeu de validation au jalon 4.1. Sans l'un ou l'autre,
+      de config.toml. Elles serviront de jeu de validation à l'étape 7 (achats). Sans l'un ou l'autre,
       ces tests sont sautés.
 
 Auteur :
-    Dracudar
+    Claude (Anthropic)
 
 Version :
     2.0
@@ -21,7 +21,7 @@ Date de création :
     2026.10.06
 
 Date de modification :
-    2026.10.09
+    2026.10.13
 """
 
 import importlib.util

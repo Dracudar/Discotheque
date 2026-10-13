@@ -73,7 +73,7 @@ Une catégorie est un dossier de premier niveau de la racine.
 | Clé | Rôle |
 |---|---|
 | `type` | `artists`, `classical`, `compilations`, `projects`, `bulk`, `incoming`, `ignore` |
-| `pages` | génère des pages (album, artiste, projet, compositeur) |
+| `pages` | a des pages dans l'interface (album, artiste, projet, compositeur) |
 | `rg_album` | calcule et écrit le ReplayGain album (sinon piste seulement) |
 
 ### Catégories par défaut

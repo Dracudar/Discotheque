@@ -5,30 +5,32 @@
 | `ARCHITECTURE.md` | Couches du code, règle de dépendance, circulation par la base, où ranger un nouveau module. |
 | `ia-locale.md` | Besoin et matériel pour l'IA locale (cas ambigus uniquement). |
 | `sqlite/` | Notes du cours SQLite (mode mentor), créées en phase 1. |
+| `qt/` | Notes du cours Qt (mode mentor), créées à l’étape 8. |
 
 La spécification des fiches d'achat reste **hors dépôt**, parce qu'elle contient des exemples tirés de la discothèque. Elle se trouve à côté des fiches réelles (`[references] purchase_sheets`), avec une copie dans le projet Claude de l'auteur.
 
 Le plan complet (décisions, phases, chiffrage, risques) est tenu dans un projet Claude privé. En voici le résumé.
 
-## Jalons
+## Étapes (jalons)
 
-Le suivi se fait dans les jalons et issues GitHub (GitHub Project « Discothèque », vue Roadmap).
+Le suivi se fait dans les jalons et issues GitHub (GitHub Project « Discothèque »). Les traitements passent avant l'interface : ce qui fait vivre la discothèque au quotidien (pistes analysées, propres, rangées, copiées) vient d'abord. Pas de dates fixes.
 
-Les branches de livrable partent de `develop`, et leurs PR visent `develop`. `main` ne reçoit que les mises en production.
+Les branches de livrable partent de `develop`, et leurs PR visent `develop`. `main` ne reçoit que les versions : `v0.1.0` à la fin de l'étape 3, puis une par étape ; `v1.0.0` sera la première vraie mise en production.
 
-| Jalon | Contenu | Branche |
-|---|---|---|
-| 0 | Socle : dépôt, configuration, `disco doctor`, CI Windows, import de l'existant | `phase-0/socle` |
-| 1.1 | Index SQLite (mode mentor) + moteur d'analyse en un seul décodage | `phase-1.1/…` |
-| 1.2 | Lot ReplayGain sur toute la discothèque (lancé par Dracudar) | |
-| 2 | Pages album, navigation, recherche globale hors ligne | |
-| 3.1 | Catalogue de référence : MusicBrainz, AcoustID, Wikidata | |
-| 3.2 | Paroles : existant puis LRCLIB, `.lrc` à côté des pistes (lot validé) | |
-| 4.1 | Pages artiste et achats (Qobuz), validation sur les fiches réelles (hors dépôt) | |
-| 4.2 | Traductions (IA locale, FR / EN) et romanisation des langues non latines | |
-| 5 | Pages projet (franchise → œuvre) et compositeur | |
-| 6 | Mises à jour hebdo et à la demande, surveillance de `_sort` | |
-| 7 | Serveur local, puis accès distant (lecteur : à cadrer) | |
+| Jalon | Contenu |
+|---|---|
+| Audit et tri | Travail préalable sur la discothèque (audit de septembre 2026, bascule, années et dossiers « année - album ») |
+| 0. Socle | Dépôt, configuration, `disco doctor`, CI, architecture, langue du code |
+| 1. Base SQLite | Schéma, migrations, accès concurrents (mode mentor) |
+| 2. Analyses | Scan, moteur en un seul décodage et mesures, exécution en arrière-plan, version compilée et installateur, lot ReplayGain |
+| 3. Tri et vérification des pistes | Vérification des conventions, lots de correction ; **`v0.1.0`** |
+| 4. Surveillance des données | Changements de la discothèque, arrivées de `_sort` et rangement |
+| 5. Copies et archivage | Partie commune, copie vers le baladeur, archivage, puis copie complète unique |
+| 6. Catalogue, paroles et traductions | MusicBrainz, AcoustID, Wikidata, pages à la demande, franchises et œuvres, paroles, traductions (en arrière-plan) |
+| 7. Sorties et achats | Nouvelles sorties, Qobuz et livrables d'achat, favoris, passes régulières, mise à jour du programme |
+| 8. Interface Qt | Navigation, recherche, pages, écrans de gestion, configurateur |
+| 9. Serveur et web | Serveur, interface web, accès distant jamais public |
+| Projets secondaires | Sans ordre : déplacement de la discothèque, automatisation du Project… |
 
 ## Catégories (dossiers de premier niveau)
 

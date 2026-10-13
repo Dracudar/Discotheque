@@ -12,7 +12,7 @@ workers = 0
 
 # Dossiers de premier niveau de la discothèque.
 # type : artists, classical, compilations, projects, bulk, incoming, ignore
-# pages : génère des pages (album, artiste, projet, compositeur)
+# pages : a des pages dans l'interface (album, artiste, projet, compositeur)
 # rg_album : calcule et écrit le ReplayGain album (sinon piste seulement)
 [categories."Artists"]
 type = "artists"

@@ -7,7 +7,7 @@ Description:
     Tout part de la racine de la discothèque (`paths.root`). Les dossiers système
     vivent à la racine et commencent par « _ » ; chacun peut être déplacé dans la config :
 
-        <racine>/_data          pages générées (miroir de la discothèque), base et caches
+        <racine>/_data          données générées (spectrogrammes…), base et caches
         <racine>/_data/_base    index SQLite : coûteux à reconstruire, jamais effacé
         <racine>/_data/_cache   réponses des services en ligne
         <racine>/_bot           installation de production (environnement, config)
@@ -33,7 +33,7 @@ Description:
     le nouveau nom.
 
 Auteur :
-    Dracudar
+    Claude (Anthropic)
 
 Version :
     2.0
@@ -42,7 +42,7 @@ Date de création :
     2026.10.06
 
 Date de modification :
-    2026.10.09
+    2026.10.13
 """
 
 from __future__ import annotations
@@ -130,7 +130,7 @@ class Category:
     Attributes:
         name: Nom du dossier.
         type: Type de la catégorie (voir `CATEGORY_TYPES`).
-        pages: Génère des pages (album, artiste, projet, compositeur).
+        pages: A des pages dans l'interface (album, artiste, projet, compositeur).
         rg_album: Calcule et écrit le ReplayGain album (sinon piste seulement).
     """
 
@@ -146,7 +146,7 @@ class References:
 
     Attributes:
         audit: Résultats et scripts de l'audit de septembre 2026.
-        purchase_sheets: Fiches d'achat réalisées à la main (référence du jalon 4.1).
+        purchase_sheets: Fiches d'achat réalisées à la main (référence de l'étape 7, achats).
     """
 
     audit: Path | None
