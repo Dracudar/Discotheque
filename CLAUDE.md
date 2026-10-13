@@ -106,13 +106,15 @@ On n'écrit jamais un chemin en dur dans le code ni dans la doc : tout passe par
 
 ## Mode mentor
 - **Désactivé par défaut** dans ce dépôt : Claude écrit le code, Dracudar relit les PR. Les descriptions de PR expliquent les choix.
-- **Activé pour tout ce qui touche à SQLite** (schéma, requêtes, migrations, concurrence, FTS5, maintenance). Dracudar veut maîtriser SQLite pour d'autres projets :
+- **Activé pour tout ce qui touche à SQLite** (schéma, requêtes, migrations, concurrence, FTS5, maintenance). Dracudar veut savoir mettre en place SQLite pour d'autres projets :
   - on avance en guidant, en expliquant le pourquoi ;
-  - Dracudar écrit ou valide lui-même le SQL ;
+  - Dracudar écrit lui-même le code SQLite (connexion, schéma, requêtes, migrations) ;
+  - **Claude écrit les tests** et leur mise en place (fixtures, base temporaire), puis les explique ;
   - les notes de cours vont dans `docs/sqlite/`.
-- **Allégé pour l'application Qt** (jalon 2) : Dracudar veut comprendre Qt sans tout écrire lui-même.
-  - Claude écrit le code **et les tests**, en expliquant les notions nouvelles au fil des PR (description de PR, commentaires utiles) ;
-  - Dracudar relit, pose ses questions, et écrit lui-même les parties qu'il choisit ;
+- **Activé pour l'application Qt** (jalon 2) :
+  - Dracudar écrit **au moins la base** de l'application (squelette, fenêtre principale, navigation) avec l'aide de Claude ;
+  - il confie certaines parties à Claude, qui les écrit en expliquant les notions nouvelles au fil des PR ;
+  - **Claude écrit les tests** ;
   - les notes de cours vont dans `docs/qt/` (#73) ;
   - pas d'échéance ferme : on prend le temps d'expliquer.
 - **Cours HTML / CSS / JS** au jalon 7, à partir de l'interface web (#74).
