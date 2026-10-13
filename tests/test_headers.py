@@ -11,7 +11,7 @@ Description:
     majeur.mineur, distincte de celle du programme (majeur.mineur.correctif).
 
 Auteur :
-    Dracudar
+    Claude (Anthropic)
 
 Version :
     2.0
@@ -20,7 +20,7 @@ Date de création :
     2026.10.07
 
 Date de modification :
-    2026.10.09
+    2026.10.13
 """
 
 import ast

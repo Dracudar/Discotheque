@@ -6,7 +6,7 @@ Description:
     puis la base SQLite et les outils externes. N'importe ni core, ni UI, ni mod.
 
 Auteur :
-    Dracudar
+    Claude (Anthropic)
 
 Version :
     1.0
@@ -15,5 +15,5 @@ Date de création :
     2026.10.08
 
 Date de modification :
-    2026.10.08
+    2026.10.13
 """

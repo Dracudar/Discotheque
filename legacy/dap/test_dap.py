@@ -5,7 +5,7 @@ Description:
     Baladeur et sauvegarde froide, sur des arborescences temporaires fictives.
 
 Auteur :
-    Dracudar
+    Claude (Anthropic)
 
 Version :
     1.1
@@ -14,7 +14,7 @@ Date de création :
     2026.10.06
 
 Date de modification :
-    2026.10.08
+    2026.10.13
 """
 
 import os

@@ -14,7 +14,7 @@ Description:
     Vérifie aussi que chaque dossier de `src` est une couche connue.
 
 Auteur :
-    Dracudar
+    Claude (Anthropic)
 
 Version :
     2.0
@@ -23,7 +23,7 @@ Date de création :
     2026.10.08
 
 Date de modification :
-    2026.10.09
+    2026.10.13
 """
 
 import ast
