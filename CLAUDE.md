@@ -110,7 +110,11 @@ On n'écrit jamais un chemin en dur dans le code ni dans la doc : tout passe par
   - on avance en guidant, en expliquant le pourquoi ;
   - Dracudar écrit ou valide lui-même le SQL ;
   - les notes de cours vont dans `docs/sqlite/`.
-- **Activé pour l'application Qt** (jalon 2), pour la même raison : on avance en guidant, Dracudar écrit ou valide lui-même le code Qt, et les notes de cours vont dans `docs/qt/` (#73). Pas d'échéance ferme : on prend le temps d'expliquer.
+- **Allégé pour l'application Qt** (jalon 2) : Dracudar veut comprendre Qt sans tout écrire lui-même.
+  - Claude écrit le code **et les tests**, en expliquant les notions nouvelles au fil des PR (description de PR, commentaires utiles) ;
+  - Dracudar relit, pose ses questions, et écrit lui-même les parties qu'il choisit ;
+  - les notes de cours vont dans `docs/qt/` (#73) ;
+  - pas d'échéance ferme : on prend le temps d'expliquer.
 - **Cours HTML / CSS / JS** au jalon 7, à partir de l'interface web (#74).
 - **Activable à la demande** pour toute autre partie : « en mode mentor ».
 
@@ -125,7 +129,7 @@ On n'écrit jamais un chemin en dur dans le code ni dans la doc : tout passe par
       <rôle du module>
 
   Auteur :
-      Dracudar
+      Claude (Anthropic)
 
   Version :
       1.0
@@ -137,6 +141,8 @@ On n'écrit jamais un chemin en dur dans le code ni dans la doc : tout passe par
       aaaa.mm.jj
   """
   ```
+  **Auteur : ceux qui ont réellement écrit le code du fichier**, un par ligne, dans l'ordre de leur contribution : `Claude (Anthropic)` pour le code écrit par Claude, `Dracudar` quand il écrit ou modifie lui-même du code (mode mentor, corrections sur son PC). Donner des instructions ou relire une PR ne fait pas d'un auteur. Un fichier existant qui porte encore `Dracudar` seul est corrigé à sa prochaine modification.
+
   **Chaque fichier a sa propre version**, au format `majeur.mineur` (pas de correctif au niveau du fichier), indépendante de celle du programme. Un nouveau fichier commence à `1.0`. **À chaque modification d'un fichier**, on met à jour sa `Date de modification` (date du jour). Sa `Version` ne change que si son **code** change : le mineur pour une modification (`1.0` → `1.1`), une seule fois par PR ; le majeur pour une réécriture ou un changement de son interface (`1.4` → `2.0`). Une modification qui ne touche pas au code (docstrings, commentaires, en-tête, numéro de version du programme) change la date, pas la version du fichier. Chaque fonction, méthode et classe a une docstring, avec les rubriques `Args:`, `Returns:`, `Raises:` ou `Attributes:` quand elles apportent quelque chose. `tests/test_headers.py` vérifie la présence de l'en-tête (`src` et `tests`, sous-dossiers compris) et des docstrings (`src`) et le format de la version, mais pas que la date et la version sont à jour : c'est une règle de relecture.
 - **Version du programme :** au format `majeur.mineur.correctif`, dans `src/assets/versions.toml` (`[program] version`), sa **seule** source : `src/__versions__.py` l'expose (`__version__`), `pyproject.toml` la lit à l'installation (`dynamic`), et `disco --version` l'affiche. La changer ne modifie que ce fichier de données : aucune version de fichier Python à changer.
 - **Git :**

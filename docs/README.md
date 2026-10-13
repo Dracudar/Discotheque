@@ -5,7 +5,7 @@
 | `ARCHITECTURE.md` | Couches du code, règle de dépendance, circulation par la base, où ranger un nouveau module. |
 | `ia-locale.md` | Besoin et matériel pour l'IA locale (cas ambigus uniquement). |
 | `sqlite/` | Notes du cours SQLite (mode mentor), créées en phase 1. |
-| `qt/` | Notes du cours Qt (mode mentor), créées au jalon 2. |
+| `qt/` | Notes du cours Qt (mode mentor allégé), créées au jalon 2. |
 
 La spécification des fiches d'achat reste **hors dépôt**, parce qu'elle contient des exemples tirés de la discothèque. Elle se trouve à côté des fiches réelles (`[references] purchase_sheets`), avec une copie dans le projet Claude de l'auteur.
 
@@ -29,7 +29,8 @@ Les branches de livrable partent de `develop`, et leurs PR visent `develop`. `ma
 | 4.2 | Traductions (IA locale, FR / EN) et romanisation des langues non latines | |
 | 5 | Pages projet (franchise → œuvre) et compositeur | |
 | 6 | Mises à jour hebdo et à la demande, surveillance de `_sort` | |
-| 7 | Serveur, interface web (téléphone, accès distant jamais public), lecteur à cadrer, projets secondaires (déplacement de la discothèque) | |
+| 7 | Serveur, interface web (téléphone, accès distant jamais public), lecteur à cadrer | |
+| 8 | Projets secondaires, sans échéance : déplacement sécurisé de la discothèque… | |
 
 ## Catégories (dossiers de premier niveau)
 
