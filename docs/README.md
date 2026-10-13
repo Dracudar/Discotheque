@@ -22,13 +22,14 @@ Les branches de livrable partent de `develop`, et leurs PR visent `develop`. `ma
 | 0 | Socle : dépôt, configuration, `disco doctor`, CI Windows, import de l'existant | `phase-0/socle` |
 | 1.1 | Index SQLite (mode mentor) + moteur d'analyse en un seul décodage | `phase-1.1/…` |
 | 1.2 | Lot ReplayGain sur toute la discothèque (lancé par Dracudar) | |
+| 1.3 | Arrivées et copies : traitement de `_sort` (analyse, ReplayGain, rangement validé), copies vers le baladeur et l'archive | |
 | 2 | Application Qt (usage local) : navigation, pages album, recherche globale, configurateur | |
 | 3.1 | Catalogue de référence : MusicBrainz, AcoustID, Wikidata | |
 | 3.2 | Paroles : existant puis LRCLIB, `.lrc` à côté des pistes (lot validé) | |
 | 4.1 | Pages artiste et achats (Qobuz), validation sur les fiches réelles (hors dépôt) | |
 | 4.2 | Traductions (IA locale, FR / EN) et romanisation des langues non latines | |
 | 5 | Pages projet (franchise → œuvre) et compositeur | |
-| 6 | Mises à jour hebdo et à la demande, surveillance de `_sort` | |
+| 6 | Mises à jour : passes hebdomadaires et à la demande, nouveautés, mise à jour du programme lui-même | |
 | 7 | Serveur, interface web (téléphone, accès distant jamais public), lecteur à cadrer | |
 | 8 | Projets secondaires, sans échéance : déplacement sécurisé de la discothèque… | |
 
