@@ -4,7 +4,7 @@
 |---|---|
 | `ARCHITECTURE.md` | Couches du code, règle de dépendance, circulation par la base, où ranger un nouveau module. |
 | `ia-locale.md` | Besoin et matériel pour l'IA locale (cas ambigus uniquement). |
-| `sqlite/` | Notes du cours SQLite (mode mentor), créées en phase 1. |
+| `sqlite/` | Notes du cours SQLite (mode mentor) : connexion, tests avec pytest, puis schéma et migrations. |
 | `qt/` | Notes du cours Qt (mode mentor), créées à l’étape 8. |
 
 La spécification des fiches d'achat reste **hors dépôt**, parce qu'elle contient des exemples tirés de la discothèque. Elle se trouve à côté des fiches réelles (`[references] purchase_sheets`), avec une copie dans le projet Claude de l'auteur.
