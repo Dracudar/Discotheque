@@ -19,6 +19,7 @@ src/
 │   ├── config.py      couches de configuration
 │   ├── oplog.py       journal (_log) et rapport (_reports) d'une opération
 │   ├── mirror.py      moteur miroir, corbeille
+│   ├── audio_hash.py  empreinte de l'audio, indépendante des tags
 │   ├── db.py          (1) SQLite : connexion, WAL, migrations
 │   └── tools.py       (2) ffmpeg, ffprobe, fpcalc
 ├── UI/                interfaces : elles ne font qu'afficher la base
