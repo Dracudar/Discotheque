@@ -3,6 +3,7 @@
 | Document | Contenu |
 |---|---|
 | `ARCHITECTURE.md` | Couches du code, règle de dépendance, circulation par la base, où ranger un nouveau module. |
+| `lots.md` | Cycle d'un lot : `_decisions.csv`, `traiter.bat`, `disco lot`, `review`, `reject`, contrat des mods. |
 | `ia-locale.md` | Besoin et matériel pour l'IA locale (cas ambigus uniquement). |
 | `sqlite/` | Notes du cours SQLite (mode mentor), créées en phase 1. |
 | `qt/` | Notes du cours Qt (mode mentor), créées à l’étape 8. |
