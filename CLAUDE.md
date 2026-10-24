@@ -50,7 +50,7 @@ Détail dans `docs/ARCHITECTURE.md` (même convention que Morphoz_SnackApp, bran
    - un journal (`journal.csv`) ;
    - un script d'annulation.
 4. **Le développement se fait sur une copie de travail (sandbox)** : en développement, `paths.root` pointe vers elle.
-5. **Rien n'est supprimé directement.** Ce qui doit disparaître va dans `_workspace\_bin\<lot>\` (`paths.trash`). Un lot y reste **30 jours** (`trash.retention_days`, réglable ; `0` = jamais de purge automatique), puis le bot le supprime définitivement (`disco purge`, `src.backend.trash`). Dracudar peut vider la corbeille avant. Chaque lot est noté dans le journal de la corbeille (`_bot\_log\bin_journal.jsonl`, qui fait foi et n'est jamais purgé) et dans un manifeste `_lot.json` dans son dossier. L'âge se compte depuis la date du journal, un lot est purgé en entier, et un lot absent du journal ou dont le manifeste ne correspond pas n'est jamais purgé : il est signalé.
+5. **Rien n'est supprimé directement.** Ce qui doit disparaître va dans `_workspace\_bin\<lot>\` (`paths.trash`). Un lot y reste jusqu'à ce que Dracudar vide la corbeille. La purge est **désactivée par défaut** (`trash.retention_days = 0`) : un nombre de jours l'active, et le bot supprime alors chaque lot ce nombre de jours après son entrée (`src.backend.trash` ; `disco purge` à la main, lancement automatique avec la surveillance des données, jalon 4). Chaque lot est noté dans le journal de la corbeille (`_bot\_log\bin_journal.jsonl`, qui fait foi et n'est jamais purgé) et dans un manifeste `_lot.json` dans son dossier. L'âge se compte depuis la date du journal, un lot est purgé en entier, et un lot absent du journal ou dont le manifeste ne correspond pas n'est jamais purgé : il est signalé.
 6. Les catégories `bulk` (`Bulk` par défaut, `Night` déclaré dans `_bot`) ne sont jamais réorganisées : elles sont indexées et analysées, sans pages.
 
 ## Racine et configuration (`config.toml`, non versionné)
@@ -79,7 +79,7 @@ Ordre de recherche (`src.backend.config.find`) : option `--config`, variable `DI
 | `_workspace/_in_review` | `paths.in_review` | Résultats tranchés par le bot, en attente de validation (lot) |
 | `_workspace/_pending` | `paths.pending` | Cas que le bot ne sait pas trancher (pas encore de décision) |
 | `_workspace/_reports` | `paths.reports` | Rapports lisibles des résultats, avec lien vers le journal (Markdown, puis intégrés à l'interface) |
-| `_workspace/_bin` | `paths.trash` | Corbeille : ce que les opérations retirent, purgé après `trash.retention_days` jours |
+| `_workspace/_bin` | `paths.trash` | Corbeille : ce que les opérations retirent, purge facultative (`trash.retention_days`, désactivée par défaut) |
 
 Les sous-dossiers de `_workspace` se déduisent de `paths.workspace`, et `_log` de `paths.bot`, s'ils ne sont pas écrits. Cycle d'un fichier : `_sort` → `_process` → `_in_review` (ou `_pending`) → lot validé, ce qui est remplacé partant dans `_bin`. `_workspace`, `_bot` et `_data` ne sont jamais copiés vers le baladeur. `disco doctor` signale les anciens dossiers encore présents à la racine (`_to_delete`, `_reports`, `_log`, `_audit`).
 

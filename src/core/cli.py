@@ -109,16 +109,15 @@ def _purge(args: argparse.Namespace) -> int:
         print(e, file=sys.stderr)
         return 2
     with oplog.OpLog(cfg.logs, "purge") as log:
-        log(f"Purge de la corbeille {cfg.trash} (rétention : {cfg.retention_days} jours)")
+        retention = f"{cfg.retention_days} jours" if cfg.retention_days else "purge désactivée (trash.retention_days = 0)"
+        log(f"Purge de la corbeille {cfg.trash} (rétention : {retention})")
         outcome = trash.purge(cfg.trash, cfg.logs, cfg.retention_days, log)
         notes = [f"Lot {lot.name} purgé le {date:%d/%m/%Y} : le récupérer avant si besoin" for lot, date in outcome.upcoming]
-        if not cfg.retention_days:
-            notes.append("Rétention à 0 : aucune purge automatique")
         report = oplog.write_report(
             cfg.reports,
             log,
             "Purge de la corbeille",
-            [("Corbeille", str(cfg.trash)), ("Rétention", f"{cfg.retention_days} jours")],
+            [("Corbeille", str(cfg.trash)), ("Rétention", retention)],
             [
                 ("Lots purgés", str(len(outcome.purged))),
                 ("Fichiers supprimés", str(sum(len(lot.files) for lot in outcome.purged))),
@@ -149,7 +148,9 @@ def build_parser() -> argparse.ArgumentParser:
     sub = p.add_subparsers(dest="command", required=True)
     sub.add_parser("doctor", help="vérifie l'environnement (ne modifie rien)").set_defaults(func=_doctor)
     sub.add_parser("config", help="affiche la configuration chargée").set_defaults(func=_config)
-    sub.add_parser("purge", help="supprime les lots de la corbeille plus vieux que la rétention").set_defaults(func=_purge)
+    sub.add_parser("purge", help="supprime les lots de la corbeille plus vieux que trash.retention_days (désactivé par défaut)").set_defaults(
+        func=_purge
+    )
     return p
 
 

@@ -143,9 +143,9 @@ Un dossier écrit l'emporte ; ceux qui en dépendent le suivent s'ils ne sont pa
 
 | Clé | Défaut | Rôle |
 |---|---|---|
-| `[trash] retention_days` | `30` | jours avant la suppression définitive d'un lot (`0` : jamais de purge automatique) |
+| `[trash] retention_days` | `0` | jours avant la suppression définitive d'un lot ; `0` : jamais (purge désactivée) |
 
-`disco purge` supprime les lots plus vieux que la rétention, comptée depuis la date d'entrée notée dans le journal de la corbeille (`<logs>\bin_journal.jsonl`), jamais depuis la date des fichiers. Un lot est purgé en entier. Le rapport annonce les lots purgés dans les 7 jours suivants et signale, sans y toucher, les lots absents du journal, sans manifeste (`_lot.json`), dont le manifeste ne correspond pas au journal, ou qui contiennent d'autres fichiers ; la commande renvoie alors 1.
+La purge est facultative : par défaut, les lots restent dans la corbeille jusqu'à ce que l'opérateur la vide. Avec un nombre de jours, `disco purge` supprime les lots plus vieux que la rétention, comptée depuis la date d'entrée notée dans le journal de la corbeille (`<logs>\bin_journal.jsonl`), jamais depuis la date des fichiers. Un lot est purgé en entier. Le rapport annonce les lots purgés dans les 7 jours suivants et signale, sans y toucher, les lots absents du journal, sans manifeste (`_lot.json`), dont le manifeste ne correspond pas au journal, ou qui contiennent d'autres fichiers ; la commande renvoie alors 1. Le lancement automatique de la purge viendra avec la surveillance des données (jalon 4).
 
 ## Règles de fusion
 

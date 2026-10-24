@@ -105,7 +105,7 @@ def test_system_folders_default_paths():
         "reports": "M/_workspace/_reports",
         "trash": "M/_workspace/_bin",
     }
-    assert cfg.retention_days == 30
+    assert cfg.retention_days == 0  # purge désactivée par défaut
     assert cfg.origin("trash.retention_days") == config.ORIGIN_DEFAULT
     assert cfg.origin("paths.workspace") == config.ORIGIN_DERIVED
 
@@ -120,16 +120,16 @@ def test_workspace_subfolders_follow_workspace():
 
 
 def test_retention_override_by_layer(tmp_path):
-    """trash.retention_days : défaut 30, surchargé par _bot puis par le clone."""
+    """trash.retention_days : défaut 0, surchargé par _bot puis par le clone."""
     root = tmp_path / "Musique"
     (root / "_bot").mkdir(parents=True)
     (root / "_bot" / "config.toml").write_text("[trash]\nretention_days = 10\n", encoding="utf-8")
     assert config.load(root / "_bot" / "config.toml").retention_days == 10
     clone = tmp_path / "clone" / "config.toml"
     clone.parent.mkdir()
-    clone.write_text(f"[paths]\nroot = '{root}'\n[trash]\nretention_days = 0\n", encoding="utf-8")
+    clone.write_text(f"[paths]\nroot = '{root}'\n[trash]\nretention_days = 45\n", encoding="utf-8")
     cfg = config.load(clone)
-    assert cfg.retention_days == 0 and cfg.origin("trash.retention_days") == config.ORIGIN_CLONE
+    assert cfg.retention_days == 45 and cfg.origin("trash.retention_days") == config.ORIGIN_CLONE
 
 
 @pytest.mark.parametrize("value", [-1, 1.5, "30", True])

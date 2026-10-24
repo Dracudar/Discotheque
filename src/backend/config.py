@@ -20,7 +20,7 @@ Description:
         <racine>/_workspace/_in_review    résultats tranchés, en attente de validation
         <racine>/_workspace/_pending      cas que le bot ne sait pas trancher
         <racine>/_workspace/_reports      rapports lisibles des résultats
-        <racine>/_workspace/_bin          corbeille, purgée après `trash.retention_days`
+        <racine>/_workspace/_bin          corbeille (purge facultative : `trash.retention_days`)
 
     Les sous-dossiers de `_workspace` se déduisent de `paths.workspace`, et `_log` de
     `paths.bot`, quand ils ne sont pas écrits.
@@ -184,7 +184,8 @@ class Config:
         process: Copies en cours de traitement, jetables (`_workspace/_process`).
         in_review: Résultats en attente de validation (`_workspace/_in_review`).
         pending: Cas que le bot ne sait pas trancher (`_workspace/_pending`).
-        retention_days: Jours avant la purge d'un lot de la corbeille (0 : jamais).
+        retention_days: Jours avant la purge d'un lot de la corbeille (0, le défaut :
+            jamais).
         ffmpeg: Commande de ffmpeg (chemin complet ou nom cherché dans le PATH).
         ffprobe: Commande de ffprobe.
         fpcalc: Commande de fpcalc (Chromaprint).

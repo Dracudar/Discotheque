@@ -4,8 +4,11 @@ trash.py - Corbeille des opérations et sa purge
 Description:
     Corbeille des opérations (`paths.trash`, `_workspace/_bin` par défaut) : rien n'est
     supprimé directement, ce qui doit disparaître y est déplacé par lot
-    (`<corbeille>/<lot>/`), puis supprimé définitivement après `trash.retention_days`
-    jours (0 : jamais de purge automatique). L'opérateur peut vider la corbeille avant.
+    (`<corbeille>/<lot>/`). Il y reste jusqu'à ce que l'opérateur vide la corbeille, sauf
+    si la purge est activée (`trash.retention_days`, 0 par défaut : jamais) : chaque lot
+    est alors supprimé définitivement ce nombre de jours après son entrée. Son lancement
+    automatique viendra avec la surveillance des données (jalon 4) ; d'ici là,
+    `disco purge` la lance à la main.
 
     Chaque lot laisse deux traces :
 

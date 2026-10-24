@@ -11,9 +11,10 @@ true_peak_oversampling = 8
 workers = 0
 
 [trash]
-# Jours pendant lesquels un lot reste dans la corbeille (_workspace\_bin) avant d'être
-# supprimé définitivement (0 = jamais de purge automatique)
-retention_days = 30
+# Purge de la corbeille (_workspace\_bin), désactivée par défaut : les lots y restent
+# jusqu'à ce que l'opérateur la vide. Un nombre de jours l'active : chaque lot est alors
+# supprimé définitivement ce nombre de jours après son entrée (0 = jamais de purge).
+retention_days = 0
 
 # Dossiers de premier niveau de la discothèque.
 # type : artists, classical, compilations, projects, bulk, incoming, ignore

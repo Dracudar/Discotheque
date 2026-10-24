@@ -1,6 +1,6 @@
 # Discothèque
 
-Outils pour indexer et documenter une discothèque personnelle (fichiers FLAC, ALAC, MP3, AAC, Opus), avec une règle avant tout : **la musique est en lecture seule**. Toute écriture de tags passe par un lot validé, journalisé et réversible.
+Outils pour indexer et documenter une discothèque personnelle (fichiers FLAC, ALAC, MP3, AAC, Opus), avec une règle avant tout : **la musique est en lecture seule**. Le programme travaille sur des copies : toute écriture sur la musique (tags, remplacement d'un fichier par sa copie retravaillée) passe par un lot validé, journalisé et réversible, et ce qui est retiré part dans une corbeille.
 
 > **État : étape 0 terminée** (socle) ; étape 1 (base SQLite) en cours. La feuille de route complète est dans [`docs/README.md`](docs/README.md).
 
@@ -9,6 +9,7 @@ Outils pour indexer et documenter une discothèque personnelle (fichiers FLAC, A
 **Disponibles**
 - **Diagnostic** (`disco doctor`) : Python, modules, SQLite, ffmpeg, fpcalc, chemins longs et configuration, sans rien modifier.
 - **Journaux et rapports** : chaque opération s'affiche dans la console, écrit un journal détaillé et produit un rapport lisible.
+- **Corbeille par lots** : rien n'est supprimé directement ; chaque lot retiré est noté dans un journal et un manifeste, pour pouvoir l'annuler. Purge facultative après un nombre de jours.
 
 **Prévues**
 - **Analyses qualité par piste, en un seul décodage** : intégrité, spectre (faux lossless, faux Hi-Res, faux 24 bits), ReplayGain 2 avec crête vraie ×8, plage dynamique, écrêtage, empreinte AcoustID.
@@ -17,23 +18,28 @@ Outils pour indexer et documenter une discothèque personnelle (fichiers FLAC, A
 
 ## Organisation de la discothèque
 
-Tout part d'un dossier racine. Les dossiers de musique y sont rangés par catégorie. Les dossiers système commencent par `_` et ne sont jamais copiés sur le baladeur.
+Tout part d'un dossier racine. Les dossiers de musique y sont rangés par catégorie. Les dossiers système commencent par `_` ; seuls `_playlists` et la musique sont copiés sur le baladeur.
 
 ```
 <racine>/
 ├── Artists/, Compilations/, Soundtrack/…   musique, par catégorie (voir docs/README.md)
+├── _sort/                  arrivées : baladeur, RIP de CD ou achats numériques (à trier)
+├── _playlists/             playlists du baladeur
 ├── _bot/                   installation de production (version compilée)
 │   ├── disco.exe           programme
 │   ├── _internal/          Python et dépendances embarqués
 │   ├── tools/              ffmpeg.exe, ffprobe.exe, fpcalc.exe
+│   ├── _log/               journal de toutes les actions du bot
 │   └── config.toml         réglages personnels, facultatif (la racine s'en déduit)
 ├── _data/                  données générées (spectrogrammes…), régénérables
 │   ├── _base/              index SQLite (jamais effacé : long à reconstruire)
 │   └── _cache/             réponses des services en ligne
-├── _sort/                  arrivées depuis le baladeur, RIP de CD ou achats numériques (à trier)
-├── _log/                   journaux détaillés
-├── _reports/               rapports lisibles des opérations
-└── _to_delete/             corbeille : ce que les opérations retirent
+└── _workspace/             travail du bot, toujours sur des copies
+    ├── _process/           copies en cours de traitement, jetables
+    ├── _in_review/         résultats en attente de validation
+    ├── _pending/           cas que le bot ne sait pas trancher
+    ├── _reports/           rapports lisibles des opérations
+    └── _bin/               corbeille : ce que les opérations retirent (purge facultative)
 ```
 
 Cette structure et les catégories standard sont intégrées au programme : aucun `config.toml` n'est nécessaire. Chaque emplacement peut être changé dans `config.toml`, qui ne contient que ce qui diffère du défaut ; `disco config` affiche l'origine de chaque valeur (`défaut`, `_bot`, `clone`, `déduit`). Détails dans [`docs/configuration.md`](docs/configuration.md).
@@ -53,7 +59,7 @@ La production est une **version compilée**, publiée dans les releases GitHub �
    ```
 5. **Vérifier** : `<racine>\_bot\disco.exe doctor`. Tout doit être `[OK]`. Le diagnostic ne modifie rien.
 
-**Mise à jour** : relancer l'installateur de la nouvelle version ; la configuration est conservée. **Désinstallation** : retire le programme seulement, jamais la musique, `_data` ni la configuration.
+**Mise à jour** : relancer l'installateur de la nouvelle version ; la configuration est conservée. **Désinstallation** : retire le programme seulement, jamais la musique, `_data`, `_workspace`, les journaux (`_bot\_log`) ni la configuration.
 
 Sous Linux (dont Raspberry Pi), une archive à décompresser dans `<racine>/_bot`, puis `disco init`.
 
@@ -63,6 +69,7 @@ Sous Linux (dont Raspberry Pi), une archive à décompresser dans `<racine>/_bot
 |---|---|
 | `disco doctor` | Vérifie Python, les modules, SQLite (FTS5, JSON), ffmpeg, fpcalc (y compris par l'entrée standard), les chemins longs et la configuration |
 | `disco config` | Affiche la configuration chargée et l'emplacement de chaque dossier |
+| `disco purge` | Supprime les lots de la corbeille plus vieux que `trash.retention_days` (désactivé par défaut) ; signale les lots suspects sans y toucher |
 
 Les copies vers le baladeur et l'archive (anciennes commandes `disco dap` et `disco sauvegarde`) sont en cours de refonte (issue #54). L'ancienne version est archivée dans `legacy/dap/`.
 
@@ -119,7 +126,7 @@ Discotheque/
 ├── src/                        le paquet lui-même (commande « disco », « python -m src »)
 │   ├── __versions__.py         lecteur des versions (assets/versions.toml)
 │   ├── core/                   entrée : commandes (cli), diagnostic (doctor)
-│   ├── backend/                services communs : configuration, journaux, moteur de copie
+│   ├── backend/                services communs : configuration, journaux, corbeille, moteur de copie
 │   ├── assets/                 configuration par défaut et son modèle commenté, versions
 │   └── mod/                    le métier, un dossier par mod
 ├── tests/                      tests pytest, sur données fictives, rangés en miroir de src/
@@ -133,7 +140,7 @@ Discotheque/
 ├── docs/
 │   ├── README.md               feuille de route (jalons) et catégories
 │   ├── ARCHITECTURE.md         couches du code et règle de dépendance
-│   ├── configuration.md        couches, catégories, origines des valeurs
+│   ├── configuration.md        couches, dossiers système, catégories, origines des valeurs
 │   └── ia-locale.md            besoin et matériel pour l'IA locale
 ├── .github/workflows/ci.yml    CI : ruff, pytest, disco doctor (Windows et Linux)
 ├── config.dev_example.toml     modèle du config.toml du clone (chemins fictifs)

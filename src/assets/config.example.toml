@@ -31,7 +31,8 @@
 # trash = 'X:\Musique\_workspace\_bin'               # corbeille (voir [trash])
 
 # [trash]
-# Jours avant la suppression définitive d'un lot de la corbeille (0 = jamais)
+# Purge de la corbeille, désactivée par défaut (0) : indiquer un nombre de jours pour
+# supprimer définitivement chaque lot ce nombre de jours après son entrée.
 # retention_days = 30
 
 # [tools]

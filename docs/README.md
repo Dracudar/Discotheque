@@ -24,7 +24,7 @@ Les branches de livrable partent de `develop`, et leurs PR visent `develop`. `ma
 | 1. Base SQLite | Schéma, migrations, accès concurrents (mode mentor) |
 | 2. Analyses | Scan, moteur en un seul décodage et mesures, exécution en arrière-plan, version compilée et installateur, lot ReplayGain |
 | 3. Tri et vérification des pistes | Vérification des conventions, lots de correction ; **`v0.1.0`** |
-| 4. Surveillance des données | Changements de la discothèque, arrivées de `_sort` et rangement |
+| 4. Surveillance des données | Changements de la discothèque, arrivées de `_sort` et rangement, purge automatique de la corbeille (si activée) |
 | 5. Copies et archivage | Partie commune, copie vers le baladeur, archivage, puis copie complète unique |
 | 6. Catalogue, paroles et traductions | MusicBrainz, AcoustID, Wikidata, pages à la demande, franchises et œuvres, paroles, traductions (en arrière-plan) |
 | 7. Sorties et achats | Nouvelles sorties, Qobuz et livrables d'achat, favoris, passes régulières, mise à jour du programme |
@@ -62,7 +62,7 @@ Ce sont les catégories par défaut, intégrées au programme : la table fait fo
    ├─ _in_review   résultats tranchés par le bot, en attente de validation (lot)
    ├─ _pending     cas que le bot ne sait pas trancher
    ├─ _reports     rapports lisibles du travail effectué
-   └─ _bin         corbeille, purgée après 30 jours (trash.retention_days)
+   └─ _bin         corbeille (purge facultative : trash.retention_days)
 ```
 
 Le bot ne travaille jamais sur les fichiers bruts. Un fichier suit le cycle `_sort` → `_process` → `_in_review` (décision à valider) ou `_pending` (pas encore de décision) → lot validé : le résultat entre dans la discothèque, ce qu'il remplace part dans `_bin`. Chaque dossier a sa clé dans `[paths]` (voir `configuration.md`) ; les sous-dossiers de `_workspace` suivent `paths.workspace`.

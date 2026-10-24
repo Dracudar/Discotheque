@@ -56,7 +56,7 @@ def test_purge(tmp_path, capsys):
     f.parent.mkdir(parents=True)
     f.write_bytes(b"x")
     cfg_file = tmp_path / "config.toml"
-    cfg_file.write_text(f"[paths]\nroot = '{root}'\n", encoding="utf-8")
+    cfg_file.write_text(f"[paths]\nroot = '{root}'\n[trash]\nretention_days = 30\n", encoding="utf-8")
     cfg = config.load(cfg_file)
     trash.put([f], root, cfg.trash, cfg.logs, "ancien", "essai", lambda m: None, dt.datetime(2020, 1, 1))
     assert main(["--config", str(cfg_file), "purge"]) == 0
