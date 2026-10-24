@@ -3,20 +3,20 @@ test_doctor.py - Tests du diagnostic
 
 Description:
     Tests de « disco doctor » : Python et modules, fonctions SQLite, outils
-    externes, fpcalc sur l'entrée standard, chemins de la configuration,
-    diagnostic sans configuration ou avec une configuration cassée.
+    externes, fpcalc sur l'entrée standard, chemins de la configuration, anciens
+    dossiers système, diagnostic sans configuration ou avec une configuration cassée.
 
 Auteur :
     Claude (Anthropic)
 
 Version :
-    2.0
+    2.1
 
 Date de création :
     2026.10.06
 
 Date de modification :
-    2026.10.13
+    2026.10.24
 """
 
 import os
@@ -81,6 +81,19 @@ def test_config_folders(tmp_path):
     assert res["Racine"].status == doctor.WARNING
     assert "Divers" in res["Racine"].detail
     assert "sera créé" in res["Dossier de sortie"].detail
+
+
+def test_old_folders_reported(tmp_path):
+    """Anciens dossiers de la racine signalés, sauf celui que la config désigne encore."""
+    for name in ("_to_delete", "_reports", "_log", "_audit", "_workspace"):
+        (tmp_path / name).mkdir()
+    cfg = config.from_dict({"paths": {"root": str(tmp_path), "logs": str(tmp_path / "_log")}})
+    res = {r.name: r for r in doctor.check_config(cfg)}
+    assert res["Ancien dossier _to_delete"].status == doctor.WARNING
+    assert str(cfg.trash) in res["Ancien dossier _to_delete"].detail
+    assert "Ancien dossier _reports" in res and "Ancien dossier _audit" in res
+    assert "Ancien dossier _log" not in res  # toujours configuré : un choix, pas un reste
+    assert res["Travail"].status == doctor.OK
 
 
 def test_diagnose_without_config(capsys):

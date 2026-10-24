@@ -12,7 +12,7 @@ La configuration se superpose en trois couches. Pour chaque clé, la couche la p
 | 2. `_bot` | `<racine>\_bot\config.toml` | réglages personnels : catégories en plus, outils | non |
 | 3. `clone` | `config.toml` du clone de développement | `root` (la sandbox), références hors dépôt, et toute surcharge | non (en développement : `root`) |
 
-Les chemins des dossiers système (`_data`, `_log`…) et des outils ne sont écrits nulle part par défaut : ils se **déduisent** de la racine.
+Les chemins des dossiers système (`_data`, `_workspace`…) et des outils ne sont écrits nulle part par défaut : ils se **déduisent** de la racine (voir [Dossiers système](#dossiers-système)).
 
 ### Où le programme cherche le fichier
 
@@ -88,7 +88,7 @@ Une catégorie est un dossier de premier niveau de la racine.
 | Bulk | bulk | non | non |
 | `_sort` | incoming | non | non |
 
-Les autres dossiers qui commencent par `_` (`_data`, `_bot`, `_log`…) sont ignorés automatiquement. `disco doctor` signale tout autre dossier de la racine qui n'est déclaré nulle part.
+Les autres dossiers qui commencent par `_` (`_data`, `_bot`, `_workspace`…) sont ignorés automatiquement. `disco doctor` signale tout autre dossier de la racine qui n'est déclaré nulle part.
 
 ### Ajouter, modifier ou retirer une catégorie
 
@@ -116,6 +116,36 @@ rg_album = false        # type et pages restent ceux du défaut
 [categories."Musicals"]
 type = "ignore"
 ```
+
+## Dossiers système
+
+| Clé `[paths]` | Défaut | Rôle |
+|---|---|---|
+| `incoming` | `<racine>\_sort` | arrivées (boîte de dépôt) |
+| `playlists` | `<racine>\_playlists` | playlists du baladeur |
+| `bot` | `<racine>\_bot` | installation de production |
+| `logs` | `<bot>\_log` | journal de toutes les actions du bot |
+| `output` | `<racine>\_data` | données générées |
+| `db` | `<output>\_base` | index SQLite, jamais effacé |
+| `cache` | `<output>\_cache` | réponses des services en ligne |
+| `workspace` | `<racine>\_workspace` | travail du bot, sur des copies |
+| `process` | `<workspace>\_process` | copies en cours de traitement, jetables |
+| `in_review` | `<workspace>\_in_review` | résultats en attente de validation |
+| `pending` | `<workspace>\_pending` | cas que le bot ne sait pas trancher |
+| `reports` | `<workspace>\_reports` | rapports lisibles |
+| `trash` | `<workspace>\_bin` | corbeille |
+
+Un dossier écrit l'emporte ; ceux qui en dépendent le suivent s'ils ne sont pas écrits (déplacer `workspace` déplace ses cinq sous-dossiers). Par défaut, tous sont sur le même disque que la racine : les déplacements entre eux sont instantanés.
+
+`disco doctor` signale les anciens dossiers encore présents à la racine (`_to_delete`, `_reports`, `_log`, `_audit`), sauf celui que la configuration désigne encore.
+
+### Corbeille
+
+| Clé | Défaut | Rôle |
+|---|---|---|
+| `[trash] retention_days` | `0` | jours avant la suppression définitive d'un lot ; `0` : jamais (purge désactivée) |
+
+La purge est facultative : par défaut, les lots restent dans la corbeille jusqu'à ce que l'opérateur la vide. Avec un nombre de jours, `disco purge` supprime les lots plus vieux que la rétention, comptée depuis la date d'entrée notée dans le journal de la corbeille (`<logs>\bin_journal.jsonl`), jamais depuis la date des fichiers. Un lot est purgé en entier. Le rapport annonce les lots purgés dans les 7 jours suivants et signale, sans y toucher, les lots absents du journal, sans manifeste (`_lot.json`), dont le manifeste ne correspond pas au journal, ou qui contiennent d'autres fichiers ; la commande renvoie alors 1. Le lancement automatique de la purge viendra avec la surveillance des données (jalon 4).
 
 ## Règles de fusion
 

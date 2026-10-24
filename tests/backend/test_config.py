@@ -4,20 +4,20 @@ test_config.py - Tests de la configuration
 Description:
     Tests du chargement de la configuration : exemples de production et de
     développement, catégories, chemins déduits de la racine, superposition des couches
-    (défaut, _bot, clone), ordre de recherche, anciens noms et valeurs refusés, outils
-    externes.
+    (défaut, _bot, clone), dossiers de travail (_workspace) et rétention de la
+    corbeille, ordre de recherche, anciens noms et valeurs refusés, outils externes.
 
 Auteur :
     Claude (Anthropic)
 
 Version :
-    2.0
+    2.1
 
 Date de création :
     2026.10.06
 
 Date de modification :
-    2026.10.13
+    2026.10.24
 """
 
 import os
@@ -36,9 +36,10 @@ def test_dev_example_is_valid(dev_example):
     assert cfg.true_peak_oversampling == 8
     assert cfg.references.purchase_sheets is not None and cfg.references.audit is not None
     # Dossiers système déduits de la racine
-    assert cfg.output.name == "_data" and cfg.logs.name == "_log"
+    assert cfg.output.name == "_data" and cfg.logs.name == "_log" and cfg.logs.parent == cfg.bot
     assert cfg.db.name == "_base" and cfg.db.parent == cfg.output
-    assert cfg.reports.name == "_reports" and cfg.trash.name == "_to_delete"
+    assert cfg.reports.name == "_reports" and cfg.trash.name == "_bin"
+    assert cfg.reports.parent == cfg.workspace and cfg.trash.parent == cfg.workspace
     assert cfg.bot.name == "_bot" and cfg.incoming.name == "_sort"
     assert cfg.reference_lufs == -18.0
     # L'exemple n'ajoute aucune catégorie : celles par défaut seulement
@@ -75,10 +76,66 @@ def test_default_categories():
 def test_db_and_cache_default_paths():
     cfg = config.from_dict({"paths": {"root": "M", "output": "S"}})
     assert cfg.db.as_posix() == "S/_base" and cfg.cache.as_posix() == "S/_cache"
-    assert cfg.logs.as_posix() == "M/_log"
+    assert cfg.logs.as_posix() == "M/_bot/_log"
     assert cfg.references.audit is None
     assert cfg.ffmpeg == "ffmpeg"
     assert cfg.reference_lufs == -18.0 and len(cfg.categories) == 7  # défaut
+
+
+def test_system_folders_default_paths():
+    """Arborescence par défaut de la racine (issue #103)."""
+    cfg = config.from_dict({"paths": {"root": "M"}})
+    found = {
+        k: getattr(cfg, k).as_posix()
+        for k in ("incoming", "playlists", "bot", "logs", "output", "db", "cache")
+        + ("workspace", "process", "in_review", "pending", "reports", "trash")
+    }
+    assert found == {
+        "incoming": "M/_sort",
+        "playlists": "M/_playlists",
+        "bot": "M/_bot",
+        "logs": "M/_bot/_log",
+        "output": "M/_data",
+        "db": "M/_data/_base",
+        "cache": "M/_data/_cache",
+        "workspace": "M/_workspace",
+        "process": "M/_workspace/_process",
+        "in_review": "M/_workspace/_in_review",
+        "pending": "M/_workspace/_pending",
+        "reports": "M/_workspace/_reports",
+        "trash": "M/_workspace/_bin",
+    }
+    assert cfg.retention_days == 0  # purge désactivée par défaut
+    assert cfg.origin("trash.retention_days") == config.ORIGIN_DEFAULT
+    assert cfg.origin("paths.workspace") == config.ORIGIN_DERIVED
+
+
+def test_workspace_subfolders_follow_workspace():
+    """Les sous-dossiers de _workspace suivent paths.workspace, sauf ceux écrits."""
+    cfg = config.from_dict({"paths": {"root": "M", "workspace": "W", "pending": "P", "bot": "B"}})
+    assert cfg.process.as_posix() == "W/_process" and cfg.in_review.as_posix() == "W/_in_review"
+    assert cfg.reports.as_posix() == "W/_reports" and cfg.trash.as_posix() == "W/_bin"
+    assert cfg.pending.as_posix() == "P"
+    assert cfg.logs.as_posix() == "B/_log"
+
+
+def test_retention_override_by_layer(tmp_path):
+    """trash.retention_days : défaut 0, surchargé par _bot puis par le clone."""
+    root = tmp_path / "Musique"
+    (root / "_bot").mkdir(parents=True)
+    (root / "_bot" / "config.toml").write_text("[trash]\nretention_days = 10\n", encoding="utf-8")
+    assert config.load(root / "_bot" / "config.toml").retention_days == 10
+    clone = tmp_path / "clone" / "config.toml"
+    clone.parent.mkdir()
+    clone.write_text(f"[paths]\nroot = '{root}'\n[trash]\nretention_days = 45\n", encoding="utf-8")
+    cfg = config.load(clone)
+    assert cfg.retention_days == 45 and cfg.origin("trash.retention_days") == config.ORIGIN_CLONE
+
+
+@pytest.mark.parametrize("value", [-1, 1.5, "30", True])
+def test_retention_rejected(value):
+    with pytest.raises(config.ConfigError, match="retention_days"):
+        config.from_dict({"paths": {"root": "M"}, "trash": {"retention_days": value}})
 
 
 def test_unknown_type_rejected():

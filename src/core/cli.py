@@ -3,7 +3,7 @@ cli.py - Ligne de commande « disco »
 
 Description:
     Point d'entrée en ligne de commande : « disco <commande> ». Construit le parseur
-    d'arguments et relie chaque sous-commande (doctor, config) à sa
+    d'arguments et relie chaque sous-commande (doctor, config, purge) à sa
     fonction. Chaque sous-commande renvoie le code de retour du processus :
     0 si tout va bien, 1 en cas d'erreur pendant l'opération, 2 si la configuration
     est absente ou invalide.
@@ -12,13 +12,13 @@ Auteur :
     Claude (Anthropic)
 
 Version :
-    2.0
+    2.1
 
 Date de création :
     2026.10.06
 
 Date de modification :
-    2026.10.13
+    2026.10.24
 """
 
 from __future__ import annotations
@@ -68,6 +68,12 @@ def _config(args: argparse.Namespace) -> int:
     line("Corbeille", cfg.trash, "paths.trash")
     line("Bot", cfg.bot, "paths.bot")
     line("Arrivées", cfg.incoming, "paths.incoming")
+    line("Playlists", cfg.playlists, "paths.playlists")
+    line("Travail", cfg.workspace, "paths.workspace")
+    line("En cours", cfg.process, "paths.process")
+    line("À valider", cfg.in_review, "paths.in_review")
+    line("En attente", cfg.pending, "paths.pending")
+    line("Rétention", f"{cfg.retention_days} jours" if cfg.retention_days else "jamais de purge", "trash.retention_days")
     line("Audit", cfg.references.audit or "(non défini)", "references.audit")
     line(
         "Fiches",
@@ -89,6 +95,43 @@ def _config(args: argparse.Namespace) -> int:
     return 0
 
 
+def _purge(args: argparse.Namespace) -> int:
+    """« disco purge » : supprime les lots de la corbeille plus vieux que la rétention.
+
+    Écrit un journal et un rapport, qui annonce aussi les lots purgés dans les jours
+    suivants et signale ceux qui ne le seront jamais (voir `src.backend.trash`).
+    """
+    from src.backend import oplog, trash
+
+    try:
+        cfg = load(args.config)
+    except ConfigError as e:
+        print(e, file=sys.stderr)
+        return 2
+    with oplog.OpLog(cfg.logs, "purge") as log:
+        retention = f"{cfg.retention_days} jours" if cfg.retention_days else "purge désactivée (trash.retention_days = 0)"
+        log(f"Purge de la corbeille {cfg.trash} (rétention : {retention})")
+        outcome = trash.purge(cfg.trash, cfg.logs, cfg.retention_days, log)
+        notes = [f"Lot {lot.name} purgé le {date:%d/%m/%Y} : le récupérer avant si besoin" for lot, date in outcome.upcoming]
+        report = oplog.write_report(
+            cfg.reports,
+            log,
+            "Purge de la corbeille",
+            [("Corbeille", str(cfg.trash)), ("Rétention", retention)],
+            [
+                ("Lots purgés", str(len(outcome.purged))),
+                ("Fichiers supprimés", str(sum(len(lot.files) for lot in outcome.purged))),
+                ("Lots gardés", str(outcome.kept)),
+                ("Lots purgés dans les 7 jours", str(len(outcome.upcoming))),
+                ("Lots signalés", str(len(outcome.flagged))),
+            ],
+            [f"Lot {name} jamais purgé : {reason}" for name, reason in outcome.flagged],
+            notes,
+        )
+        log(f"Rapport : {report}")
+    return 1 if outcome.flagged else 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     """Construit le parseur de « disco » et de ses sous-commandes.
 
@@ -105,6 +148,9 @@ def build_parser() -> argparse.ArgumentParser:
     sub = p.add_subparsers(dest="command", required=True)
     sub.add_parser("doctor", help="vérifie l'environnement (ne modifie rien)").set_defaults(func=_doctor)
     sub.add_parser("config", help="affiche la configuration chargée").set_defaults(func=_config)
+    sub.add_parser("purge", help="supprime les lots de la corbeille plus vieux que trash.retention_days (désactivé par défaut)").set_defaults(
+        func=_purge
+    )
     return p
 
 

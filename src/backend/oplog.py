@@ -2,7 +2,8 @@
 oplog.py - Journal et rapport d'une opération
 
 Description:
-    Journal d'une opération (dans `_log`) et rapport lisible des résultats (dans `_reports`).
+    Journal d'une opération (dans `paths.logs`, `_bot/_log` par défaut) et rapport
+    lisible des résultats (dans `paths.reports`, `_workspace/_reports` par défaut).
 
     - Le **journal** garde chaque action, horodatée, et l'affiche en même temps dans la
       console.
@@ -23,7 +24,7 @@ Date de création :
     2026.10.06
 
 Date de modification :
-    2026.10.13
+    2026.10.24
 """
 
 from __future__ import annotations
@@ -67,7 +68,7 @@ class OpLog:
         """Ouvre le fichier journal (en ajout) dans `folder`, créé au besoin.
 
         Args:
-            folder: Dossier des journaux (`paths.logs`).
+            folder: Dossier des journaux (`paths.logs`, `_bot/_log`).
             operation: Nom court de l'opération.
             now: Instant de début ; l'heure courante par défaut (utile aux tests).
             console: Affiche aussi chaque ligne dans la console.
@@ -121,7 +122,8 @@ def write_report(
     journal), et finit par un lien relatif vers le journal.
 
     Args:
-        folder: Dossier des rapports (`paths.reports`), créé au besoin.
+        folder: Dossier des rapports (`paths.reports`, `_workspace/_reports`), créé au
+            besoin.
         log: Journal de l'opération : fournit le nom, le début et le lien.
         title: Titre du rapport.
         context: Couples (libellé, valeur) affichés en liste (dossiers concernés…).

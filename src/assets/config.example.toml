@@ -15,14 +15,25 @@
 # root = 'X:\Musique'
 #
 # Dossiers système, à la racine par défaut (décommenter pour les déplacer) :
-# output = 'X:\Musique\_data'               # données générées (spectrogrammes…)
-# db = 'X:\Musique\_data\_base'             # index SQLite : jamais effacé
-# cache = 'X:\Musique\_data\_cache'         # réponses des services en ligne
-# logs = 'X:\Musique\_log'                  # journaux détaillés
-# reports = 'X:\Musique\_reports'           # rapports lisibles des résultats
-# trash = 'X:\Musique\_to_delete'           # ce que les opérations retirent (jamais supprimé)
-# bot = 'X:\Musique\_bot'                   # installation de production
-# incoming = 'X:\Musique\_sort'             # arrivées depuis le baladeur
+# incoming = 'X:\Musique\_sort'                      # arrivées (boîte de dépôt)
+# playlists = 'X:\Musique\_playlists'                # playlists du baladeur
+# bot = 'X:\Musique\_bot'                            # installation de production
+# logs = 'X:\Musique\_bot\_log'                      # journal de toutes les actions du bot
+# output = 'X:\Musique\_data'                        # données générées (spectrogrammes…)
+# db = 'X:\Musique\_data\_base'                      # index SQLite : jamais effacé
+# cache = 'X:\Musique\_data\_cache'                  # réponses des services en ligne
+# workspace = 'X:\Musique\_workspace'                # travail du bot, sur des copies
+# Sous-dossiers de workspace (déduits de workspace s'ils ne sont pas écrits) :
+# process = 'X:\Musique\_workspace\_process'         # copies en cours de traitement, jetables
+# in_review = 'X:\Musique\_workspace\_in_review'     # résultats en attente de validation
+# pending = 'X:\Musique\_workspace\_pending'         # cas que le bot ne sait pas trancher
+# reports = 'X:\Musique\_workspace\_reports'         # rapports lisibles des résultats
+# trash = 'X:\Musique\_workspace\_bin'               # corbeille (voir [trash])
+
+# [trash]
+# Purge de la corbeille, désactivée par défaut (0) : indiquer un nombre de jours pour
+# supprimer définitivement chaque lot ce nombre de jours après son entrée.
+# retention_days = 30
 
 # [tools]
 # Par défaut, les outils sont cherchés dans <racine>\_bot\tools, puis dans le PATH.

@@ -40,8 +40,9 @@ Détail dans `docs/ARCHITECTURE.md` (même convention que Morphoz_SnackApp, bran
 ## Règles absolues (sécurité de la discothèque)
 1. **La discothèque (`paths.root` en production) est en lecture seule.** Exceptions :
    - les données générées (`_data`) : spectrogrammes et fichiers dérivés peuvent être effacés et régénérés à tout moment, **pas la base** (`_data/_base`), coûteuse à reconstruire ;
-   - les **lots de tags validés** (ReplayGain, rangement de `_sort`), **lancés par Dracudar depuis son PC**, jamais depuis une session cloud.
-2. **L'audio n'est jamais modifié.** Seuls les tags peuvent l'être, par lots.
+   - le travail du bot dans `_workspace` (copies en cours, résultats à valider, rapports, corbeille et sa purge, règle 5) ;
+   - les **lots validés** (tags : ReplayGain, rangement de `_sort` ; remplacement d'un fichier par sa copie retravaillée, règle 2), **lancés par Dracudar depuis son PC**, jamais depuis une session cloud.
+2. **L'audio d'un fichier n'est jamais modifié en place.** Un fichier retravaillé (conversion ALAC → FLAC, FLAC depuis un WAV, passage en mono, fusion d'éditions…) est une **copie** faite dans `_workspace`. Elle ne remplace l'original que par un **lot validé** (règle 3 ; pour une copie retravaillée, l'empreinte audio contrôlée est un décodage vérifié et une comparaison documentée), l'original partant à la corbeille. Les tags, eux, se modifient en place, par lots.
 3. **Toute écriture sur la musique passe par un lot :**
    - une liste validée par Dracudar ;
    - une sauvegarde des tags avant ;
@@ -49,7 +50,7 @@ Détail dans `docs/ARCHITECTURE.md` (même convention que Morphoz_SnackApp, bran
    - un journal (`journal.csv`) ;
    - un script d'annulation.
 4. **Le développement se fait sur une copie de travail (sandbox)** : en développement, `paths.root` pointe vers elle.
-5. **Rien n'est supprimé directement.** Ce qui doit disparaître va dans `paths.trash\<lot>\`, que seul Dracudar vide.
+5. **Rien n'est supprimé directement.** Ce qui doit disparaître va dans `_workspace\_bin\<lot>\` (`paths.trash`). Un lot y reste jusqu'à ce que Dracudar vide la corbeille. La purge est **désactivée par défaut** (`trash.retention_days = 0`) : un nombre de jours l'active, et le bot supprime alors chaque lot ce nombre de jours après son entrée (`src.backend.trash` ; `disco purge` à la main, lancement automatique avec la surveillance des données, jalon 4). Chaque lot est noté dans le journal de la corbeille (`_bot\_log\bin_journal.jsonl`, qui fait foi et n'est jamais purgé) et dans un manifeste `_lot.json` dans son dossier. L'âge se compte depuis la date du journal, un lot est purgé en entier, et un lot absent du journal ou dont le manifeste ne correspond pas n'est jamais purgé : il est signalé.
 6. Les catégories `bulk` (`Bulk` par défaut, `Night` déclaré dans `_bot`) ne sont jamais réorganisées : elles sont indexées et analysées, sans pages.
 
 ## Racine et configuration (`config.toml`, non versionné)
@@ -66,18 +67,25 @@ Ordre de recherche (`src.backend.config.find`) : option `--config`, variable `DI
 
 | Dossier | Clé | Rôle |
 |---|---|---|
+| `_sort` | `paths.incoming` | Arrivées : boîte de dépôt de l'opérateur (dossiers `@source`), que le bot libère |
+| `_playlists` | `paths.playlists` | Playlists du baladeur |
+| `_bot` | `paths.bot` | Installation de production : environnement, version publiée depuis `main`, `config.toml`, outils externes (`tools`). **Distinct du clone de développement** |
+| `_bot/_log` | `paths.logs` | Journal de toutes les actions du bot (aussi affiché dans la console), dont le journal de la corbeille |
 | `_data` | `paths.output` | Données générées (spectrogrammes, puis fichiers du web à l'étape 9), régénérables ; ses dossiers internes commencent par `_` |
 | `_data/_base` | `paths.db` | Index SQLite. **Jamais effacé** |
 | `_data/_cache` | `paths.cache` | Réponses des services en ligne |
-| `_bot` | `paths.bot` | Installation de production : environnement, version publiée depuis `main`, `config.toml`, outils externes (`tools`). **Distinct du clone de développement** |
-| `_sort` | `paths.incoming` | Arrivées depuis le baladeur |
-| `_log` | `paths.logs` | Journaux détaillés (aussi affichés dans la console) |
-| `_reports` | `paths.reports` | Rapports lisibles des résultats, avec lien vers le journal (Markdown, puis intégrés à l'interface) |
-| `_to_delete` | `paths.trash` | Corbeille : ce que les opérations retirent, pour pouvoir annuler |
+| `_workspace` | `paths.workspace` | Tout le travail du bot, **sur des copies** (jamais sur les fichiers bruts) |
+| `_workspace/_process` | `paths.process` | Copies en cours de traitement, jetables |
+| `_workspace/_in_review` | `paths.in_review` | Résultats tranchés par le bot, en attente de validation (lot) |
+| `_workspace/_pending` | `paths.pending` | Cas que le bot ne sait pas trancher (pas encore de décision) |
+| `_workspace/_reports` | `paths.reports` | Rapports lisibles des résultats, avec lien vers le journal (Markdown, puis intégrés à l'interface) |
+| `_workspace/_bin` | `paths.trash` | Corbeille : ce que les opérations retirent, purge facultative (`trash.retention_days`, désactivée par défaut) |
 
-Autres clés : `references.*` (données hors dépôt, dans le config du clone), `tools.*`, `analysis.*`, `categories.*`. Les anciens noms français (`[chemins]`…) et les sections retirées (`[dap]`, `[sauvegarde]`) sont refusés avec le nouveau nom (`src.backend.config.reject_old_names`). Tout dossier `_…` non déclaré dans `categories` est ignoré par l'indexation.
+Les sous-dossiers de `_workspace` se déduisent de `paths.workspace`, et `_log` de `paths.bot`, s'ils ne sont pas écrits. Cycle d'un fichier : `_sort` → `_process` → `_in_review` (ou `_pending`) → lot validé, ce qui est remplacé partant dans `_bin`. `_workspace`, `_bot` et `_data` ne sont jamais copiés vers le baladeur. `disco doctor` signale les anciens dossiers encore présents à la racine (`_to_delete`, `_reports`, `_log`, `_audit`).
 
-Toute opération du bot écrit un journal dans `_log` et un rapport dans `_reports` (`src.backend.oplog`).
+Autres clés : `references.*` (données hors dépôt, dans le config du clone), `tools.*`, `analysis.*`, `trash.retention_days`, `categories.*`. Les anciens noms français (`[chemins]`…) et les sections retirées (`[dap]`, `[sauvegarde]`) sont refusés avec le nouveau nom (`src.backend.config.reject_old_names`). Tout dossier `_…` non déclaré dans `categories` est ignoré par l'indexation.
+
+Toute opération du bot écrit un journal dans `_bot/_log` et un rapport dans `_workspace/_reports` (`src.backend.oplog`).
 
 On n'écrit jamais un chemin en dur dans le code ni dans la doc : tout passe par la configuration.
 
