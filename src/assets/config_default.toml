@@ -10,6 +10,11 @@ true_peak_oversampling = 8
 # Nombre de pistes analysées en parallèle (0 = nombre de cœurs - 2)
 workers = 0
 
+[trash]
+# Jours pendant lesquels un lot reste dans la corbeille (_workspace\_bin) avant d'être
+# supprimé définitivement (0 = jamais de purge automatique)
+retention_days = 30
+
 # Dossiers de premier niveau de la discothèque.
 # type : artists, classical, compilations, projects, bulk, incoming, ignore
 # pages : a des pages dans l'interface (album, artiste, projet, compositeur)
@@ -49,5 +54,5 @@ type = "incoming"
 pages = false
 rg_album = false
 
-# Les autres dossiers système de la racine (_data, _bot, _log, _reports,
-# _to_delete…) sont ignorés automatiquement : tout dossier qui commence par « _ ».
+# Les autres dossiers système de la racine (_bot, _data, _workspace, _playlists…) sont
+# ignorés automatiquement : tout dossier qui commence par « _ ».

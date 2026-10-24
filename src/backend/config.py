@@ -7,15 +7,23 @@ Description:
     Tout part de la racine de la discothèque (`paths.root`). Les dossiers système
     vivent à la racine et commencent par « _ » ; chacun peut être déplacé dans la config :
 
-        <racine>/_data          données générées (spectrogrammes…), base et caches
-        <racine>/_data/_base    index SQLite : coûteux à reconstruire, jamais effacé
-        <racine>/_data/_cache   réponses des services en ligne
-        <racine>/_bot           installation de production (environnement, config)
-        <racine>/_bot/tools     outils externes (ffmpeg, ffprobe, fpcalc)
-        <racine>/_sort          arrivées depuis le baladeur
-        <racine>/_log           journaux détaillés
-        <racine>/_reports       rapports lisibles des résultats
-        <racine>/_to_delete     corbeille des opérations (jamais de suppression directe)
+        <racine>/_sort                    arrivées (boîte de dépôt de l'opérateur)
+        <racine>/_playlists               playlists du baladeur
+        <racine>/_bot                     installation de production (environnement, config)
+        <racine>/_bot/tools               outils externes (ffmpeg, ffprobe, fpcalc)
+        <racine>/_bot/_log                journal de toutes les actions du bot
+        <racine>/_data                    données générées (spectrogrammes…), base et caches
+        <racine>/_data/_base              index SQLite : coûteux à reconstruire, jamais effacé
+        <racine>/_data/_cache             réponses des services en ligne
+        <racine>/_workspace               tout le travail du bot, sur des copies
+        <racine>/_workspace/_process      copies en cours de traitement, jetables
+        <racine>/_workspace/_in_review    résultats tranchés, en attente de validation
+        <racine>/_workspace/_pending      cas que le bot ne sait pas trancher
+        <racine>/_workspace/_reports      rapports lisibles des résultats
+        <racine>/_workspace/_bin          corbeille, purgée après `trash.retention_days`
+
+    Les sous-dossiers de `_workspace` se déduisent de `paths.workspace`, et `_log` de
+    `paths.bot`, quand ils ne sont pas écrits.
 
     La configuration se superpose en trois couches, la plus haute l'emportant clé par clé :
 
@@ -36,13 +44,13 @@ Auteur :
     Claude (Anthropic)
 
 Version :
-    2.0
+    2.1
 
 Date de création :
     2026.10.06
 
 Date de modification :
-    2026.10.13
+    2026.10.24
 """
 
 from __future__ import annotations
@@ -166,11 +174,17 @@ class Config:
         output: Pages générées (`_data`).
         db: Dossier de l'index SQLite (`_data/_base`), jamais effacé.
         cache: Réponses des services en ligne (`_data/_cache`).
-        logs: Journaux détaillés (`_log`).
-        reports: Rapports lisibles (`_reports`).
-        trash: Corbeille des opérations (`_to_delete`).
+        logs: Journal de toutes les actions du bot (`_bot/_log`).
+        reports: Rapports lisibles (`_workspace/_reports`).
+        trash: Corbeille des opérations (`_workspace/_bin`).
         bot: Installation de production (`_bot`).
-        incoming: Arrivées depuis le baladeur (`_sort`).
+        incoming: Arrivées (`_sort`).
+        playlists: Playlists du baladeur (`_playlists`).
+        workspace: Travail du bot sur des copies (`_workspace`).
+        process: Copies en cours de traitement, jetables (`_workspace/_process`).
+        in_review: Résultats en attente de validation (`_workspace/_in_review`).
+        pending: Cas que le bot ne sait pas trancher (`_workspace/_pending`).
+        retention_days: Jours avant la purge d'un lot de la corbeille (0 : jamais).
         ffmpeg: Commande de ffmpeg (chemin complet ou nom cherché dans le PATH).
         ffprobe: Commande de ffprobe.
         fpcalc: Commande de fpcalc (Chromaprint).
@@ -192,6 +206,12 @@ class Config:
     trash: Path
     bot: Path
     incoming: Path
+    playlists: Path
+    workspace: Path
+    process: Path
+    in_review: Path
+    pending: Path
+    retention_days: int
     ffmpeg: str
     ffprobe: str
     fpcalc: str
@@ -383,12 +403,14 @@ def from_dict(d: dict, sources: tuple[Path, ...] = (), origins: dict[str, str] |
     tools = d.get("tools", {})
     analysis = d.get("analysis", {})
     refs = d.get("references", {})
+    trash = d.get("trash", {})
 
     root = _path(paths, "root")
     if root is None:
         raise RootNotFound("Racine introuvable : lancer le programme depuis <racine>/_bot, ou indiquer [paths] root dans config.toml.")
     output = _path(paths, "output") or root / "_data"
     bot = _path(paths, "bot") or root / "_bot"
+    workspace = _path(paths, "workspace") or root / "_workspace"
 
     categories: dict[str, Category] = {}
     for name, c in d.get("categories", {}).items():
@@ -409,17 +431,27 @@ def from_dict(d: dict, sources: tuple[Path, ...] = (), origins: dict[str, str] |
     oversampling = int(_require(analysis, "true_peak_oversampling", "analysis"))
     if oversampling < 1:
         raise ConfigError("analysis.true_peak_oversampling doit valoir au moins 1")
+    retention = _require(trash, "retention_days", "trash")
+    # bool est un int en Python : « true » ne doit pas passer pour 1 jour
+    if isinstance(retention, bool) or not isinstance(retention, int) or retention < 0:
+        raise ConfigError("trash.retention_days doit être un nombre entier de jours, 0 ou plus (0 : jamais de purge)")
 
     return Config(
         root=root,
         output=output,
         db=_path(paths, "db") or output / "_base",
         cache=_path(paths, "cache") or output / "_cache",
-        logs=_path(paths, "logs") or root / "_log",
-        reports=_path(paths, "reports") or root / "_reports",
-        trash=_path(paths, "trash") or root / "_to_delete",
+        logs=_path(paths, "logs") or bot / "_log",
+        reports=_path(paths, "reports") or workspace / "_reports",
+        trash=_path(paths, "trash") or workspace / "_bin",
         bot=bot,
         incoming=_path(paths, "incoming") or root / "_sort",
+        playlists=_path(paths, "playlists") or root / "_playlists",
+        workspace=workspace,
+        process=_path(paths, "process") or workspace / "_process",
+        in_review=_path(paths, "in_review") or workspace / "_in_review",
+        pending=_path(paths, "pending") or workspace / "_pending",
+        retention_days=retention,
         ffmpeg=_tool(tools, "ffmpeg", bot),
         ffprobe=_tool(tools, "ffprobe", bot),
         fpcalc=_tool(tools, "fpcalc", bot),

@@ -17,8 +17,9 @@ src/
 │   └── doctor.py      diagnostic de l'environnement
 ├── backend/           services communs, aucun métier
 │   ├── config.py      couches de configuration
-│   ├── oplog.py       journal (_log) et rapport (_reports) d'une opération
-│   ├── mirror.py      moteur miroir, corbeille
+│   ├── oplog.py       journal (_bot/_log) et rapport (_workspace/_reports) d'une opération
+│   ├── trash.py       corbeille par lots (_workspace/_bin) et sa purge
+│   ├── mirror.py      moteur miroir, corbeille de la destination
 │   ├── db.py          (1) SQLite : connexion, WAL, migrations
 │   └── tools.py       (2) ffmpeg, ffprobe, fpcalc
 ├── UI/                interfaces : elles ne font qu'afficher la base

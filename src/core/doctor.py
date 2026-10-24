@@ -13,13 +13,13 @@ Auteur :
     Claude (Anthropic)
 
 Version :
-    2.0
+    2.1
 
 Date de création :
     2026.10.06
 
 Date de modification :
-    2026.10.13
+    2026.10.24
 """
 
 from __future__ import annotations
@@ -280,12 +280,47 @@ def check_long_paths() -> Result:
 
 
 # --------------------------------------------------------------- Configuration
+# Anciens dossiers système de la racine (issue #103) : où va leur contenu
+OLD_FOLDERS = {
+    "_to_delete": ("trash", "corbeille"),
+    "_reports": ("reports", "rapports"),
+    "_log": ("logs", "journaux"),
+    "_audit": (None, "repris par _process, _in_review et _pending, puis à vider ou archiver"),
+}
+
+
+def check_old_folders(cfg: Config) -> list[Result]:
+    """Signale les anciens dossiers système encore présents à la racine.
+
+    Un ancien dossier que la configuration désigne encore (`trash = …\\_to_delete`)
+    n'est pas signalé : c'est un choix, pas un reste.
+
+    Returns:
+        Un point d'attention par ancien dossier présent, avec son nouvel emplacement.
+    """
+    res = []
+    for name, (attribute, role) in OLD_FOLDERS.items():
+        old = cfg.root / name
+        if not old.is_dir():
+            continue
+        if attribute is None:
+            res.append(Result(f"Ancien dossier {name}", WARNING, f"{old} : {role}"))
+            continue
+        new = getattr(cfg, attribute)
+        if new != old:
+            res.append(Result(f"Ancien dossier {name}", WARNING, f"{old} : {role}, à déplacer vers {new}"))
+    return res
+
+
 def check_config(cfg: Config) -> list[Result]:
     """Vérifie les chemins de la configuration.
 
     - la racine doit exister ; un dossier de premier niveau non déclaré dans
       `[categories]` est signalé ;
-    - sortie, base et cache peuvent manquer s'ils peuvent être créés ;
+    - sortie, base, cache et dossier de travail peuvent manquer s'ils peuvent être
+      créés ;
+    - les anciens dossiers système encore présents sont signalés
+      (`check_old_folders`) ;
     - les références hors dépôt absentes ne sont qu'un point d'attention : elles ne
       servent qu'au développement.
     """
@@ -311,6 +346,7 @@ def check_config(cfg: Config) -> list[Result]:
         ("Dossier de sortie", cfg.output),
         ("Base", cfg.db),
         ("Cache", cfg.cache),
+        ("Travail", cfg.workspace),
     ):
         if path.is_dir():
             res.append(Result(name, OK, str(path)))
@@ -318,6 +354,8 @@ def check_config(cfg: Config) -> list[Result]:
             res.append(Result(name, OK, f"{path} (sera créé)"))
         else:
             res.append(Result(name, WARNING, f"{path} : dossier parent introuvable"))
+    if cfg.root.is_dir():
+        res += check_old_folders(cfg)
     optional = (
         ("Référence : audit", cfg.references.audit),
         ("Référence : fiches d'achat", cfg.references.purchase_sheets),
