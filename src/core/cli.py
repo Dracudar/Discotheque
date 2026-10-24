@@ -3,8 +3,8 @@ cli.py - Ligne de commande « disco »
 
 Description:
     Point d'entrée en ligne de commande : « disco <commande> ». Construit le parseur
-    d'arguments et relie chaque sous-commande (doctor, config, purge) à sa
-    fonction. Chaque sous-commande renvoie le code de retour du processus :
+    d'arguments et relie chaque sous-commande (doctor, config, purge, lot, review,
+    reject) à sa fonction. Chaque sous-commande renvoie le code de retour du processus :
     0 si tout va bien, 1 en cas d'erreur pendant l'opération, 2 si la configuration
     est absente ou invalide.
 
@@ -12,7 +12,7 @@ Auteur :
     Claude (Anthropic)
 
 Version :
-    2.1
+    2.2
 
 Date de création :
     2026.10.06
@@ -132,6 +132,25 @@ def _purge(args: argparse.Namespace) -> int:
     return 1 if outcome.flagged else 0
 
 
+def _lots(args: argparse.Namespace) -> int:
+    """« disco lot », « disco review » et « disco reject » : lots validés par l'opérateur.
+
+    Voir `src.core.lots`.
+    """
+    from src.core import lots
+
+    try:
+        cfg = load(args.config)
+    except ConfigError as e:
+        print(e, file=sys.stderr)
+        return 2
+    if args.command == "lot":
+        return lots.run(args.folder, cfg)
+    if args.command == "reject":
+        return lots.reject(args.lot, cfg)
+    return lots.review(cfg)
+
+
 def build_parser() -> argparse.ArgumentParser:
     """Construit le parseur de « disco » et de ses sous-commandes.
 
@@ -151,6 +170,13 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("purge", help="supprime les lots de la corbeille plus vieux que trash.retention_days (désactivé par défaut)").set_defaults(
         func=_purge
     )
+    p_lot = sub.add_parser("lot", help="applique les décisions d'un lot (_decisions.csv), après confirmation")
+    p_lot.add_argument("folder", help="dossier du lot (dans _in_review ou _pending), ou son nom")
+    p_lot.set_defaults(func=_lots)
+    sub.add_parser("review", help="liste les lots à valider et en attente").set_defaults(func=_lots)
+    p_reject = sub.add_parser("reject", help="refuse toutes les lignes restantes d'un lot, après confirmation")
+    p_reject.add_argument("lot", help="nom ou dossier du lot")
+    p_reject.set_defaults(func=_lots)
     return p
 
 

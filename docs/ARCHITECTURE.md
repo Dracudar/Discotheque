@@ -14,11 +14,13 @@ src/
 ├── __versions__.py    lecteur de assets/versions.toml (versions de la livraison)
 ├── core/              entrée et environnement
 │   ├── cli.py         commandes, envoi vers les mod
+│   ├── lots.py        disco lot / review / reject, registre des mods qui appliquent les lots
 │   └── doctor.py      diagnostic de l'environnement
 ├── backend/           services communs, aucun métier
 │   ├── config.py      couches de configuration
 │   ├── oplog.py       journal (_bot/_log) et rapport (_workspace/_reports) d'une opération
 │   ├── trash.py       corbeille par lots (_workspace/_bin) et sa purge
+│   ├── lot.py         lots à valider : manifeste, _decisions.csv, traiter.bat
 │   ├── mirror.py      moteur miroir, corbeille de la destination
 │   ├── db.py          (1) SQLite : connexion, WAL, migrations
 │   └── tools.py       (2) ffmpeg, ffprobe, fpcalc
