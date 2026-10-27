@@ -43,7 +43,7 @@ Format : **une lettre de type, un tiret, une partie aléatoire**, par exemple `A
 A artiste ──┬── album_credit ──────► R album ◄───────── project_album ────────┐
             │                        │                                        │
             │                        ▼                                        │
-            │                     édition                                     │
+            │                     édition ◄── publie ── L label               │
             │                        │                                        │
             │                        ▼                                        ├── P projet ◄─ parent
             │                      piste ◄┄┄┄┄┄┄┄┄ fichier (mesures)          │   (franchise → jeu → événement)
@@ -61,49 +61,78 @@ A artiste ──┬── album_credit ──────► R album ◄──�
                                   paroles (synchronisées par T)
 ```
 
-Lecture : chaque table de liaison est nommée sur sa flèche ; `┄` marque un lien facultatif. L'artiste (A) apparaît une fois, avec ses trois sortes de crédits : sur l'album, sur l'enregistrement (interprètes, invités, remixeurs) et sur l'œuvre (compositeurs, auteurs). Le projet (P) se relie aux albums, aux enregistrements et aux œuvres.
+Lecture : chaque table de liaison est nommée sur sa flèche ; `┄` marque un lien facultatif. L'artiste (A) apparaît une fois, avec ses trois sortes de crédits : sur l'album, sur l'enregistrement (interprètes, invités, remixeurs) et sur l'œuvre (compositeurs, auteurs). Le projet (P) se relie aux albums, aux enregistrements et aux œuvres ; le label (L) publie les éditions.
 
 - Chaque **enregistrement** a **une œuvre** (créée automatiquement, en un pour un, pour une chanson ordinaire).
 - Une **œuvre** renvoie vers sa **première interprétation**, avec ou sans fichier.
 - Un **fichier** pointe vers un enregistrement ; la ligne de tracklist est facultative (fichiers en vrac des catégories `bulk`).
 - Les **mesures** (intégrité, ReplayGain, spectre…) appartiennent au **fichier** : un même enregistrement peut exister en FLAC et en MP3, ou dans un autre master.
 
-```mermaid
-erDiagram
-    artist ||--o{ artist_alias : "a"
-    artist ||--o{ artist_relation : "a"
-    artist ||--o{ artist_link : "a"
-    album ||--o{ edition : "a"
-    album ||--o{ album_credit : "crédité"
-    artist ||--o{ album_credit : "crédité"
-    studio ||--o{ album_studio : "présente"
-    album ||--o{ album_studio : "présenté par"
-    project ||--o{ project_album : "regroupe"
-    album ||--o{ project_album : "appartient"
-    project |o--o{ project : "parent"
-    edition ||--o{ track : "tracklist"
-    recording ||--o{ track : "apparaît"
-    label |o--o{ edition : "publie"
-    work ||--o{ recording : "interprétée par"
-    work |o--o| recording : "première interprétation"
-    recording ||--o{ recording_credit : "crédité"
-    artist ||--o{ recording_credit : "crédité"
-    recording ||--o{ recording_relation : "dérive de"
-    recording ||--o{ recording_marker : "a"
-    work ||--o{ work_credit : "écrite par"
-    artist ||--o{ work_credit : "écrit"
-    work ||--o{ work_relation : "basée sur"
-    work ||--o{ work_project : "issue de"
-    project ||--o{ work_project : "contient"
-    recording ||--o{ recording_project : "liée à"
-    work ||--o{ lyrics_text : "paroles"
-    recording ||--o{ lyrics_sync : "synchronisation"
-    lyrics_text ||--o{ lyrics_sync : "synchronisé"
-    recording ||--o{ file : "fichiers"
-    track |o--o{ file : "fichiers"
-    file ||--o{ file_tag : "tags bruts"
-    file ||--o{ measurement : "mesures"
-```
+### Liaisons, table par table
+
+Lecture : « un album → plusieurs éditions » se lit « un album a plusieurs éditions, une édition appartient à un seul album ». Une table de liaison (plusieurs à plusieurs) porte en plus un rôle et un ordre.
+
+**Artistes**
+
+| Liaison | Relie | Sens |
+|---|---|---|
+| `artist_alias` | artiste → noms | un artiste, plusieurs noms |
+| `artist_relation` | artiste ↔ artiste | membre de, sous-groupe, projet solo |
+| `artist_link` | artiste → profils | un artiste, plusieurs profils |
+| `artist_flag` | artiste → marquages | un artiste, plusieurs marquages |
+
+**Sorties**
+
+| Liaison | Relie | Sens |
+|---|---|---|
+| `edition.album_id` | album → éditions | un album, plusieurs éditions |
+| `edition.label_id` | label → éditions | un label, plusieurs éditions ; une édition, un label au plus |
+| `track.edition_id` | édition → pistes | une édition, plusieurs pistes (la tracklist) |
+| `track.recording_id` | enregistrement → pistes | un enregistrement, plusieurs pistes (album, compilation…) |
+| `album_credit` | album ↔ artistes | plusieurs à plusieurs, avec nom crédité, rôle, ordre |
+| `album_studio` | album ↔ studios | plusieurs à plusieurs (bandes originales) |
+| `album_type` | album → types | un album, plusieurs types secondaires |
+| `edition_marker` | édition → marqueurs | `RELEASETYPE` |
+
+**Enregistrements et œuvres**
+
+| Liaison | Relie | Sens |
+|---|---|---|
+| `recording.work_id` | œuvre → enregistrements | une œuvre, plusieurs interprétations ; chaque enregistrement a **une** œuvre |
+| `work.first_recording_id` | œuvre → enregistrement | la première interprétation (une au plus) |
+| `recording_credit` | enregistrement ↔ artistes | interprètes, invités, remixeurs |
+| `recording_relation` | enregistrement ↔ enregistrement | dérivé → sources (remix, mashup : plusieurs sources) |
+| `recording_marker` | enregistrement → marqueurs | `TRACKTYPE` |
+| `work_credit` | œuvre ↔ artistes | compositeurs, auteurs, arrangeurs |
+| `work_relation` | œuvre ↔ œuvre | parodie, traduction, arrangement → œuvre de base |
+
+**Projets et studios**
+
+| Liaison | Relie | Sens |
+|---|---|---|
+| `project.parent_id` | projet → sous-projets | franchise → jeu → extension ou événement |
+| `project_album` | projet ↔ albums | bande originale, extension, version d'une boutique |
+| `project_studio` | projet ↔ studios | développement, édition, production |
+| `work_project` | œuvre ↔ projets | thème, générique, chanson d'un événement |
+| `recording_project` | enregistrement ↔ projets | morceau lié au projet sans album de bande originale |
+
+**Paroles**
+
+| Liaison | Relie | Sens |
+|---|---|---|
+| `lyrics_text.work_id` | œuvre → textes | une œuvre, plusieurs textes (original, romanisation, traductions) |
+| `lyrics_text.recording_id` | enregistrement → texte propre | facultatif (live improvisé) |
+| `lyrics_text.derived_from_id` | texte → textes dérivés | traduction ou romanisation d'un texte |
+| `lyrics_sync` | enregistrement ↔ textes | horodatages d'un enregistrement pour un texte |
+
+**Fichiers**
+
+| Liaison | Relie | Sens |
+|---|---|---|
+| `file.recording_id` | enregistrement → fichiers | plusieurs fichiers possibles (formats, éditions) |
+| `file.track_id` | piste → fichiers | **facultatif** ; deux fichiers sur la même piste = doublon |
+| `file_tag` | fichier → tags bruts | une ligne par valeur |
+| `measurement` | fichier → mesures | une ligne par mesure et par version |
 
 ## 4. Tables
 
