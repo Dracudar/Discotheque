@@ -4,6 +4,7 @@
 |---|---|
 | `ARCHITECTURE.md` | Couches du code, règle de dépendance, circulation par la base, où ranger un nouveau module. |
 | `ia-locale.md` | Besoin et matériel pour l'IA locale (cas ambigus uniquement). |
+| `modele-donnees.md` | Modèle de données : identifiants, entités, tables et liaisons, correspondance avec les tags (base du schéma SQLite). |
 | `sqlite/` | Notes du cours SQLite (mode mentor), créées en phase 1. |
 | `qt/` | Notes du cours Qt (mode mentor), créées à l’étape 8. |
 
