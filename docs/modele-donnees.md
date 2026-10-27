@@ -37,23 +37,31 @@ Format : **une lettre de type, un tiret, une partie aléatoire**, par exemple `A
 ## 3. Vue d'ensemble
 
 ```
-                     P projet ◄─(parent)
-                       ▲   ▲
-      project_album ───┘   └─── work_project / recording_project
-                       │
-A ─┐ (ou S pour les OST)
-   ├──► R album ──► édition ──► piste (facultative) ──┐
-A ─┘                                                  ▼
-│                                              fichier (mesures)
-│                                                     │
-├─ crédits (nom crédité, rôle) ──► T enregistrement ◄─┘
-│                                   │  ▲
-│                                   │  └─ recording_relation (remix, mashup, remaster…)
-│                                   ▼
-└─ compositeur, auteur ──────────► W œuvre ◄─ work_relation (parodie, traduction…)
-                                    │
-                                    └─ paroles (textes) ; synchronisation par enregistrement
+                                     S studio
+                                     │ album_studio
+                                     ▼
+A artiste ──┬── album_credit ──────► R album ◄───────── project_album ────────┐
+            │                        │                                        │
+            │                        ▼                                        │
+            │                     édition                                     │
+            │                        │                                        │
+            │                        ▼                                        ├── P projet ◄─ parent
+            │                      piste ◄┄┄┄┄┄┄┄┄ fichier (mesures)          │   (franchise → jeu → événement)
+            │                        │               │                        │
+            │                        ▼               ▼                        │
+            ├── recording_credit ──► T enregistrement ◄── recording_project ──┤
+            │                        │  ▲                                     │
+            │                        │  └── recording_relation                │
+            │                        │      (remix, mashup, remaster…)        │
+            │                        ▼                                        │
+            └── work_credit ───────► W œuvre ◄──────────────── work_project ──┘
+                                     │  ▲
+                                     │  └── work_relation (parodie, traduction…)
+                                     ▼
+                                  paroles (synchronisées par T)
 ```
+
+Lecture : chaque table de liaison est nommée sur sa flèche ; `┄` marque un lien facultatif. L'artiste (A) apparaît une fois, avec ses trois sortes de crédits : sur l'album, sur l'enregistrement (interprètes, invités, remixeurs) et sur l'œuvre (compositeurs, auteurs). Le projet (P) se relie aux albums, aux enregistrements et aux œuvres.
 
 - Chaque **enregistrement** a **une œuvre** (créée automatiquement, en un pour un, pour une chanson ordinaire).
 - Une **œuvre** renvoie vers sa **première interprétation**, avec ou sans fichier.
