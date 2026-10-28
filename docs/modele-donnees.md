@@ -37,9 +37,6 @@ Format : **une lettre de type, un tiret, une partie aléatoire**, par exemple `A
 ## 3. Vue d'ensemble
 
 ```
-                                     S studio
-                                     │ album_studio
-                                     ▼
 A artiste ──┬── album_credit ──────► R album ◄───────── project_album ────────┐
             │                        │                                        │
             │                        ▼                                        │
@@ -47,7 +44,7 @@ A artiste ──┬── album_credit ──────► R album ◄──�
             │                        │                                        │
             │                        ▼                                        ├── P projet ◄─ parent
             │                      piste ◄┄┄┄┄┄┄┄┄ fichier (mesures)          │   (franchise → jeu → événement)
-            │                        │               │                        │
+            │                        │               │                        │   ◄── project_studio ── S studio
             │                        ▼               ▼                        │
             ├── recording_credit ──► T enregistrement ◄── recording_project ──┤
             │                        │  ▲                                     │
@@ -61,7 +58,7 @@ A artiste ──┬── album_credit ──────► R album ◄──�
                                   paroles (synchronisées par T)
 ```
 
-Lecture : chaque table de liaison est nommée sur sa flèche ; `┄` marque un lien facultatif. L'artiste (A) apparaît une fois, avec ses trois sortes de crédits : sur l'album, sur l'enregistrement (interprètes, invités, remixeurs) et sur l'œuvre (compositeurs, auteurs). Le projet (P) se relie aux albums, aux enregistrements et aux œuvres ; le label (L) publie les éditions.
+Lecture : chaque table de liaison est nommée sur sa flèche ; `┄` marque un lien facultatif. L'artiste (A) apparaît une fois, avec ses trois sortes de crédits : sur l'album, sur l'enregistrement (interprètes, invités, remixeurs) et sur l'œuvre (compositeurs, auteurs). Le projet (P) se relie aux albums, aux enregistrements et aux œuvres ; le label (L) publie les éditions ; le studio (S) est rattaché au projet.
 
 - Chaque **enregistrement** a **une œuvre** (créée automatiquement, en un pour un, pour une chanson ordinaire).
 - Une **œuvre** renvoie vers sa **première interprétation**, avec ou sans fichier.
@@ -90,7 +87,6 @@ Lecture : « un album → plusieurs éditions » se lit « un album a plusieurs 
 | `track.edition_id` | édition → pistes | une édition, plusieurs pistes (la tracklist) |
 | `track.recording_id` | enregistrement → pistes | un enregistrement, plusieurs pistes (album, compilation…) |
 | `album_credit` | album ↔ artistes | plusieurs à plusieurs, avec nom crédité, rôle, ordre |
-| `album_studio` | album ↔ studios | plusieurs à plusieurs (bandes originales) |
 | `album_type` | album → types | un album, plusieurs types secondaires |
 | `edition_marker` | édition → marqueurs | `RELEASETYPE` |
 
@@ -182,7 +178,7 @@ Les champs listés sont le contenu attendu, pas le schéma définitif. `source` 
 | `year` | année de sortie |
 | `follow_level` | comme pour les artistes |
 
-**`project_studio`** : `project_id`, `studio_id`, `role` (développement, édition, production).
+**`project_studio`** : `project_id`, `studio_id`, `role` (développement, édition, production). **Le studio est rattaché au projet, pas à l'album** : pour une bande originale, l'artiste de l'album (`ALBUMARTIST`) se déduit du studio du projet (développement pour un jeu, production pour un film ou une série). Un sous-projet (extension, événement) hérite des studios de son parent, sauf s'il a les siens. Un cas qui ne rentre pas (album lié à plusieurs projets de studios différents) passe par une surcharge.
 
 **`project_album`** : `project_id`, `album_id`, `role` (bande originale, extension, version d'une boutique, enregistrement de la troupe…).
 
@@ -200,8 +196,6 @@ Les champs listés sont le contenu attendu, pas le schéma définitif. `source` 
 **`album_type`** : types secondaires, plusieurs par album (compilation, bande originale, live, remix…), une ligne par type.
 
 **`album_credit`** : artistes de l'album (`album_id`, `artist_id`, `credited_name`, `role`, `position`, `join_phrase`). `credited_name` garde le nom tel qu'il est crédité sur la sortie ; `join_phrase` (« & », « feat. », « × ») permet de recomposer le crédit affiché.
-
-**`album_studio`** : studio présenté comme artiste de l'album (bandes originales de jeux et de films), avec son rôle.
 
 **`edition`** : la sortie précise. Un dossier de la discothèque correspond à une édition.
 
@@ -321,7 +315,7 @@ Les tags d'un fichier sont **déduits de la base** et écrits par lots validés.
 |---|---|
 | `TITLE` | `recording.title` et marqueurs, au format de #82 |
 | `ARTIST` (plusieurs valeurs) | `recording_credit` : noms crédités |
-| `ALBUMARTIST` | `album_credit`, ou `album_studio` pour les bandes originales |
+| `ALBUMARTIST` | `album_credit` ; pour une bande originale, studio du projet (`project_album` → `project_studio`) |
 | `ALBUM` | `album.title` (ou `edition.title`) |
 | `TRACKNUMBER`, `DISCNUMBER` | `track` |
 | `DATE` | `recording.date` |
